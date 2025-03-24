@@ -1,0 +1,198 @@
+[
+    {
+        "DeviceID":"485063f8-3076-459c-8523-9bd8ba5487eb",
+        "deviceType":null,
+        "fmPortID":{
+
+        },
+        "oobDeviceID":"test_oob_id_1",
+        "PCIeVendorId":"000A",
+        "PCIeDeviceId":"010B",
+        "PCIeDeviceSerialNumber":"abcdef3312345678",
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":"test_data_5",
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":null,
+        "switchModel":"dummy",
+        "switchManufacturer":null,
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":"test_data_6",
+        "deviceKeys":null,
+        "switchPortType":"DSP",
+        "fmValid":false,
+        "valid":false
+    },
+    {
+        "DeviceID":"f3efffb7-b11b-4198-bd39-9da6458dc931",
+        "deviceType":null,
+        "fmPortID":{
+
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":"test_data_7",
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":"test_data_8",
+        "switchModel":"test_data_10",
+        "switchManufacturer":"test_data_9",
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":"test_data_11",
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":false,
+        "valid":false
+    },
+    {
+        "DeviceID":"5b96d128-bc88-4254-aaa5-5b4c8cbc49cc",
+        "deviceType":"CPU",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":"test_data_11",
+        "CPUManufacturer":"test_data_12",
+        "CPUModel":"test_data_13",
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":null,
+        "switchModel":null,
+        "switchManufacturer":null,
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":false,
+        "valid":false
+    },
+    {
+        "DeviceID":"23397fe0-c912-4088-9352-4af19b72fd5e",
+        "deviceType":null,
+        "fmPortID":{
+            "qemu-01":[
+                "111"
+            ]
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":"1af4",
+        "PCIeDeviceId":"1024",
+        "PCIeDeviceSerialNumber":"1234567812345678",
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+            "qemu-01":[
+                "\/aaaa\/bbb\/ccccc"
+            ]
+        },
+        "switchSerialNumber":null,
+        "switchModel":null,
+        "switchManufacturer":null,
+        "fmManagerID":[
+            "qemu-01"
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":"{'test': 'tttttttttttt'}",
+        "deviceKeys":null,
+        "switchPortType":"DSP",
+        "fmValid":true,
+        "valid":true
+    },
+    {
+        "DeviceID":"08ccb38c-aba5-472f-8796-027c944269e7",
+        "deviceType":"switch",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":"\/ccccc\/bbb\/aaaaaa",
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":"98765",
+        "switchModel":"test_model",
+        "switchManufacturer":"test_fac",
+        "fmManagerID":[
+            "qemu-01"
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":true,
+        "valid":true
+    },
+    {
+        "DeviceID":"a1850019-3578-452b-8f26-8aff9373b012",
+        "deviceType":"CPU",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":"test",
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":"CPU-123456789",
+        "CPUManufacturer":"1af4",
+        "CPUModel":"1024CPU",
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":null,
+        "switchModel":null,
+        "switchManufacturer":null,
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+            "oob-1"
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":false,
+        "valid":true
+    }
+]

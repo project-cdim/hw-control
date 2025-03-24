@@ -1,0 +1,124 @@
+{
+    "CPU": {
+        "type": {
+            "vtype": "str"
+        },
+        "usageRate": {
+            "vtype": "float"
+        },
+        "user": {
+            "vtype": "float"
+        },
+        "system": {
+            "vtype": "float"
+        },
+        "wait": {
+            "vtype": "float"
+        },
+        "idle": {
+            "vtype": "float"
+        },
+        "CPUWatts": {
+            "key": "cpuWatts",
+            "vtype": "int"
+        }
+    },
+    "memory": {
+        "type": {
+            "vtype": "str"
+        },
+        "usedMemory": {
+            "vtype": "int"
+        },
+        "swap": {
+            "vtype": "int"
+        }
+    },
+    "storage": {
+        "type": {
+            "vtype": "str"
+        },
+        "disk": {
+            "vtype": "dict",
+            "sub_mapping": {
+                "amountUsedDisk": {
+                    "vtype": "int"
+                },
+                "usageIO": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "readCount": {
+                            "vtype": "int"
+                        },
+                        "writeCount": {
+                            "vtype": "int"
+                        },
+                        "readBytes": {
+                            "vtype": "int"
+                        },
+                        "writeBytes": {
+                            "vtype": "int"
+                        },
+                        "readTime": {
+                            "vtype": "int"
+                        },
+                        "writeTime": {
+                            "vtype": "int"
+                        },
+                        "readMergedCount": {
+                            "vtype": "int"
+                        },
+                        "writeMergedCount": {
+                            "vtype": "int"
+                        },
+                        "busyRate": {
+                            "vtype": "float"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "networkInterface": {
+        "type": {
+            "vtype": "str"
+        },
+        "networkInterfaceInformation": {
+            "vtype": "dict",
+            "sub_mapping": {
+                "networkTraffic": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "receivePackets": {
+                            "vtype": "int"
+                        },
+                        "transmitPackets": {
+                            "vtype": "int"
+                        },
+                        "bytesSent": {
+                            "vtype": "int"
+                        },
+                        "bytesRecv": {
+                            "vtype": "int"
+                        },
+                        "errin": {
+                            "vtype": "int"
+                        },
+                        "errout": {
+                            "vtype": "int"
+                        },
+                        "dropin": {
+                            "vtype": "int"
+                        },
+                        "dropout": {
+                            "vtype": "int"
+                        }
+                    }
+                },
+                "networkSpeed": {
+                    "vtype": "int"
+                }
+            }
+        }
+    }
+}

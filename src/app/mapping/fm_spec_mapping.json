@@ -1,0 +1,189 @@
+{
+    "CPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "fabricID": {
+            "key": "fabricId",
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "memory": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "fabricID": {
+            "key": "fabricId",
+            "vtype": "str"
+        },
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "storage": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "fabricID": {
+            "key": "fabricId",
+            "vtype": "str"
+        },
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "networkInterface": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "fabricID": {
+            "key": "fabricId",
+            "vtype": "str"
+        },
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "GPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "fabricID": {
+            "key": "fabricId",
+            "vtype": "str"
+        },
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "graphicController": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        }
+    }
+}

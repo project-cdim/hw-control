@@ -1,0 +1,630 @@
+{
+    "CPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "status": {
+            "path": "schema.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.PowerCapability"
+        },
+        "metricBandwidthPercent": {
+            "key": "BandwidthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.BandwidthPercent"
+        },
+        "metricOperatingSpeedMHz": {
+            "key": "OperatingSpeedMHz",
+            "vtype": "int",
+            "path": "metric.OperatingSpeedMHz"
+        },
+        "metricCaches": {
+            "key": "Cache",
+            "vtype": "list",
+            "path": "metric.Cache",
+            "sub_mapping": {
+                "miss": {
+                    "key": "CacheMiss",
+                    "vtype": ["int","float"]
+                },
+                "missesPerInstruction": {
+                    "key": "CacheMissesPerInstruction",
+                    "vtype": ["int","float"]
+                },
+                "hitRatio": {
+                    "key": "HitRatio",
+                    "vtype": ["int","float"]
+                },
+                "occupancyBytes": {
+                    "key": "OccupancyBytes",
+                    "vtype": "int"
+                },
+                "occupancyPercent": {
+                    "key": "OccupancyPercent",
+                    "vtype": ["int","float"]
+                }
+            }
+        },
+        "metricCoreMetrics": {
+            "key": "CoreMetrics",
+            "vtype": "list",
+            "path": "metric.CoreMetrics",
+            "sub_mapping": {
+                "coreID": {
+                    "key": "CoreId",
+                    "vtype": "str"
+                },
+                "instructionsPerCycle": {
+                    "key": "InstructionsPerCycle",
+                    "vtype": ["int","float"]
+                },
+                "coreCaches": {
+                    "key": "CoreCache",
+                    "vtype": "list",
+                    "sub_mapping": {
+                        "occupancyBytes": {
+                            "key": "OccupancyBytes",
+                            "vtype": "int"
+                        },
+                        "occupancyPercent": {
+                            "key": "OccupancyPercent",
+                            "vtype": ["int","float"]
+                        }
+                    }
+                }
+            }
+        },
+        "metricLocalMemoryBandwidthBytes": {
+            "key": "LocalMemoryBandwidthBytes",
+            "vtype": "int",
+            "path": "metric.LocalMemoryBandwidthBytes"
+        },
+        "metricRemoteMemoryBandwidthBytes": {
+            "key": "RemoteMemoryBandwidthBytes",
+            "vtype": "int",
+            "path": "metric.RemoteMemoryBandwidthBytes"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
+    "memory": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "enabled": {
+            "key": "Enabled",
+            "vtype": "bool",
+            "path": "schema.Enabled"
+        },
+        "status": {
+            "path": "schema.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.PowerCapability"
+        },
+        "metricBandwidthPercent": {
+            "key": "BandwidthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.BandwidthPercent"
+        },
+        "metricBlockSizeBytes": {
+            "key": "BlockSizeBytes",
+            "vtype": "int",
+            "path": "metric.BlockSizeBytes"
+        },
+        "metricOperatingSpeedMHz": {
+            "key": "OperatingSpeedMHz",
+            "vtype": "int",
+            "path": "metric.OperatingSpeedMHz"
+        },
+        "metricHealthData": {
+            "key": "HealthData",
+            "vtype": "dict",
+            "path": "metric.HealthData",
+            "sub_mapping": {
+                "dataLossDetected": {
+                    "key": "DataLossDetected",
+                    "vtype": "bool"
+                },
+                "lastShutdownSuccess": {
+                    "key": "LastShutdownSuccess",
+                    "vtype": "bool"
+                },
+                "performanceDegraded": {
+                    "key": "PerformanceDegraded",
+                    "vtype": "bool"
+                },
+                "predictedMediaLifeLeftPercent": {
+                    "key": "PredictedMediaLifeLeftPercent",
+                    "vtype": ["int","float"]
+                }
+            }
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
+    "storage": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "volumeCapacity": {
+            "path": "schema.Volume.Capacity",
+            "key": "Capacity",
+            "vtype": "dict",
+            "sub_mapping": {
+                "data": {
+                    "key": "Data",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "allocatedBytes": {
+                            "key": "AllocatedBytes",
+                            "vtype": "int"
+                        },
+                        "consumedBytes": {
+                            "key": "ConsumedBytes",
+                            "vtype": "int"
+                        },
+                        "guaranteedBytes": {
+                            "key": "GuaranteedBytes",
+                            "vtype": "int"
+                        },
+                        "provisionedBytes": {
+                            "key": "ProvisionedBytes",
+                            "vtype": "int"
+                        }
+                    }
+                },
+                "metadata": {
+                    "key": "Metadata",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "allocatedBytes": {
+                            "key": "AllocatedBytes",
+                            "vtype": "int"
+                        },
+                        "consumedBytes": {
+                            "key": "ConsumedBytes",
+                            "vtype": "int"
+                        },
+                        "guaranteedBytes": {
+                            "key": "GuaranteedBytes",
+                            "vtype": "int"
+                        },
+                        "provisionedBytes": {
+                            "key": "ProvisionedBytes",
+                            "vtype": "int"
+                        }
+                    }
+                },
+                "snapshot": {
+                    "key": "Snapshot",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "allocatedBytes": {
+                            "key": "AllocatedBytes",
+                            "vtype": "int"
+                        },
+                        "consumedBytes": {
+                            "key": "ConsumedBytes",
+                            "vtype": "int"
+                        },
+                        "guaranteedBytes": {
+                            "key": "GuaranteedBytes",
+                            "vtype": "int"
+                        },
+                        "provisionedBytes": {
+                            "key": "ProvisionedBytes",
+                            "vtype": "int"
+                        }
+                    }
+                }
+            }
+        },
+        "volumeRemainingCapacityPercent": {
+            "key": "RemainingCapacityPercent",
+            "vtype": "int",
+            "path": "schema.Volume.RemainingCapacityPercent"
+        },
+        "driveNegotiatedSpeedGbs": {
+            "key": "NegotiatedSpeedGbs",
+            "vtype": ["int","float"],
+            "path": "schema.Drive.NegotiatedSpeedGbs"
+        },
+        "status": {
+            "path": "schema.Drive.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Drive.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Drive.PowerCapability"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
+    "networkInterface": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "deviceEnabled": {
+            "key": "DeviceEnabled",
+            "vtype": "bool",
+            "path": "schema.NetworkDeviceFunctions.DeviceEnabled"
+        },
+        "status": {
+            "path": "schema.Network.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Network.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Network.PowerCapability"
+        },
+        "metricsCPUCorePercent": {
+            "key": "CPUCorePercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.CPUCorePercent"
+        },
+        "metricsHostBusRXPercent": {
+            "key": "HostBusRXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusRXPercent"
+        },
+        "metricsHostBusTXPercent": {
+            "key": "HostBusTXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusTXPercent"
+        },
+        "metricsRXAvgQueueDepthPercent": {
+            "key": "RXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.RXAvgQueueDepthPercent"
+        },
+        "metricsTXAvgQueueDepthPercent": {
+            "key": "TXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.TXAvgQueueDepthPercent"
+        },
+        "metricsRXBytes": {
+            "key": "RXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXBytes"
+        },
+        "metricsRXFrames": {
+            "key": "RXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXFrames"
+        },
+        "metricsTXBytes": {
+            "key": "TXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXBytes"
+        },
+        "metricsTXFrames": {
+            "key": "TXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXFrames"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
+    "GPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "status": {
+            "path": "schema.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.PowerCapability"
+        },
+        "metricBandwidthPercent": {
+            "key": "BandwidthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.BandwidthPercent"
+        },
+        "metricOperatingSpeedMHz": {
+            "key": "OperatingSpeedMHz",
+            "vtype": "int",
+            "path": "metric.OperatingSpeedMHz"
+        },
+        "metricCaches": {
+            "key": "Cache",
+            "vtype": "list",
+            "path": "metric.Cache",
+            "sub_mapping": {
+                "miss": {
+                    "key": "CacheMiss",
+                    "vtype": ["int","float"]
+                },
+                "missesPerInstruction": {
+                    "key": "CacheMissesPerInstruction",
+                    "vtype": ["int","float"]
+                },
+                "hitRatio": {
+                    "key": "HitRatio",
+                    "vtype": ["int","float"]
+                },
+                "occupancyBytes": {
+                    "key": "OccupancyBytes",
+                    "vtype": "int"
+                },
+                "occupancyPercent": {
+                    "key": "OccupancyPercent",
+                    "vtype": ["int","float"]
+                }
+            }
+        },
+        "metricCoreMetrics": {
+            "key": "CoreMetrics",
+            "vtype": "list",
+            "path": "metric.CoreMetrics",
+            "sub_mapping": {
+                "coreID": {
+                    "key": "CoreId",
+                    "vtype": "str"
+                },
+                "instructionsPerCycle": {
+                    "key": "InstructionsPerCycle",
+                    "vtype": ["int","float"]
+                },
+                "coreCaches": {
+                    "key": "CoreCache",
+                    "vtype": "list",
+                    "sub_mapping": {
+                        "occupancyBytes": {
+                            "key": "OccupancyBytes",
+                            "vtype": "int"
+                        },
+                        "occupancyPercent": {
+                            "key": "OccupancyPercent",
+                            "vtype": ["int","float"]
+                        }
+                    }
+                }
+            }
+        },
+        "metricLocalMemoryBandwidthBytes": {
+            "key": "LocalMemoryBandwidthBytes",
+            "vtype": "int",
+            "path": "metric.LocalMemoryBandwidthBytes"
+        },
+        "metricRemoteMemoryBandwidthBytes": {
+            "key": "RemoteMemoryBandwidthBytes",
+            "vtype": "int",
+            "path": "metric.RemoteMemoryBandwidthBytes"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,42 @@
+{
+    "memory": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "test",
+            "required": true
+        },
+        "capacityMiB": {
+            "key": "CapacityMiB",
+            "vtype": "int",
+            "path": "schema.CapacityMiB"
+        },
+        "logicalSizeMiB": {
+            "key": "LogicalSizeMiB",
+            "vtype": "float",
+            "path": "schema.LogicalSizeMiB"
+        },
+        "nonVolatileSizeMiB": {
+            "key": "NonVolatileSizeMiB",
+            "vtype": "str",
+            "path": "schema.NonVolatileSizeMiB"
+        },
+        "persistentRegionNumberLimit": {
+            "key": "PersistentRegionNumberLimit",
+            "vtype": ["int", "float"],
+            "path": "schema.PersistentRegionNumberLimit"
+        },
+        "allowedSpeedsMHz": {
+            "key": "AllowedSpeedsMHz",
+            "vtype": "list",
+            "path": "schema.AllowedSpeedsMHz",
+            "item_type": "int"
+        },
+        "enabled": {
+            "key": "Enabled",
+            "vtype": "bool",
+            "path": "schema.Enabled"
+        }
+    }
+}

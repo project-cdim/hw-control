@@ -1,0 +1,84 @@
+{
+    "CPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "memory": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "CXLCapacity": {
+            "key": "capacity",
+            "vtype": "dict",
+            "path": "capacity",
+            "sub_mapping": {
+                "total": {
+                    "key": "total",
+                    "vtype": "int"
+                },
+                "volatile": {
+                    "key": "volatile",
+                    "vtype": "int"
+                },
+                "persistent": {
+                    "key": "persistent",
+                    "vtype": "int"
+                }
+            }
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "storage": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "networkInterface": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "GPU": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "LTSSMState": {
+            "vtype": "str"
+        }
+    },
+    "graphicController": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        }
+    }
+}

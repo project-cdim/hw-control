@@ -1,0 +1,42 @@
+---
+'0001':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+'1001':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+'2001':
+    agent:
+        timeout: 500
+        url: http://127.0.0.0:8000
+    specific_data:
+        disk_id: 11111111111111111111
+'2002':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+    specific_data:
+        disk_id: 00000000000000000000
+'3001':
+    agent:
+        timeout: 600
+        url: http://172.16.0.135:8888
+    specific_data:
+        macaddress: 11:11:11:11:11:11
+'3002':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+    specific_data:
+        macaddress: 00:00:00:00:00:00
+'4001':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+'5001':
+    agent:
+        timeout: 300
+        url: http://0.0.0.0:8100
+...

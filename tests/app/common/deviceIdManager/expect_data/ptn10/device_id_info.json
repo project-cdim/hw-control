@@ -1,0 +1,38 @@
+[
+    {
+        "DeviceID":"c360804f-7b33-4737-bbd0-7bf39a56b15b",
+        "deviceType":null,
+        "fmPortID":{
+            "qemu-01":[
+                "111"
+            ]
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+            "qemu-01":[
+                "\/aaaa\/bbb\/ccccc"
+            ]
+        },
+        "switchSerialNumber":null,
+        "switchManufacturer":null,
+        "switchModel":null,
+        "fmManagerID":[
+            "qemu-01"
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":"{'test': 'tttttttttttt'}",
+        "deviceKeys":"{'test': 'test'}",
+        "switchPortType":"DSP",
+        "fmValid":true,
+        "valid":true
+    }
+]

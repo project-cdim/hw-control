@@ -1,0 +1,21 @@
+---
+DEFAULT:
+    agent:
+        url: http://0.0.0.0:8100
+        timeout: 300
+    specific_data:
+        disk_id: 00000000000000000000
+        macaddress: 00:00:00:00:00:00
+'2001':
+    agent:
+        timeout: 500
+        url: http://127.0.0.0:8000
+    specific_data:
+        disk_id: 11111111111111111111
+'3001':
+    agent:
+        timeout: 600
+        url: http://172.16.0.135:8888
+    specific_data:
+        macaddress: 11:11:11:11:11:11
+...

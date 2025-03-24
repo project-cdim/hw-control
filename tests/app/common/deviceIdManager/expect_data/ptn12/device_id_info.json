@@ -1,0 +1,34 @@
+[
+    {
+        "DeviceID":"b4fb8424-ca97-4470-9101-cd704c88dedd",
+        "deviceType":"CPU",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":"test",
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":"CPU-123456789",
+        "CPUManufacturer":"1af4",
+        "CPUModel":"1024CPU",
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":null,
+        "switchManufacturer":null,
+        "switchModel":null,
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+            "oob-1"
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":false,
+        "valid":true
+    }
+]

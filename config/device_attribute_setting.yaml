@@ -1,0 +1,9 @@
+---
+DEFAULT:
+    agent:
+        url: http://0.0.0.0:8100
+        timeout: 600
+    specific_data:
+        disk_id: 00000000000000000000
+        macaddress: 00:00:00:00:00:00
+...

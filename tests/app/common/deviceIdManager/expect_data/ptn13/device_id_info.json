@@ -1,0 +1,102 @@
+[
+    {
+        "DeviceID":"fc345da5-b8d5-484d-93d6-e69494389d95",
+        "deviceType":null,
+        "fmPortID":{
+            "qemu-01":[
+                "111"
+            ]
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":"1af4",
+        "PCIeDeviceId":"1024",
+        "PCIeDeviceSerialNumber":"1234567812345678",
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+            "qemu-01":[
+                "\/aaaa\/bbb\/ccccc"
+            ]
+        },
+        "switchSerialNumber":null,
+        "switchModel":null,
+        "switchManufacturer":null,
+        "fmManagerID":[
+            "qemu-01"
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":"{'test': 'tttttttttttt'}",
+        "deviceKeys":null,
+        "switchPortType":"DSP",
+        "fmValid":true,
+        "valid":true
+    },
+    {
+        "DeviceID":"440d2f23-24c2-4e48-a9ac-7e356fb06eec",
+        "deviceType":"switch",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":null,
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":null,
+        "CPUManufacturer":null,
+        "CPUModel":null,
+        "fmSwitchID":"\/ccccc\/bbb\/aaaaaa",
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":"98765",
+        "switchModel":"test_model",
+        "switchManufacturer":"test_fac",
+        "fmManagerID":[
+            "qemu-01"
+        ],
+        "oobManagerID":[
+
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":true,
+        "valid":true
+    },
+    {
+        "DeviceID":"8c62d4a3-b7a2-40cb-8510-aa6260757170",
+        "deviceType":"CPU",
+        "fmPortID":{
+
+        },
+        "oobDeviceID":"test",
+        "PCIeVendorId":null,
+        "PCIeDeviceId":null,
+        "PCIeDeviceSerialNumber":null,
+        "CPUSerialNumber":"CPU-123456789",
+        "CPUManufacturer":"1af4",
+        "CPUModel":"1024CPU",
+        "fmSwitchID":null,
+        "connectedFmSwitchID":{
+
+        },
+        "switchSerialNumber":null,
+        "switchModel":null,
+        "switchManufacturer":null,
+        "fmManagerID":[
+
+        ],
+        "oobManagerID":[
+            "oob-1"
+        ],
+        "portKeys":null,
+        "deviceKeys":null,
+        "switchPortType":null,
+        "fmValid":false,
+        "valid":true
+    }
+]

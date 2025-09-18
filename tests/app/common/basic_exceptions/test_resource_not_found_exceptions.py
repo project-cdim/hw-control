@@ -16,20 +16,20 @@
 
 import pytest
 
-import app.common.basic_exceptions as exc  # type: ignore
+import app.common.basic_exceptions as exc
 
 
 @pytest.mark.parametrize(
     "exception_class, expected_status_code, expected_error_code, expected_error_message",
     [
         (
-            exc.HostCpuNotFoundHwControlError,
+            exc.HostCPUNotFoundHWControlError,
             404,
             "EF013BAS001",
             "The specified Host CPU is not found. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.HostCpuAndDeviceNotFoundHwControlError,
+            exc.HostCPUAndDeviceNotFoundHWControlError,
             404,
             "EF013BAS002",
             (
@@ -38,22 +38,34 @@ import app.common.basic_exceptions as exc  # type: ignore
             ),
         ),
         (
-            exc.ResourceNotFoundHwControlError,
+            exc.ResourceNotFoundHWControlError,
             404,
             "EF013BAS003",
             "The specified resource is not found. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.SwitchNotFoundHwControlError,
+            exc.SwitchNotFoundHWControlError,
             404,
             "EF013BAS004",
             "The specified switch is not found. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.DeviceIdNotFoundHwControlError,
+            exc.DeviceIDNotFoundHWControlError,
             404,
             "EF013BAS005",
             "The specified Device ID is not found. test_additional_message_01 test_additional_message_02",
+        ),
+        (
+            exc.UpstreamDeviceNotFoundHWControlError,
+            404,
+            "EF013BAS000",
+            "The specified target device is not found. test_additional_message_01 test_additional_message_02",
+        ),
+        (
+            exc.DownstreamDeviceNotFoundHWControlError,
+            404,
+            "EF013BAS000",
+            "The specified target device is not found. test_additional_message_01 test_additional_message_02",
         ),
     ],
 )
@@ -65,7 +77,7 @@ def test_initialize_instance_and_set_additional_message(
 ):
     """Test can initialize instance and generate response.
 
-    This test checks that the DeviceNotFoundHwControlError various derived
+    This test checks that the DeviceNotFoundHWControlError various derived
     exception classes are correctly initialized with the expected status code,
     error code, error message, and additional message.
     It also ensures that the generated API response
@@ -86,7 +98,7 @@ def test_initialize_instance_and_set_additional_message(
 
     try:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.DeviceNotFoundHwControlError as error_object:
+    except exc.DeviceNotFoundHWControlError as error_object:
         error_object.append_error_message(additional_message="test_additional_message_02")
 
         actual_response_object = error_object.generate_api_response()

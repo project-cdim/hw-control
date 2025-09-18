@@ -14,16 +14,16 @@
 
 """
 This module defines an exception class that inherits from the 
-InternalHwControlError class.
+InternalHWControlError class.
 The exception classes defined in this module are as follows.
 
-- UnexpectedExceptionHwControlError
+- UnexpectedExceptionHWControlError
 """
 
-from app.common.basic_exceptions.base_exceptions import InternalHwControlError
+from app.common.basic_exceptions.base_exceptions import InternalHWControlError
 
 
-class UnexpectedExceptionHwControlError(InternalHwControlError):
+class UnexpectedExceptionHWControlError(InternalHWControlError):
     """Unexpected Exception raise Case Exception class
 
     This class is common HwControl defined detail exception class

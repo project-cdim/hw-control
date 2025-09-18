@@ -12,28 +12,28 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit ControlObjectHwControlError
+"""Classes that inherit ControlObjectHWControlError
 
 file path: /app/common/basic_exceptions/control_object_exceptions.py
 
 This module defines an exception class that inherits from the 
-ControlObjectHwControlError class.
+ControlObjectHWControlError class.
 The exception classes defined in this module are as follows.
 
-FmConnectFailureHwControlError
-FmDisconnectFailureHwControlError
-PowerOnFailureHwControlError
-PowerOffFailureHwControlError
-CpuResetFailureHwControlError
-AgentConnectFailureHwControlError
-AgentGetInformationFailureHwControlError
+FMConnectFailureHWControlError
+FMDisconnectFailureHWControlError
+PowerOnFailureHWControlError
+PowerOffFailureHWControlError
+CPUResetFailureHWControlError
+AgentConnectFailureHWControlError
+AgentGetInformationFailureHWControlError
 
 """
 
-from app.common.basic_exceptions.base_exceptions import ControlObjectHwControlError
+from app.common.basic_exceptions.base_exceptions import ControlObjectHWControlError
 
 
-class FmConnectFailureHwControlError(ControlObjectHwControlError):
+class FMConnectFailureHWControlError(ControlObjectHWControlError):
     """HwControl FM Connect Failure Error Detail Exception class
 
     This class is common detail exception class for HwControl defined
@@ -47,7 +47,7 @@ class FmConnectFailureHwControlError(ControlObjectHwControlError):
     )
 
 
-class FmDisconnectFailureHwControlError(ControlObjectHwControlError):
+class FMDisconnectFailureHWControlError(ControlObjectHWControlError):
     """HwControl FM Disconnect Failure Error Detail Exception class
 
     This class is common detail exception class for HwControl defined
@@ -61,7 +61,7 @@ class FmDisconnectFailureHwControlError(ControlObjectHwControlError):
     )
 
 
-class PowerOnFailureHwControlError(ControlObjectHwControlError):
+class PowerOnFailureHWControlError(ControlObjectHWControlError):
     """HwControl defined OOB Power On Failure Error Detail Exception class.
 
     This class is common HwControl defined detail exception class
@@ -73,7 +73,7 @@ class PowerOnFailureHwControlError(ControlObjectHwControlError):
     default_error_message: str = "The Out-of-Band Controller failed to power on the specified device."
 
 
-class PowerOffFailureHwControlError(ControlObjectHwControlError):
+class PowerOffFailureHWControlError(ControlObjectHWControlError):
     """HwControl defined OOB Power Off Failure Error Detail Exception class.
 
     This class is common HwControl defined detail exception class
@@ -85,7 +85,7 @@ class PowerOffFailureHwControlError(ControlObjectHwControlError):
     default_error_message: str = "The Out-of-Band Controller failed to power off the specified device."
 
 
-class CpuResetFailureHwControlError(ControlObjectHwControlError):
+class CPUResetFailureHWControlError(ControlObjectHWControlError):
     """HwControl defined OOB CpuReset Failure Error Detail Exception class.
 
     This class is common HwControl defined detail exception class
@@ -97,7 +97,7 @@ class CpuResetFailureHwControlError(ControlObjectHwControlError):
     default_error_message: str = "The Out-of-Band Controller failed to reset the specified Host CPU."
 
 
-class AgentConnectFailureHwControlError(ControlObjectHwControlError):
+class AgentConnectFailureHWControlError(ControlObjectHWControlError):
     """HwControl Agent Connect Failure Error Detail Exception class
 
     This class is common detail exception class for HwControl defined
@@ -109,7 +109,7 @@ class AgentConnectFailureHwControlError(ControlObjectHwControlError):
     default_error_message: str = "Failed to connect to the HW Control Agent."
 
 
-class AgentGetInformationFailureHwControlError(ControlObjectHwControlError):
+class AgentGetInformationFailureHWControlError(ControlObjectHWControlError):
     """HwControl Agent Get Information Failure Error Detail Exception class
 
     This class is common detail exception class for HwControl defined

@@ -16,18 +16,19 @@
 A module for handling authorization operations.
 """
 
+import logging
 from http import HTTPStatus
 
 from pydantic import BaseModel, ValidationError, Field
 import requests
 
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
 from app.common.utils.secret_management_utilities import secret_management_client
 from app.common.utils.authorization_utilities import authorization_server_settings
 
 CLIENT_SECRET_NAME = "Keycloak"
+
+logger = logging.getLogger(__name__)
 
 
 class ClientCredential(BaseModel):
@@ -51,27 +52,6 @@ class ClientCredential(BaseModel):
     client_secret: str = Field(description="client secret of HW Control")
 
 
-class AuthorizationServerRequestLog(message.BaseLogMessage):
-    """Log Message Model class for logging request to The Authorization Server."""
-
-    action: str = Field(
-        default="Request to the Authorization Server.",
-    )
-    url: str | None = Field(default=None, description="The URL to which the HTTP request was sent.")
-    timeout: int | None = Field(default=None, description="The timeout value for the HTTP request.")
-
-
-class AuthorizationServerResponseLog(message.BaseLogMessage):
-    """Log Message Model class for logging response from The Authorization Server."""
-
-    action: str = Field(
-        default="Receive the Authorization Server response.",
-    )
-    status_code: int | None = Field(
-        default=None, description="The HTTP status code returned from the Authorization Server."
-    )
-
-
 def get_agent_access_token() -> str:
     """Fetches an access token from the Authorization Server.
 
@@ -88,16 +68,16 @@ def get_agent_access_token() -> str:
         of requests to the agent.
 
     Raises:
-        AuthenticationHwControlError:
+        AuthenticationHWControlError:
             If the authentication of the client to the Authorization Server fails.
 
-        InternalHwControlError:
+        InternalHWControlError:
             If there are issues during the authorization retrieval process, such as connection errors.
 
-        ConfigurationHwControlError:
+        ConfigurationHWControlError:
             If there are configuration errors with environment variables related to the Authorization Server.
 
-        DependencyServiceHwControlError
+        DependencyServiceHWControlError
             If there are unexpected issues in the Authorization Server.
 
     Example:
@@ -117,22 +97,23 @@ def get_agent_access_token() -> str:
     try:
         client_credential = ClientCredential(**secret)
     except ValidationError as e:
-        raise exc.InternalHwControlError(
+        raise exc.InternalHWControlError(
             additional_message="The client credentials retrieved from secret management are invalid."
         ) from e
 
     try:
-        setting = authorization_server_settings.AuthorizationServerSettings()  # type: ignore
+        setting = authorization_server_settings.AuthorizationServerSettings()
     except ValidationError as e:
-        raise exc.ConfigurationHwControlError(
+        raise exc.ConfigurationHWControlError(
             additional_message=(
                 "There is an issue with the configuration of the environment variables related"
                 " to the Authorization Server."
             )
         ) from e
 
-    LOGGER.info(
-        authorization_server_settings.AuthorizationServerSettingsLog(**setting.model_dump()).to_json_encodable()
+    logger.info(
+        "Get Authorization Server settings form environment variables.",
+        extra={"token_endpoint": str(setting.token_endpoint), "timeout": setting.timeout},
     )
 
     token_request_body = {
@@ -143,8 +124,8 @@ def get_agent_access_token() -> str:
 
     token_request_headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-    LOGGER.info(
-        AuthorizationServerRequestLog(url=str(setting.token_endpoint), timeout=setting.timeout).to_json_encodable()
+    logger.info(
+        "Request to the Authorization Server.", extra={"url": str(setting.token_endpoint), "timeout": setting.timeout}
     )
 
     try:
@@ -156,11 +137,11 @@ def get_agent_access_token() -> str:
         )
 
     except requests.exceptions.RequestException as e:
-        raise exc.InternalHwControlError(
+        raise exc.InternalHWControlError(
             additional_message="The access token request to the Authorization Server failed due to an unexpected error."
         ) from e
 
-    LOGGER.info(AuthorizationServerResponseLog(status_code=auth_server_response.status_code).to_json_encodable())
+    logger.info("Receive the Authorization Server response.", extra={"status_code": auth_server_response.status_code})
 
     if auth_server_response.status_code in (HTTPStatus.BAD_REQUEST.value, HTTPStatus.UNAUTHORIZED.value):
         response_body = auth_server_response.json()
@@ -168,17 +149,17 @@ def get_agent_access_token() -> str:
         auth_server_error_code = response_body.get("error")
 
         if auth_server_error_code in ("invalid_client", "unauthorized_client"):
-            raise exc.AuthenticationHwControlError(
+            raise exc.AuthenticationHWControlError(
                 f"error code: {auth_server_error_code}",
                 additional_message="Failed to authenticate to the Authorization Server.",
             )
-        raise exc.InternalHwControlError(
+        raise exc.InternalHWControlError(
             f"error code: {auth_server_error_code}",
             additional_message="Failed to get access token due to an unexpected error.",
         )
 
     if auth_server_response.status_code != HTTPStatus.OK.value:
-        raise exc.DependencyServiceHwControlError(
+        raise exc.DependencyServiceHWControlError(
             additional_message="An unexpected error was returned by the Authorization Server."
         )
 
@@ -190,6 +171,6 @@ def get_agent_access_token() -> str:
         requests.exceptions.JSONDecodeError,
         KeyError,
     ) as e:  # The Authorization Server return invalid response.
-        raise exc.InternalHwControlError(additional_message="The Authorization Server return invalid data.")
+        raise exc.InternalHWControlError(additional_message="The Authorization Server return invalid data.") from e
 
     return access_token

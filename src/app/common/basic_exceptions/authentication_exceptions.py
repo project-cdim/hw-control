@@ -12,22 +12,22 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit AuthenticationHwControlError
+"""Classes that inherit AuthenticationHWControlError
 
 file path: /app/common/basic_exceptions/authentication_exceptions.py
 
 This module defines an exception class that inherits from the 
-AuthenticationHwControlError class.
+AuthenticationHWControlError class.
 The exception classes defined in this module are as follows.
 
-OobAuthenticationHwControlError
+OOBAuthenticationHWControlError
 
 """
 
-from app.common.basic_exceptions.base_exceptions import AuthenticationHwControlError
+from app.common.basic_exceptions.base_exceptions import AuthenticationHWControlError
 
 
-class OobAuthenticationHwControlError(AuthenticationHwControlError):
+class OOBAuthenticationHWControlError(AuthenticationHWControlError):
     """HwControl OOB Authentication Error Detail Exception class
 
     This class is common HwControl defined detail exception class

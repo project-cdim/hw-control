@@ -14,23 +14,27 @@
 
 """HW independent section - Get Agent(OS) Information
 
-Get metric information for the specified device ID.
+Get metric information for the specified Device ID.
 
 """
+import logging
 import fcntl
-from typing import Any, List, Union
+from typing import Any
 import copy
+from pathlib import Path
 import requests
 import requests.exceptions
 import yaml
-from app.common.utils.log import LOGGER
 from app.common.messages import message
 from app.common.basic_exceptions import (
-    AgentConnectFailureHwControlError,
-    AgentGetInformationFailureHwControlError,
+    AgentConnectFailureHWControlError,
+    AgentGetInformationFailureHWControlError,
 )
 import app.common.constants as const
 from app.common.utils.file_location_settings import FileLocationSettings
+from app.common.utils.authorization_utilities import authorization_server_client
+
+logger = logging.getLogger(__name__)
 
 # Device attribute information file name (stub data)
 DEVICE_DATA_FILE = "device_attribute.yaml"
@@ -40,7 +44,7 @@ DEVICE_DATA_SETTING_FILE = "device_attribute_setting.yaml"
 
 # Device list information item name
 DEVICE_LIST_ITEM_NAME_DEVICE_ID = "deviceID"  # Device ID
-DEVICE_LIST_ITEM_NAME_DEVICE_TYPE = "type"  # Device type
+DEVICE_LIST_ITEM_NAME_DEVICE_TYPE = "type"  # Device Type
 
 
 class InfoMetricAgent:
@@ -52,12 +56,12 @@ class InfoMetricAgent:
     def get_metric_agent(self, device_id: str, device_type: str, cpu_device_id: str) -> dict:
         """Get metric information
 
-        Get metric information for the specified device ID and device type
+        Get metric information for the specified Device ID and Device Type
 
         Args:
-            device_id (str): device ID
-            device_type (str): device type
-            cpu_device_id (str): CPU device ID
+            device_id (str): Device ID
+            device_type (str): Device Type
+            cpu_device_id (str): CPU Device ID
 
         Returns:
             dict: metric info
@@ -72,10 +76,10 @@ class InfoMetricAgent:
 
         settings = FileLocationSettings()
         # Read device attribute information file. (stub data)
-        file_path = settings.config_file_dir + DEVICE_DATA_FILE
-        with open(file_path, "r", encoding="utf-8") as device_file:
+        file_path = Path(settings.config_file_dir) / DEVICE_DATA_FILE
+        with open(file_path, encoding="utf-8") as device_file:
             devices = yaml.safe_load(device_file)
-            url = devices[cpu_device_id]["agent"]["url"] + "/cdim/api/v1/agent/info?device_type=" + device_type
+            url = devices[cpu_device_id]["agent"]["url"] + const.BASE_URL + "/v1/agent/info?deviceType=" + device_type
             timeout_seconds = devices[device_id]["agent"]["timeout"]
             param = devices[device_id].get("specific_data", None)
 
@@ -84,27 +88,35 @@ class InfoMetricAgent:
 
         return resp
 
-    def _get_agent_data(self, url: str, timeout_seconds: int, param: dict, device_id: str) -> Union[dict, Any]:
+    def _get_agent_data(self, url: str, timeout_seconds: int, param: dict, device_id: str) -> dict | Any:
         """Get agent data
 
         Request to agent and get metric information.
 
         Args:
             url (str): agent url
-            timeout (int): agent request timeout time (seconds)
+            timeout_seconds (int): agent request timeout time (seconds)
             param (dict): request parameter
-            device_id (str): device id
+            device_id (str): Device ID
 
         Returns:
-            Union[dict, Any]: metric info
+            dict | Any: metric info
         """
-        resp = None
-        log_pram = f"device_id: {device_id}, "
+        log_param = f"device_id: {device_id}, "
+
+        access_token = authorization_server_client.get_agent_access_token()
+        requests_header = {"Authorization": f"Bearer {access_token}"}
+
         try:
-            LOGGER.info(message.get_log_message(message.I00005, [log_pram]))
-            req = requests.get(url, params=param, timeout=timeout_seconds)
+            logger.info(message.get_log_message(message.I00005, [log_param]))
+            req = requests.get(
+                url,
+                params=param,
+                timeout=timeout_seconds,
+                headers=requests_header,
+            )
             req.raise_for_status()
-            resp = req.json()
+            return req.json()
 
         except requests.exceptions.HTTPError as http_err:
             error_code = "Unknown"
@@ -115,8 +127,8 @@ class InfoMetricAgent:
                     error_code = error_data.get("code", error_code)
                     error_message = error_data.get("message", error_message)
                 except (ValueError, TypeError, AttributeError) as ex:
-                    LOGGER.warning("Failed to parse error Agent response JSON: " + str(ex))
-            LOGGER.warning(
+                    logger.warning("Failed to parse error Agent response JSON: " + str(ex))
+            logger.warning(
                 message.get_log_message(
                     message.W00014,
                     [
@@ -126,26 +138,24 @@ class InfoMetricAgent:
                     ],
                 )
             )
-            raise AgentGetInformationFailureHwControlError from http_err
+            raise AgentGetInformationFailureHWControlError from http_err
 
         except requests.exceptions.RequestException as requests_err:
-            LOGGER.warning(
+            logger.warning(
                 message.get_log_message(message.W00013, [f"Request to Agent failed: device_id {device_id} url {url}"])
             )
-            raise AgentConnectFailureHwControlError from requests_err
+            raise AgentConnectFailureHWControlError from requests_err
 
         finally:
-            LOGGER.info(message.get_log_message(message.I00006, [log_pram]))
+            logger.info(message.get_log_message(message.I00006, [log_param]))
 
-        return resp
-
-    def create_device_attribute(self, device_list: List) -> None:
+    def create_device_attribute(self, device_list: list) -> None:
         """Create device attribute file
 
         Create device attribute file based on setting file
 
         Args:
-            device_list (List): device ID list
+            device_list (list): Device ID list
 
         Examples:
             >>> get_info = GetMetricInfoAgent()
@@ -153,26 +163,26 @@ class InfoMetricAgent:
         """
         settings = FileLocationSettings()
         # Read device attribute setting file.
-        setting_file_path = settings.config_file_dir + DEVICE_DATA_SETTING_FILE
-        with open(setting_file_path, "r", encoding="utf-8") as setting_file:
+        setting_file_path = Path(settings.config_file_dir) / DEVICE_DATA_SETTING_FILE
+        with open(setting_file_path, encoding="utf-8") as setting_file:
             setting_data = yaml.safe_load(setting_file)
 
-        # Generate device attribute information for the number of device IDs in the device list.
+        # Generate device attribute information for the number of Device IDs in the device list.
         attribute_data = {}
         for device_item in device_list:
             device_id = device_item.get(DEVICE_LIST_ITEM_NAME_DEVICE_ID)
-            # If the device ID has already been set in the device attribute information, set that information.
+            # If the Device ID has already been set in the device attribute information, set that information.
             if device_id in setting_data:
                 attribute_data[device_id] = copy.deepcopy(setting_data.get(device_id))
             else:
-                # If the device ID does not exist in the device attribute information, set the default value.
+                # If the Device ID does not exist in the device attribute information, set the default value.
                 attribute_data[device_id] = copy.deepcopy(setting_data["DEFAULT"])
-                # Delete unnecessary data according to device type.
+                # Delete unnecessary data according to Device Type.
                 device_type = device_item.get(DEVICE_LIST_ITEM_NAME_DEVICE_TYPE)
                 if device_type == const.DeviceType.STORAGE.value:
-                    attribute_data[device_id]["specific_data"].pop("macaddress", None)
+                    attribute_data[device_id]["specific_data"].pop("macAddress", None)
                 elif device_type == const.DeviceType.NIC.value:
-                    attribute_data[device_id]["specific_data"].pop("disk_id", None)
+                    attribute_data[device_id]["specific_data"].pop("diskID", None)
                 else:
                     attribute_data[device_id].pop("specific_data", None)
 
@@ -180,8 +190,8 @@ class InfoMetricAgent:
         if attribute_data:
             settings = FileLocationSettings()
             # Read device attribute information file.
-            file_path = settings.config_file_dir + DEVICE_DATA_FILE
-            with open(file_path, "r", encoding="utf-8") as device_file:
+            file_path = Path(settings.config_file_dir) / DEVICE_DATA_FILE
+            with open(file_path, encoding="utf-8") as device_file:
                 old_data = yaml.safe_load(device_file)
             # Output file only if data has changed.
             if old_data != attribute_data:

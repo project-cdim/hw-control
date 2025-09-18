@@ -16,11 +16,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Dict
 import yaml
-import app.common
-import app.common.utils
-import app.common.utils.file_location_settings
 import app.core.info.metric_agent
 from app.core.info.metric_agent import InfoMetricAgent
 
@@ -48,10 +44,12 @@ DEVICE_LIST1 = [
     {"deviceID": "5001", "type": "graphicController"},
 ]
 
-DEVICE_LIST2: List[Dict] = []
+DEVICE_LIST2: list[dict] = []
 
 
-def _create_device_attribute(mocker, monkeypatch, clear, device_list, create_file, setting_file, comp_file):
+def _create_device_attribute(
+    mocker, monkeypatch, clear, device_list, create_file, setting_file, comp_file, trailing_slash: bool = True
+):  # pylint: disable=R0913,R0914,R0917
     """Create device attribute"""
     # Current path
     current_path = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -61,7 +59,10 @@ def _create_device_attribute(mocker, monkeypatch, clear, device_list, create_fil
     # Replace the device attribute configuration file name with the test device attribute configuration file name.
     mocker.patch.object(app.core.info.metric_agent, "DEVICE_DATA_SETTING_FILE", setting_file)
     # Replace the environment variable setting file directory with the current path.
-    monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", str(current_path) + "/")
+    config_path = str(current_path)
+    if trailing_slash:
+        config_path += "/"
+    monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", config_path)
 
     # Clear the generated files.
     if clear:
@@ -75,12 +76,12 @@ def _create_device_attribute(mocker, monkeypatch, clear, device_list, create_fil
 
     # Loading the generated data
     file_path = current_path / TEST_DEVICE_DATA_CREATE_FILE
-    with open(file_path, "r", encoding="utf-8") as create_file:
-        create_data = yaml.safe_load(create_file)
+    with open(file_path, encoding="utf-8") as test_file:
+        create_data = yaml.safe_load(test_file)
 
     # Loading verification data.
     file_path = current_path / comp_file
-    with open(file_path, "r", encoding="utf-8") as ref_file:
+    with open(file_path, encoding="utf-8") as ref_file:
         ref_data = yaml.safe_load(ref_file)
 
     # Return the generated data.
@@ -97,6 +98,22 @@ def test_create_device_attribute(mocker, monkeypatch):
         TEST_DEVICE_DATA_CREATE_FILE,
         TEST_DEVICE_DATA_SETTING_FILE1,
         TEST_DEVICE_DATA_FILE1,
+    )
+    # Verification of generated data
+    assert create_data == comp_data
+
+
+def test_create_device_attribute_no_slash(mocker, monkeypatch):
+    """Test create device attribute data. No trailing slash in configuration path."""
+    create_data, comp_data = _create_device_attribute(
+        mocker,
+        monkeypatch,
+        True,
+        DEVICE_LIST1,
+        TEST_DEVICE_DATA_CREATE_FILE,
+        TEST_DEVICE_DATA_SETTING_FILE1,
+        TEST_DEVICE_DATA_FILE1,
+        False,
     )
     # Verification of generated data
     assert create_data == comp_data

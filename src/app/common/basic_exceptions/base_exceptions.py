@@ -18,16 +18,16 @@ file path: /app/common/basic_exceptions/base_exceptions.py
 
 """
 from http import HTTPStatus
+from typing import final
 
 from fastapi.responses import JSONResponse
-from typing_extensions import final
 
-# The key for BaseHwControlError.to_error_dict method.
+# The key for BaseHWControlError.to_error_dict method.
 ERROR_CODE = "errorCode"
 ERROR_MESSAGE = "errorMessage"
 
 
-class BaseHwControlError(Exception):
+class BaseHWControlError(Exception):
     """HwControl Base Exception class
 
     This class serves as the common base exception class for all exceptions
@@ -77,8 +77,8 @@ class BaseHwControlError(Exception):
 
         Example:
             >>> try:
-            >>>     raise FooHwControlError(additional_message="Foo")
-            >>> except BaseHwControlError as e:
+            >>>     raise FooHWControlError(additional_message="Foo")
+            >>> except BaseHWControlError as e:
             >>>     e.append_error_message(additional_message="Bar")
             >>>     raise
 
@@ -119,7 +119,7 @@ class BaseHwControlError(Exception):
             with keys "errorCode" and "errorMessage" respectively.
 
         Example:
-            >>> error = FooHwControlError()
+            >>> error = FooHWControlError()
             >>> error_dict = error.to_error_dict()
             >>> print(error_dict)
             {"errorCode": str, "errorMessage": str}
@@ -127,7 +127,7 @@ class BaseHwControlError(Exception):
         Note:
             This method should not be overridden in subclasses.
             It is designed to provide a consistent error dictionary
-            format across all custom exception classes derived from BaseHwControlError.
+            format across all custom exception classes derived from BaseHWControlError.
         """
         return {ERROR_CODE: self.error_code, ERROR_MESSAGE: self.message}
 
@@ -152,7 +152,7 @@ class BaseHwControlError(Exception):
 # ++++ Base Exception class +++++++++++++++++++++++++++++++++++++++++++#
 
 
-class UnknownHwControlError(BaseHwControlError):
+class UnknownHWControlError(BaseHWControlError):
     """HwControl Unknown Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -165,7 +165,7 @@ class UnknownHwControlError(BaseHwControlError):
     default_error_message: str = "The server encountered an internal error and was unable to complete your request."
 
 
-class AuthenticationHwControlError(BaseHwControlError):
+class AuthenticationHWControlError(BaseHWControlError):
     """HwControl Authentication Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -178,7 +178,7 @@ class AuthenticationHwControlError(BaseHwControlError):
     default_error_message: str = "Authentication failed."
 
 
-class BadRequestHwControlError(BaseHwControlError):
+class BadRequestHWControlError(BaseHWControlError):
     """HwControl Bad Request Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -191,7 +191,7 @@ class BadRequestHwControlError(BaseHwControlError):
     default_error_message: str = "Your request is invalid."
 
 
-class ControlObjectHwControlError(BaseHwControlError):
+class ControlObjectHWControlError(BaseHWControlError):
     """HwControl Control Object Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -204,7 +204,7 @@ class ControlObjectHwControlError(BaseHwControlError):
     default_error_message: str = "Failed to operate the specified device."
 
 
-class ResourceBusyHwControlError(BaseHwControlError):
+class ResourceBusyHWControlError(BaseHWControlError):
     """HwControl Resource Busy Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -217,7 +217,7 @@ class ResourceBusyHwControlError(BaseHwControlError):
     default_error_message: str = "The specified resource is busy."
 
 
-class ConfigurationHwControlError(BaseHwControlError):
+class ConfigurationHWControlError(BaseHWControlError):
     """HwControl Configuration Error Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -230,7 +230,7 @@ class ConfigurationHwControlError(BaseHwControlError):
     default_error_message: str = "Your request failed due to the missing required system configuration."
 
 
-class InternalHwControlError(BaseHwControlError):
+class InternalHWControlError(BaseHWControlError):
     """HwControl 'Internal Server Error' Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -242,7 +242,7 @@ class InternalHwControlError(BaseHwControlError):
     default_error_message: str = "The server encountered an internal error."
 
 
-class RequestConflictHwControlError(BaseHwControlError):
+class RequestConflictHWControlError(BaseHWControlError):
     """HwControl Request Conflict Base Exception class
 
     This class is common base exception class for HwControl defined
@@ -254,7 +254,7 @@ class RequestConflictHwControlError(BaseHwControlError):
     default_error_message: str = "The request conflicts with the current resource state."
 
 
-class DependencyServiceHwControlError(BaseHwControlError):
+class DependencyServiceHWControlError(BaseHWControlError):
     """Dependency service error case."""
 
     http_code = HTTPStatus.INTERNAL_SERVER_ERROR.value
@@ -262,7 +262,7 @@ class DependencyServiceHwControlError(BaseHwControlError):
     default_error_message: str = "Operation could not be completed due to a failure in external dependencies."
 
 
-class DeviceNotFoundHwControlError(BaseHwControlError):
+class DeviceNotFoundHWControlError(BaseHWControlError):
     """HwControl Device Not Found Error Detail Exception class
 
     This class is common detail exception class for HwControl defined

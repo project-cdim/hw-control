@@ -12,22 +12,22 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit ResourceBusyHwControlError
+"""Classes that inherit ResourceBusyHWControlError
 
 file path: /app/common/basic_exceptions/resource_busy_exceptions.py
 
 This module defines an exception class that inherits from the 
-ResourceBusyHwControlError class.
+ResourceBusyHWControlError class.
 The exception classes defined in this module are as follows.
 
-DeviceBusyHwControlError
+DeviceBusyHWControlError
 
 """
 
-from app.common.basic_exceptions.base_exceptions import ResourceBusyHwControlError
+from app.common.basic_exceptions.base_exceptions import ResourceBusyHWControlError
 
 
-class DeviceBusyHwControlError(ResourceBusyHwControlError):
+class DeviceBusyHWControlError(ResourceBusyHWControlError):
     """Device Busy Error Detail Exception class
 
     This class is common HwControl defined detail exception class

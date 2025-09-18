@@ -19,7 +19,7 @@ File: hw-control/src/app/common/utils/fm_plugin_base.py
 
 import abc
 from abc import ABCMeta
-from typing import Dict, Optional, List, Literal, Self
+from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 from app.common.utils.plugin_base import ManagerPluginBase
 
@@ -27,12 +27,12 @@ from app.common.utils.plugin_base import ManagerPluginBase
 _HEXADECIMAL = r"^[0-9a-fA-F]*$"
 
 
-class FmPortData(BaseModel):
+class FMPortData(BaseModel):
     """FM Port Data Class
     Defines types of port data's field
 
     Class Name:
-        FmPortData
+        FMPortData
 
     Raises:
         pydantic.ValidationError
@@ -40,33 +40,33 @@ class FmPortData(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
     id: StrictStr
-    switch_id: Optional[StrictStr] = Field(None, alias="switchId")
-    switch_port_number: Optional[StrictStr] = Field(None, alias="switchPortNumber")
-    switch_port_type: Optional[Literal["USP", "DSP"]] = Field(None, alias="switchPortType")
-    fabric_id: Optional[StrictStr] = Field(None, alias="fabricId")
-    link: Optional[List[str]] = Field(None)
-    device_type: Optional[
+    switch_id: StrictStr | None = Field(None, alias="switchId")
+    switch_port_number: StrictStr | None = Field(None, alias="switchPortNumber")
+    switch_port_type: Literal["USP", "DSP"] | None = Field(None, alias="switchPortType")
+    fabric_id: StrictStr | None = Field(None, alias="fabricId")
+    link: list[str] | None = Field(None)
+    device_type: None | (
         Literal["CXL-Type1", "CXL-Type2", "CXL-Type3", "CXL-Type3-MLD", "PCIe", "Undetected", "Other", "Unknown"]
-    ] = Field(None, alias="deviceType")
-    pci_class_code: Optional[Dict[str, int]] = Field(None, min_length=3, max_length=3, alias="PCIClassCode")
-    pcie_vendor_id: Optional[StrictStr] = Field(
+    ) = Field(None, alias="deviceType")
+    pci_class_code: dict[str, int] | None = Field(None, min_length=3, max_length=3, alias="PCIClassCode")
+    pcie_vendor_id: StrictStr | None = Field(
         None, min_length=4, max_length=4, pattern=_HEXADECIMAL, alias="PCIeVendorId"
     )
-    pcie_device_id: Optional[StrictStr] = Field(
+    pcie_device_id: StrictStr | None = Field(
         None, min_length=4, max_length=4, pattern=_HEXADECIMAL, alias="PCIeDeviceId"
     )
-    pcie_device_serial_number: Optional[StrictStr] = Field(
+    pcie_device_serial_number: StrictStr | None = Field(
         None, min_length=16, max_length=16, pattern=_HEXADECIMAL, alias="PCIeDeviceSerialNumber"
     )
-    cpu_manufacturer: Optional[StrictStr] = Field(None, alias="CPUManufacturer")
-    cpu_model: Optional[StrictStr] = Field(None, alias="CPUModel")
-    cpu_serial_number: Optional[StrictStr] = Field(None, alias="CPUSerialNumber")
-    ltssm_state: Optional[
+    cpu_manufacturer: StrictStr | None = Field(None, alias="CPUManufacturer")
+    cpu_model: StrictStr | None = Field(None, alias="CPUModel")
+    cpu_serial_number: StrictStr | None = Field(None, alias="CPUSerialNumber")
+    ltssm_state: None | (
         Literal["L0", "L0s", "L2", "Detect", "Polling", "Configuration", "Recovery", "HotReset", "Disable", "Loopback"]
-    ] = Field(None, alias="LTSSMState")
+    ) = Field(None, alias="LTSSMState")
     device_keys: dict = Field({}, alias="deviceKeys")
     port_keys: dict = Field({}, alias="portKeys")
-    capacity: Optional[Dict[str, StrictInt]] = Field(None, min_length=1, max_length=3)
+    capacity: dict[str, StrictInt] | None = Field(None, min_length=1, max_length=3)
 
     @field_validator("pci_class_code")
     @classmethod
@@ -88,7 +88,7 @@ class FmPortData(BaseModel):
         """
         if value is None:
             return value
-        if set(["base", "sub", "prog"]) != set(value.keys()) or len([x for x in value.values() if 0 <= x < 0x100]) != 3:
+        if {"base", "sub", "prog"} != set(value.keys()) or len([x for x in value.values() if 0 <= x < 0x100]) != 3:
             raise ValueError
         return value
 
@@ -166,7 +166,7 @@ class FmPortData(BaseModel):
             None
 
         Returns:
-            FmPortData class instance.
+            FMPortData class instance.
         """
         if self.switch_port_type == "USP" and (
             self.pcie_vendor_id is not None
@@ -181,12 +181,12 @@ class FmPortData(BaseModel):
         return self
 
 
-class FmSwitchData(BaseModel):
+class FMSwitchData(BaseModel):
     """FM Switch Data Class
     Defines types of switch data's field
 
     Class Name:
-        FmSwitchData
+        FMSwitchData
 
     Raises:
         pydantic.ValidationError
@@ -194,10 +194,10 @@ class FmSwitchData(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
     switch_id: StrictStr = Field(..., alias="switchId")
-    switch_manufacturer: Optional[StrictStr] = Field(None, alias="switchManufacturer")
-    switch_model: Optional[StrictStr] = Field(None, alias="switchModel")
-    switch_serial_number: Optional[StrictStr] = Field(None, alias="switchSerialNumber")
-    link: Optional[List[str]] = Field(None)
+    switch_manufacturer: StrictStr | None = Field(None, alias="switchManufacturer")
+    switch_model: StrictStr | None = Field(None, alias="switchModel")
+    switch_serial_number: StrictStr | None = Field(None, alias="switchSerialNumber")
+    link: list[str] | None = Field(None)
 
 
 class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
@@ -213,22 +213,22 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     Raises:
         The FM plug-in may raise the following exception defined for
         app.common.basic_exceptions module:
-            - HostCpuNotFoundHwControlError
-            - DeviceNotFoundHwControlError
-            - HostCpuAndDeviceNotFoundHwControlError
-            - ResourceNotFoundHwControlError
-            - SwitchNotFoundHwControlError
-            - RequestConflictHwControlError
-            - BadRequestHwControlError
-            - AuthenticationHwControlError
-            - FmConnectFailureHwControlError
-            - FmDisconnectFailureHwControlError
-            - ControlObjectHwControlError
-            - ConfigurationHwControlError
-            - InternalHwControlError
-            - UnknownHwControlError
+            - HostCPUNotFoundHWControlError
+            - DeviceNotFoundHWControlError
+            - HostCPUAndDeviceNotFoundHWControlError
+            - ResourceNotFoundHWControlError
+            - SwitchNotFoundHWControlError
+            - RequestConflictHWControlError
+            - BadRequestHWControlError
+            - AuthenticationHWControlError
+            - FMConnectFailureHWControlError
+            - FMDisconnectFailureHWControlError
+            - ControlObjectHWControlError
+            - ConfigurationHWControlError
+            - InternalHWControlError
+            - UnknownHWControlError
         The FM plug-in may also raise vendor-specific exceptions that
-        inherit BaseHwControlError.
+        inherit BaseHWControlError.
     """
 
     # FM API definition
@@ -271,7 +271,7 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_port_info(self, target_id: Optional[str] = None) -> dict:
+    def get_port_info(self, target_id: str | None = None) -> dict[str, list[FMPortData]]:
         """Definition of an API for get information.
 
         The FM plug-in should provide the ability to return port
@@ -287,7 +287,7 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
 
         Returns:
             A dictionary-type data with the "data" key.
-            The value of the "data" key is a list of FmPortData class
+            The value of the "data" key is a list of FMPortData class
             instances.
             If an argument is specified, the list contains only one
             specified port.
@@ -296,7 +296,7 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_switch_info(self, switch_id: Optional[str] = None) -> dict:
+    def get_switch_info(self, switch_id: str | None = None) -> dict[str, list[FMSwitchData]]:
         """Definition of an API for get information of switch.
 
         The FM plug-in should provide the ability to return switch
@@ -312,7 +312,7 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
 
         Returns:
             A dictionary-type data with the "data" key.
-            The value of the "data" key is a list of FmPortData class
+            The value of the "data" key is a list of FMPortData class
             instances.
             If an argument is specified, the list contains only one
             specified switch.

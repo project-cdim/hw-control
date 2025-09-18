@@ -19,79 +19,81 @@ This package provides basic exceptions for HWCONTROL.
 """
 
 from app.common.basic_exceptions.base_exceptions import (
-    BaseHwControlError,
+    BaseHWControlError,
     ERROR_CODE,
     ERROR_MESSAGE,
 )
 
 # ++++ Base Exception class +++++++++++++++++++++++++++++++++++++++++++#
 from app.common.basic_exceptions.base_exceptions import (
-    UnknownHwControlError,
-    AuthenticationHwControlError,
-    BadRequestHwControlError,
-    ControlObjectHwControlError,
-    ResourceBusyHwControlError,
-    ConfigurationHwControlError,
-    InternalHwControlError,
-    RequestConflictHwControlError,
-    DependencyServiceHwControlError,
-    DeviceNotFoundHwControlError,
+    UnknownHWControlError,
+    AuthenticationHWControlError,
+    BadRequestHWControlError,
+    ControlObjectHWControlError,
+    ResourceBusyHWControlError,
+    ConfigurationHWControlError,
+    InternalHWControlError,
+    RequestConflictHWControlError,
+    DependencyServiceHWControlError,
+    DeviceNotFoundHWControlError,
 )
 
-# ++++ Subclasses of AuthenticationHwControlError. ++++++++++++++++++++#
+# ++++ Subclasses of AuthenticationHWControlError. ++++++++++++++++++++#
 from app.common.basic_exceptions.authentication_exceptions import (
-    OobAuthenticationHwControlError,
+    OOBAuthenticationHWControlError,
 )
 
-# ++++ Subclasses of BadRequestHwControlError. ++++++++++++++++++++++++#
+# ++++ Subclasses of BadRequestHWControlError. ++++++++++++++++++++++++#
 from app.common.basic_exceptions.bad_request_exceptions import (
-    HostCpuPowerOffBadRequestHwControlError,
-    RequestNotSupportedHwControlError,
+    HostCPUPowerOffBadRequestHWControlError,
+    RequestNotSupportedHWControlError,
 )
 
-# ++++ Subclasses of ControlObjectHwControlError. +++++++++++++++++++++#
+# ++++ Subclasses of ControlObjectHWControlError. +++++++++++++++++++++#
 from app.common.basic_exceptions.control_object_exceptions import (
-    FmConnectFailureHwControlError,
-    FmDisconnectFailureHwControlError,
-    PowerOnFailureHwControlError,
-    PowerOffFailureHwControlError,
-    CpuResetFailureHwControlError,
-    AgentConnectFailureHwControlError,
-    AgentGetInformationFailureHwControlError,
+    FMConnectFailureHWControlError,
+    FMDisconnectFailureHWControlError,
+    PowerOnFailureHWControlError,
+    PowerOffFailureHWControlError,
+    CPUResetFailureHWControlError,
+    AgentConnectFailureHWControlError,
+    AgentGetInformationFailureHWControlError,
 )
 
-# ++++ Subclasses of ResourceBusyHwControlError. ++++++++++++++++++++++#
+# ++++ Subclasses of ResourceBusyHWControlError. ++++++++++++++++++++++#
 from app.common.basic_exceptions.resource_busy_exceptions import (
-    DeviceBusyHwControlError,
+    DeviceBusyHWControlError,
 )
 
-# ++++ Subclasses of ConfigurationHwControlError. +++++++++++++++++++++#
+# ++++ Subclasses of ConfigurationHWControlError. +++++++++++++++++++++#
 from app.common.basic_exceptions.configuration_exceptions import (
-    ApiUsageHwControlError,
-    ManagerIdHwControlError,
-    PluginGetInstanceHwControlError,
-    PluginRespondUnExpectedTypeHwControlError,
-    InvalidSerialNumberConfigFileNotFoundHwControlError,
-    InvalidSerialNumberConfigFileIncorrectHwControlError,
-    DeviceIdFileNotFoundHwControlError,
-    DeviceIdFileIncorrectHwControlError,
-    DeviceIdFileUpdateHwControlError,
-    InvalidTypeDeviceIdHwControlError,
-    InvalidDeviceTypeParameterHwControlError,
-    InvalidLogMessageParameterHwControlError,
-    PluginRespondNoneHwControlError,
+    APIUsageHWControlError,
+    ManagerIDHWControlError,
+    PluginGetInstanceHWControlError,
+    PluginRespondUnExpectedTypeHWControlError,
+    InvalidSerialNumberConfigFileNotFoundHWControlError,
+    InvalidSerialNumberConfigFileIncorrectHWControlError,
+    DeviceIDFileNotFoundHWControlError,
+    DeviceIDFileIncorrectHWControlError,
+    DeviceIDFileUpdateHWControlError,
+    InvalidTypeDeviceIDHWControlError,
+    InvalidDeviceTypeParameterHWControlError,
+    InvalidLogMessageParameterHWControlError,
+    PluginRespondNoneHWControlError,
 )
 
-# ++++ Subclasses of InternalHwControlError. ++++++++++++++++++++++++++#
+# ++++ Subclasses of InternalHWControlError. ++++++++++++++++++++++++++#
 from app.common.basic_exceptions.internal_exceptions import (
-    UnexpectedExceptionHwControlError,
+    UnexpectedExceptionHWControlError,
 )
 
-# ++++ Subclasses of DeviceNotFoundHwControlError. ++++++++++++++++++++#
+# ++++ Subclasses of DeviceNotFoundHWControlError. ++++++++++++++++++++#
 from app.common.basic_exceptions.resource_not_found_exceptions import (
-    HostCpuNotFoundHwControlError,
-    HostCpuAndDeviceNotFoundHwControlError,
-    SwitchNotFoundHwControlError,
-    ResourceNotFoundHwControlError,
-    DeviceIdNotFoundHwControlError,
+    HostCPUNotFoundHWControlError,
+    HostCPUAndDeviceNotFoundHWControlError,
+    SwitchNotFoundHWControlError,
+    ResourceNotFoundHWControlError,
+    DeviceIDNotFoundHWControlError,
+    UpstreamDeviceNotFoundHWControlError,
+    DownstreamDeviceNotFoundHWControlError,
 )

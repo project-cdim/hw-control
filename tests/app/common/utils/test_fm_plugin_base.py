@@ -16,109 +16,108 @@
 Test program for app/common/utils/fm_plugin_base.py
 """
 
-from typing import Optional
 from unittest import TestCase
 from pydantic import ValidationError
-from app.common.utils.fm_plugin_base import FMPluginBase, FmPortData, FmSwitchData
+from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData, FMSwitchData
 
 
-class FmPortDataTests(TestCase):
-    """Test FmPortData class"""
+class FMPortDataTests(TestCase):
+    """Test FMPortData class"""
 
     default: dict = {"id": "sample_id"}
 
     def _check_none_member(self, key_name: str, member: str):
-        """Test that the FmPortData's member can be set None."""
+        """Test that the FMPortData's member can be set None."""
         for value in [self.default, self.default | {key_name: None}]:
-            fpd = FmPortData(**value)
+            fpd = FMPortData(**value)
             self.assertIsNone(getattr(fpd, member))
 
     def _check_condition_member(self, key_name: str, member: str, allows: list, denials: list):
-        """Test that the FmPortData's member can set allows items, can not set denials items."""
+        """Test that the FMPortData's member can set allows items, can not set denials items."""
         for value in allows:
-            fpd = FmPortData(**{"id": "sample_id", key_name: value})
+            fpd = FMPortData(**{"id": "sample_id", key_name: value})
             self.assertEqual(value, getattr(fpd, member))
 
-            fpd = FmPortData(**self.default)
+            fpd = FMPortData(**self.default)
             setattr(fpd, member, value)
             self.assertEqual(value, getattr(fpd, member))
 
         for value in denials:
             with self.assertRaises(ValidationError):
-                FmPortData(**{"id": "sample_id", key_name: value})
+                FMPortData(**{"id": "sample_id", key_name: value})
 
-            fpd = FmPortData(**self.default)
+            fpd = FMPortData(**self.default)
             with self.assertRaises(ValidationError):
                 setattr(fpd, member, value)
 
     def _check_none_or_condition_member(self, key_name: str, member: str, allows: list, denials: list):
-        """Test that the FmPortData's member can set allows items or None,
+        """Test that the FMPortData's member can set allows items or None,
         can not set denials items.
         """
         self._check_none_member(key_name, member)
         self._check_condition_member(key_name, member, allows, denials)
 
     def _check_none_or_string_member(self, key_name: str, member: str):
-        """Test that the FmPortData's member can only be set to string or None."""
+        """Test that the FMPortData's member can only be set to string or None."""
         self._check_none_or_condition_member(key_name, member, ["sample"], [1, ["data1", "data2"], {}])
 
     def _check_none_or_literal_member(self, key_name: str, member: str, allows: list):
-        """Test that the FmPortData's member can only be set to literal or None."""
+        """Test that the FMPortData's member can only be set to literal or None."""
         self._check_none_or_condition_member(key_name, member, allows, ["Not Allow", 0, [], {"key": "value"}])
 
     def _check_dictionary_member(self, key_name: str, member: str):
-        """Test that the FmPortData's member can only be set to dictionary."""
-        fpd = FmPortData(**self.default)
+        """Test that the FMPortData's member can only be set to dictionary."""
+        fpd = FMPortData(**self.default)
         self.assertEqual({}, getattr(fpd, member))
         allows: list = [{}, {"key": "value"}, {"key1": "value1", "key2": 2}]
         denials: list = [None, [], "string"]
         self._check_condition_member(key_name, member, allows, denials)
 
     def test_id(self):
-        """Validation test of id in FmPortData class"""
-        fpd = FmPortData(**self.default)
+        """Validation test of id in FMPortData class"""
+        fpd = FMPortData(**self.default)
         self.assertEqual("sample_id", fpd.id)
         for value in [{}, {"id": None}]:
             with self.assertRaises(ValidationError):
-                FmPortData(**value)
+                FMPortData(**value)
 
     def test_switch_id(self):
-        """Validation test of switchId in FmPortData class"""
+        """Validation test of switchId in FMPortData class"""
         self._check_none_or_string_member("switchId", "switch_id")
 
     def test_switch_port_number(self):
-        """Validation test of switchPortNumber in FmPortData class"""
+        """Validation test of switchPortNumber in FMPortData class"""
         self._check_none_or_string_member("switchPortNumber", "switch_port_number")
 
     def test_switch_port_type(self):
-        """Validation test of switchPortType in FmPortData class"""
+        """Validation test of switchPortType in FMPortData class"""
         self._check_none_or_literal_member("switchPortType", "switch_port_type", ["USP", "DSP"])
 
     def test_fabric_id(self):
-        """Validation test of fabricId in FmPortData class"""
+        """Validation test of fabricId in FMPortData class"""
         self._check_none_or_string_member("fabricId", "fabric_id")
 
     def test_link(self):
-        """Validation test of link in FmPortData class"""
+        """Validation test of link in FMPortData class"""
         allows = [[], ["id"], ["id1", "id2"]]
         denials = ["string", ["id1", "id2", None], [1, 2]]
         self._check_none_or_condition_member("link", "link", allows, denials)
 
     def test_device_type(self):
-        """Validation test of deviceType in FmPortData class"""
+        """Validation test of deviceType in FMPortData class"""
         allows = ["CXL-Type1", "CXL-Type2", "CXL-Type3", "CXL-Type3-MLD", "PCIe", "Undetected", "Other", "Unknown"]
         self._check_none_or_literal_member("deviceType", "device_type", allows)
 
     def test_pci_class_code(self):
-        """Validation test of PCIClassCode in FmPortData class"""
+        """Validation test of PCIClassCode in FMPortData class"""
         sample = {"base": 0, "sub": 1, "prog": 0xFF}
-        fpd = FmPortData(**self.default)
+        fpd = FMPortData(**self.default)
         self.assertIsNone(fpd.pci_class_code)
-        fpd = FmPortData(**{"id": "sample", "PCIClassCode": None})
+        fpd = FMPortData(**{"id": "sample", "PCIClassCode": None})
         self.assertIsNone(fpd.pci_class_code)
         fpd.pci_class_code = sample
         self.assertDictEqual(sample, fpd.pci_class_code)
-        fpd = FmPortData(**{"id": "dummy", "PCIClassCode": sample})
+        fpd = FMPortData(**{"id": "dummy", "PCIClassCode": sample})
         self.assertDictEqual(sample, fpd.pci_class_code)
         for data in [
             "string",
@@ -131,44 +130,44 @@ class FmPortDataTests(TestCase):
             {"base": 0, "prog": 0},
         ]:
             with self.assertRaises(ValidationError):
-                FmPortData(**{"id": "sample", "PCIClassCode": data})
+                FMPortData(**{"id": "sample", "PCIClassCode": data})
 
-            fpd = FmPortData(**self.default)
+            fpd = FMPortData(**self.default)
             with self.assertRaises(ValidationError):
                 fpd.pci_class_code = data
 
     def test_pcie_vendor_id(self):
-        """Validation test of PCIeVendorId in FmPortData class"""
+        """Validation test of PCIeVendorId in FMPortData class"""
         allows = ["0000", "0123", "4567", "89ab", "cdef", "ABCD", "EF12", "FFFF", "ffff"]
         denials = [-1, 0, 0xFFFF, "00000", "000", "defg"]
         self._check_none_or_condition_member("PCIeVendorId", "pcie_vendor_id", allows, denials)
 
     def test_pcie_device_id(self):
-        """Validation test of PCIeDeviceId in FmPortData class"""
+        """Validation test of PCIeDeviceId in FMPortData class"""
         allows = ["0000", "0123", "4567", "89ab", "cdef", "ABCD", "EF12", "FFFF", "ffff"]
         denials = [-1, 0, 0xFFFF, "00000", "000", "defg"]
         self._check_none_or_condition_member("PCIeDeviceId", "pcie_device_id", allows, denials)
 
     def test_pcie_device_serial_number(self):
-        """Validation test of PCIeDeviceSerialNumber in FmPortData class"""
+        """Validation test of PCIeDeviceSerialNumber in FMPortData class"""
         allows = ["0000000000000000", "0123456789abcdef", "FEDCBA9876543210", "FFFFFFFFFFFFFFFF"]
         denials = ["000000000000000", "00000000000000000", "123456789ABCDEFG"]
         self._check_none_or_condition_member("PCIeDeviceSerialNumber", "pcie_device_serial_number", allows, denials)
 
     def test_cpu_manufacturer(self):
-        """Validation test of CPUManufacturer in FmPortData class"""
+        """Validation test of CPUManufacturer in FMPortData class"""
         self._check_none_or_string_member("CPUManufacturer", "cpu_manufacturer")
 
     def test_cpu_model(self):
-        """Validation test of CPUModel in FmPortData class"""
+        """Validation test of CPUModel in FMPortData class"""
         self._check_none_or_string_member("CPUModel", "cpu_model")
 
     def test_cpu_serial_number(self):
-        """Validation test of CPUSerialNumber in FmPortData class"""
+        """Validation test of CPUSerialNumber in FMPortData class"""
         self._check_none_or_string_member("CPUSerialNumber", "cpu_serial_number")
 
     def test_ltssm_state(self):
-        """Validation test of LTSSMState in FmPortData class"""
+        """Validation test of LTSSMState in FMPortData class"""
         allows = [
             "L0",
             "L0s",
@@ -184,18 +183,18 @@ class FmPortDataTests(TestCase):
         self._check_none_or_literal_member("LTSSMState", "ltssm_state", allows)
 
     def test_device_keys(self):
-        """Validation test of deviceKeys in FmPortData class"""
+        """Validation test of deviceKeys in FMPortData class"""
         self._check_dictionary_member("deviceKeys", "device_keys")
 
     def test_port_keys(self):
-        """Validation test of portKeys in FmPortData class"""
+        """Validation test of portKeys in FMPortData class"""
         self._check_dictionary_member("portKeys", "port_keys")
 
     def test_capacity(self):
-        """Validation test of capacity in FmPortData class"""
-        fpd = FmPortData(**self.default)
+        """Validation test of capacity in FMPortData class"""
+        fpd = FMPortData(**self.default)
         self.assertIsNone(fpd.capacity)
-        fpd = FmPortData(**{"id": "sample_id", "capacity": None})
+        fpd = FMPortData(**{"id": "sample_id", "capacity": None})
         self.assertIsNone(fpd.capacity)
 
         sample = {"volatile": 10, "persistent": 20, "total": 30}
@@ -207,14 +206,14 @@ class FmPortDataTests(TestCase):
         allows.append(({"persistent": 20, "total": 30}, sample))
         allows.append((sample, sample))
         for value, check in allows:
-            fpd = FmPortData(**{"id": "dummy", "capacity": value})
+            fpd = FMPortData(**{"id": "dummy", "capacity": value})
             self.assertDictEqual(check, fpd.capacity)
 
-            fpd = FmPortData(**self.default)
+            fpd = FMPortData(**self.default)
             fpd.capacity = value
             self.assertDictEqual(check, fpd.capacity)
 
-        fpd = FmPortData(**{"id": "dummy", "capacity": sample})
+        fpd = FMPortData(**{"id": "dummy", "capacity": sample})
         fpd.capacity["volatile"] = 0
         self.assertDictEqual({"volatile": 0, "persistent": 20, "total": 30}, fpd.capacity)
 
@@ -232,8 +231,8 @@ class FmPortDataTests(TestCase):
             {"persistent": 30, "total": 29},
         ]:
             with self.assertRaises(ValidationError):
-                FmPortData(**{"id": "dummy", "capacity": value})
-            fpd = FmPortData(**self.default)
+                FMPortData(**{"id": "dummy", "capacity": value})
+            fpd = FMPortData(**self.default)
             with self.assertRaises(ValidationError):
                 fpd.capacity = value
 
@@ -241,7 +240,7 @@ class FmPortDataTests(TestCase):
         for member in members:
             data[member] = "dummy"
             with self.assertRaises(ValidationError):
-                FmPortData(**data)
+                FMPortData(**data)
             data[member] = None
 
     def test_validate_port_type_cpu_pcie(self):
@@ -255,13 +254,13 @@ class FmPortDataTests(TestCase):
             "CPUModel": "model",
             "CPUSerialNumber": "serial",
         }
-        FmPortData(**data)
+        FMPortData(**data)
         usp = data | {"switchPortType": "USP"}
         with self.assertRaises(ValidationError):
-            FmPortData(**usp)
+            FMPortData(**usp)
         dsp = data | {"switchPortType": "DSP"}
         with self.assertRaises(ValidationError):
-            FmPortData(**dsp)
+            FMPortData(**dsp)
 
         cpu_data = ["CPUManufacturer", "CPUModel", "CPUSerialNumber"]
         self._check_validation_error_without_none(usp, cpu_data)
@@ -290,7 +289,7 @@ class FmPortDataTests(TestCase):
             "portKeys": {},
             "capacity": None,
         }
-        self.assertDictEqual(data, FmPortData(**self.default).model_dump(by_alias=True))
+        self.assertDictEqual(data, FMPortData(**self.default).model_dump(by_alias=True))
         data = {
             "id": "exchange_id",
             "switchId": "switch-1",
@@ -311,67 +310,67 @@ class FmPortDataTests(TestCase):
             "portKeys": {"port_key": "port_value"},
             "capacity": {"volatile": 1, "persistent": 2, "total": 3},
         }
-        self.assertDictEqual(data, FmPortData(**data).model_dump(by_alias=True))
+        self.assertDictEqual(data, FMPortData(**data).model_dump(by_alias=True))
 
 
-class FmSwitchDataTests(TestCase):
-    """Test FmSwitchData class"""
+class FMSwitchDataTests(TestCase):
+    """Test FMSwitchData class"""
 
     default: dict = {"switchId": "sample_id"}
 
     def _check_none_member(self, key_name: str, member: str):
-        """Test that the FmSwitchData's member can be set None."""
+        """Test that the FMSwitchData's member can be set None."""
         for value in [self.default, self.default | {key_name: None}]:
-            fsd = FmSwitchData(**value)
+            fsd = FMSwitchData(**value)
             self.assertIsNone(getattr(fsd, member))
 
     def _check_none_or_condition_member(self, key_name: str, member: str, allows: list, denials: list):
-        """Test that the FmSwitchData's member can set allows items or None,
+        """Test that the FMSwitchData's member can set allows items or None,
         can not set denials items.
         """
         self._check_none_member(key_name, member)
         for value in allows:
-            fsd = FmSwitchData(**{"switchId": "sample_id", key_name: value})
+            fsd = FMSwitchData(**{"switchId": "sample_id", key_name: value})
             self.assertEqual(value, getattr(fsd, member))
 
-            fsd = FmSwitchData(**self.default)
+            fsd = FMSwitchData(**self.default)
             setattr(fsd, member, value)
             self.assertEqual(value, getattr(fsd, member))
 
         for value in denials:
             with self.assertRaises(ValidationError):
-                FmSwitchData(**{"switchId": "sample_id", key_name: value})
+                FMSwitchData(**{"switchId": "sample_id", key_name: value})
 
-            fsd = FmSwitchData(**self.default)
+            fsd = FMSwitchData(**self.default)
             with self.assertRaises(ValidationError):
                 setattr(fsd, member, value)
 
     def _check_none_or_string_member(self, key_name: str, member: str):
-        """Test that the FmSwitchData's member can only be set to string or None."""
+        """Test that the FMSwitchData's member can only be set to string or None."""
         self._check_none_or_condition_member(key_name, member, ["sample"], [1, []])
 
     def test_switch_id(self):
-        """Validation test of switchId in FmSwitchData class"""
-        fsd = FmSwitchData(**self.default)
+        """Validation test of switchId in FMSwitchData class"""
+        fsd = FMSwitchData(**self.default)
         self.assertEqual("sample_id", fsd.switch_id)
         for value in [{}, {"switchId": None}]:
             with self.assertRaises(ValidationError):
-                FmSwitchData(**value)
+                FMSwitchData(**value)
 
     def test_switch_manufacturer(self):
-        """Validation test of switchManufacturer in FmSwitchData class"""
+        """Validation test of switchManufacturer in FMSwitchData class"""
         self._check_none_or_string_member("switchManufacturer", "switch_manufacturer")
 
     def test_switch_model(self):
-        """Validation test of switchModel in FmSwitchData class"""
+        """Validation test of switchModel in FMSwitchData class"""
         self._check_none_or_string_member("switchModel", "switch_model")
 
     def test_switch_serial_number(self):
-        """Validation test of switchSerialNumber in FmSwitchData class"""
+        """Validation test of switchSerialNumber in FMSwitchData class"""
         self._check_none_or_string_member("switchSerialNumber", "switch_serial_number")
 
     def test_link(self):
-        """Validation test of link in FmSwitchData class"""
+        """Validation test of link in FMSwitchData class"""
         allows = [[], ["id"], ["id1", "id2"]]
         denials = ["string", ["id1", "id2", None], [1, 2]]
         self._check_none_or_condition_member("link", "link", allows, denials)
@@ -385,7 +384,7 @@ class FmSwitchDataTests(TestCase):
             "switchSerialNumber": None,
             "link": None,
         }
-        self.assertDictEqual(data, FmSwitchData(**self.default).model_dump(by_alias=True))
+        self.assertDictEqual(data, FMSwitchData(**self.default).model_dump(by_alias=True))
         data = {
             "switchId": "exchange_id",
             "switchManufacturer": "manufacturer",
@@ -393,7 +392,7 @@ class FmSwitchDataTests(TestCase):
             "switchSerialNumber": "serial",
             "link": [],
         }
-        self.assertDictEqual(data, FmSwitchData(**data).model_dump(by_alias=True))
+        self.assertDictEqual(data, FMSwitchData(**data).model_dump(by_alias=True))
 
 
 class FMPluginBaseTests(TestCase):
@@ -413,10 +412,10 @@ class FMPluginBaseTests(TestCase):
             def disconnect(self, cpu_id: str, device_id: str):
                 return self.specific_data
 
-            def get_port_info(self, target_id: Optional[str] = None):
+            def get_port_info(self, target_id: str | None = None):
                 return self.specific_data
 
-            def get_switch_info(self, switch_id: Optional[str] = None):
+            def get_switch_info(self, switch_id: str | None = None):
                 return self.specific_data
 
         inst = _dummy()
@@ -443,10 +442,10 @@ class FMPluginBaseTests(TestCase):
             def disconnect(self, cpu_id: str, device_id: str):
                 """Create only definitions for evaluation"""
 
-            def get_port_info(self, target_id: Optional[str] = None):
+            def get_port_info(self, target_id: str | None = None):
                 """Create only definitions for evaluation"""
 
-            def get_switch_info(self, switch_id: Optional[str] = None):
+            def get_switch_info(self, switch_id: str | None = None):
                 """Create only definitions for evaluation"""
 
         with self.assertRaises(TypeError):
@@ -466,10 +465,10 @@ class FMPluginBaseTests(TestCase):
             def connect(self, cpu_id: str, device_id: str):
                 """Create only definitions for evaluation"""
 
-            def get_port_info(self, target_id: Optional[str] = None):
+            def get_port_info(self, target_id: str | None = None):
                 """Create only definitions for evaluation"""
 
-            def get_switch_info(self, switch_id: Optional[str] = None):
+            def get_switch_info(self, switch_id: str | None = None):
                 """Create only definitions for evaluation"""
 
         with self.assertRaises(TypeError):
@@ -492,7 +491,7 @@ class FMPluginBaseTests(TestCase):
             def disconnect(self, cpu_id: str, device_id: str):
                 """Create only definitions for evaluation"""
 
-            def get_switch_info(self, switch_id: Optional[str] = None):
+            def get_switch_info(self, switch_id: str | None = None):
                 """Create only definitions for evaluation"""
 
         with self.assertRaises(TypeError):
@@ -515,7 +514,7 @@ class FMPluginBaseTests(TestCase):
             def disconnect(self, cpu_id: str, device_id: str):
                 """Create only definitions for evaluation"""
 
-            def get_port_info(self, target_id: Optional[str] = None):
+            def get_port_info(self, target_id: str | None = None):
                 """Create only definitions for evaluation"""
 
         with self.assertRaises(TypeError):
@@ -537,10 +536,10 @@ class FMPluginBaseTests(TestCase):
             def disconnect(self, cpu_id: str, device_id: str):
                 """Create only definitions for evaluation"""
 
-            def get_port_info(self, target_id: Optional[str] = None):
+            def get_port_info(self, target_id: str | None = None):
                 """Create only definitions for evaluation"""
 
-            def get_switch_info(self, switch_id: Optional[str] = None):
+            def get_switch_info(self, switch_id: str | None = None):
                 """Create only definitions for evaluation"""
 
         inst = _dummy()

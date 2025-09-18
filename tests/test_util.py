@@ -16,17 +16,14 @@
 
 import json
 from enum import Enum
-from typing import Dict, Any
+from typing import Any
 
 from requests.models import Response as requests_Response
 
-from app.common import constants  # type: ignore
-
-# constant request ID for logging unit test
-CONSTANT_REQUEST_ID = "test_request_id"
+from app.common import constants
 
 
-class DummyCpuInfo(Enum):
+class DummyCPUInfo(Enum):
     """Define a collection of name/plugin_type value pairs."""
 
     DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
@@ -55,7 +52,7 @@ class DummyDeviceInfo(Enum):
 
 # ++++ side effect of mock ++++++++++++++++++++++++++++++++++++++++++++#
 def generate_dummy_agent_response(
-    status_code: int, content: str | dict | None = None, headers: Dict[str, Any] | None = None
+    status_code: int, content: str | dict | None = None, headers: dict[str, Any] | None = None
 ):
     """Generates a dummy response object for testing purposes.
 
@@ -95,7 +92,7 @@ def generate_dummy_agent_response(
 
 
 def generate_dummy_http_response(
-    status_code: int, content: str | dict | None = None, headers: Dict[str, Any] | None = None
+    status_code: int, content: str | dict | None = None, headers: dict[str, Any] | None = None
 ):
     """Generates a dummy response object for testing HTTP request.
 

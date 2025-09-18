@@ -15,87 +15,19 @@
 """Unit test module for secret_management_settings.py ."""
 
 import pytest
+from pytest import MonkeyPatch
 from pydantic import ValidationError
 
-from tests import test_util
-
-from app.common.messages import message  # type: ignore
-
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils.secret_management_utilities import secret_management_settings  # type: ignore
+from app.common.utils.secret_management_utilities import secret_management_settings
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-class TestLogMessageModel:
-    """Unit test class for Log Message Model Class."""
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, expected_default_value",
-        [
-            (
-                secret_management_settings.SecretManagementSettingsLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Get secret API settings form environment variables.",
-                    "host": None,
-                    "port": None,
-                    "path": None,
-                    "timeout": None,
-                },
-            ),
-        ],
-    )
-    def test_default_values(self, log_message_class: message.BaseLogMessage, expected_default_value):
-        """test create instance default values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_log_message = log_message_class().to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_log_message == expected_default_value
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, logging_contents, expected_contents",
-        [
-            (
-                secret_management_settings.SecretManagementSettingsLog,
-                {
-                    "detail": "test_string",
-                    "host": "localhost",
-                    "port": 3500,
-                    "path": None,
-                    "timeout": None,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Get secret API settings form environment variables.",
-                    "host": "localhost",
-                    "port": 3500,
-                    "path": None,
-                    "timeout": None,
-                },
-            ),
-        ],
-    )
-    def test_custom_values(
-        self, log_message_class: message.BaseLogMessage, logging_contents: dict, expected_contents: dict
-    ):
-        """test create instance custom values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        log_message = log_message_class(**logging_contents).to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert log_message == expected_contents
 
 
 class TestSecretManagementSettings:
     """Unit test class for SecretManagementSettings"""
 
-    def test_instance_generate_default_value(self, monkeypatch):
+    def test_instance_generate_default_value(self, monkeypatch: MonkeyPatch):
         """test for SecretManagementSettings instance generate default value"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Clean up the environment variables in the current test environment.
@@ -118,7 +50,7 @@ class TestSecretManagementSettings:
         assert actual_setting.path == expected_path
         assert actual_setting.timeout == expected_timeout
 
-    def test_env_case_sensitive(self, monkeypatch):
+    def test_env_case_sensitive(self, monkeypatch: MonkeyPatch):
         """Test environment case sensitive."""
 
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -144,7 +76,7 @@ class TestSecretManagementSettings:
         assert actual_setting.path == "/v1.0/secrets/"  # default value
         assert actual_setting.timeout == 3  # default value
 
-    def test_instance_generate_from_env(self, monkeypatch):
+    def test_instance_generate_from_env(self, monkeypatch: MonkeyPatch):
         """Test environment variables set case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -186,7 +118,7 @@ class TestSecretManagementSettings:
             ("HW_CONTROL_SECRET_API_TIMEOUT", 11),  # timeout must be less than 10.
         ],
     )
-    def test_invalid_env(self, monkeypatch, env_key, env_value):
+    def test_invalid_env(self, monkeypatch: MonkeyPatch, env_key, env_value):
         """Test invalid environment variables set case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 

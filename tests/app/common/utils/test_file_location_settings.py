@@ -15,7 +15,7 @@
 """Unit test module for file_location_settings.py ."""
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils import file_location_settings  # type: ignore
+from app.common.utils import file_location_settings
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 

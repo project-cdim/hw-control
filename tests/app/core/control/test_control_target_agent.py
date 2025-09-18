@@ -18,12 +18,12 @@ from pytest_mock import MockFixture
 
 from tests.app.core.control import test_util
 
-from app.common.utils import os_ipaddress  # type: ignore
-import app.common.basic_exceptions as exc  # type: ignore
-from app.core.control import agent_control  # type: ignore
+from app.common.utils import os_ipaddress
+import app.common.basic_exceptions as exc
+from app.core.control import agent_control
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.core.control.agent_control import ControlTargetAgent  # type: ignore
+from app.core.control.agent_control import ControlTargetAgent
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -33,7 +33,7 @@ class TestControlTargetAgentGenerate:
 
     @pytest.mark.parametrize(
         "ip_address_manager_return",
-        [(test_util.DummyCpuInfo.IP_ADDRESS.value, True)],
+        [(test_util.DummyCPUInfo.IP_ADDRESS.value, True)],
     )
     def test_instance_generate_successful(
         self,
@@ -42,7 +42,7 @@ class TestControlTargetAgentGenerate:
     ):
         """Unit test for ControlTargetAgent instance generate successful."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        target_device_id = test_util.DummyCpuInfo.DEVICE_ID.value
+        target_device_id = test_util.DummyCPUInfo.DEVICE_ID.value
 
         # Expected results:
         expected_ip_address, _ = ip_address_manager_return
@@ -61,7 +61,7 @@ class TestControlTargetAgentGenerate:
     @pytest.mark.parametrize(
         "ip_address_manager_return",
         [
-            (test_util.DummyCpuInfo.IP_ADDRESS.value, False),
+            (test_util.DummyCPUInfo.IP_ADDRESS.value, False),
             (None, True),
             (None, False),
         ],
@@ -73,11 +73,11 @@ class TestControlTargetAgentGenerate:
     ):
         """Unit test for get_os_ipaddress return invalid value case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        target_device_id = test_util.DummyCpuInfo.DEVICE_ID.value
+        target_device_id = test_util.DummyCPUInfo.DEVICE_ID.value
 
         # Set up the mock.
         mocker.patch.object(os_ipaddress, "get_os_ipaddress", return_value=ip_address_manager_return)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.RequestNotSupportedHwControlError):
+        with pytest.raises(exc.RequestNotSupportedHWControlError):
             _ = ControlTargetAgent(host_cpu_device_id=target_device_id)

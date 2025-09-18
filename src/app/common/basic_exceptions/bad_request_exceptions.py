@@ -12,23 +12,23 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit BadRequestHwControlError
+"""Classes that inherit BadRequestHWControlError
 
 file path: /app/common/basic_exceptions/bad_request_exceptions.py
 
 This module defines an exception class that inherits from the 
-BadRequestHwControlError class.
+BadRequestHWControlError class.
 The exception classes defined in this module are as follows.
 
-HostCpuPowerOffBadRequestHwControlError
-RequestNotSupportedHwControlError
+HostCPUPowerOffBadRequestHWControlError
+RequestNotSupportedHWControlError
 
 """
 
-from app.common.basic_exceptions.base_exceptions import BadRequestHwControlError
+from app.common.basic_exceptions.base_exceptions import BadRequestHWControlError
 
 
-class HostCpuPowerOffBadRequestHwControlError(BadRequestHwControlError):
+class HostCPUPowerOffBadRequestHWControlError(BadRequestHWControlError):
     """HwControl Host CPU Power Off state Error Detail Exception class
     This class is common detail exception class for HwControl defined
     exceptions of Host CPU Power Off state Error.
@@ -38,7 +38,7 @@ class HostCpuPowerOffBadRequestHwControlError(BadRequestHwControlError):
     default_error_message: str = "The specified device power state is already off."
 
 
-class RequestNotSupportedHwControlError(BadRequestHwControlError):
+class RequestNotSupportedHWControlError(BadRequestHWControlError):
     """HwControl request not supported Error Detail Exception class
 
     This class is common detail exception class for HwControl defined

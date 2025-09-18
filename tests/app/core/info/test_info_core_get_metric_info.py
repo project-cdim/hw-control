@@ -22,8 +22,8 @@ from app.common.settings import settings
 from app.core.info.info_core import InformationCore
 from app.common.constants import TIME_STAMP_FORMAT
 from app.common.basic_exceptions import (
-    BaseHwControlError,
-    InternalHwControlError,
+    BaseHWControlError,
+    InternalHWControlError,
 )
 from app.core.info.info_utils import load_mapping_table
 
@@ -77,9 +77,9 @@ OOB_DATA_CPU = {
             },
             "environment": {
                 "Sensor": {
-                    "SensorResetTime": "2023-11-20T04:14:00Z",  # NOSONAR
+                    "SensorResetTime": "2023-11-20T04:14:00Z",
                     "SensingInterval": "PT5S",
-                    "ReadingTime": "2023-11-20T05:15:00Z",  # NOSONAR
+                    "ReadingTime": "2023-11-20T05:15:00Z",
                 },
                 "EnergyJoules": {
                     "Reading": 25,
@@ -636,9 +636,9 @@ OOB_DATA_GPU = {
             },
             "environment": {
                 "Sensor": {
-                    "SensorResetTime": "2023-11-20T04:14:00Z",  # NOSONAR
+                    "SensorResetTime": "2023-11-20T04:14:00Z",
                     "SensingInterval": "PT5S",
-                    "ReadingTime": "2023-11-20T05:15:00Z",  # NOSONAR
+                    "ReadingTime": "2023-11-20T05:15:00Z",
                 },
                 "EnergyJoules": {
                     "Reading": 25,
@@ -789,14 +789,14 @@ def _get_metric_info(mocker, device_id, device_type, agent_data, oob_data, fm_da
     # Reading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    # Replace the device information retrieval for device ID management.
+    # Replace the device information retrieval for Device ID management.
     mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type",  # NOSONAR
+        "app.common.dim.device_id_base.device_id_to_device_type",
         side_effect=mock_device_id_to_device_type,
     )
 
     # Replace obtaining agent information with a mock
-    mocker.patch("app.core.info.metric_agent.InfoMetricAgent.get_metric_agent", side_effect=mock_agent)  # NOSONAR
+    mocker.patch("app.core.info.metric_agent.InfoMetricAgent.get_metric_agent", side_effect=mock_agent)
 
     # Replace OOB metric information retrieval with a mock
     mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=mock_oob)
@@ -954,7 +954,7 @@ def test_get_metric_info_gc(mocker):
 
 
 def test_get_metric_info_other_device_type(mocker, caplog):
-    """Test Get metric Information other device type"""
+    """Test Get metric Information other Device Type"""
     metric_data, errors = _get_metric_info(mocker, "9001", None, AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU, False)
 
     assert metric_data is None
@@ -963,14 +963,14 @@ def test_get_metric_info_other_device_type(mocker, caplog):
         {
             "errorCode": "EF010BAS000",
             "errorMessage": "The server encountered an internal error. "
-            "Unable to retrieve the device type corresponding to Device ID: 9001.",
+            "Unable to retrieve the Device Type corresponding to Device ID: 9001.",
         }
     ]
 
     assert _log_contains(
         caplog.record_tuples,
         logging.WARNING,
-        "W00006: Device information not found: Unable to retrieve the device type corresponding to Device ID: 9001.",
+        "W00006: Device information not found: Unable to retrieve the Device Type corresponding to Device ID: 9001.",
     )
 
 
@@ -991,10 +991,10 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_o
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHwControlError)
+    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHWControlError)
 
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
         get_information._create_metric_info("0001", "CPU", None, oob_data, None)  # pylint: disable=protected-access
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
@@ -1017,10 +1017,10 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_f
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHwControlError)
+    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHWControlError)
 
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
         get_information._create_metric_info("0001", "CPU", None, None, fm_data)  # pylint: disable=protected-access
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
@@ -1043,10 +1043,10 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_a
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHwControlError)
+    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHWControlError)
 
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
         get_information._create_metric_info("0001", "CPU", agent_data, None, None)  # pylint: disable=protected-access
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
@@ -1058,12 +1058,10 @@ def test_get_metric_info_base_exception(mocker):
     def mock_device_id_to_device_type(_):
         return "CPU"
 
-    # Replace device information retrieval for device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type
-    )
+    # Replace device information retrieval for Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
 
-    mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=BaseHwControlError)
+    mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=BaseHWControlError)
     mocker.patch.object(settings, "HW_CONTROL_AGENT_ENABLED", True)
     get_information = InformationCore()
     _, errors = get_information.get_metric_info("0001")
@@ -1078,12 +1076,10 @@ def test_get_metric_info_verify_agent_access_base_exception(mocker):
     def mock_device_id_to_device_type(_):
         return "CPU"
 
-    # Replace the device information retrieval in device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type
-    )
+    # Replace the device information retrieval in Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
 
-    mocker.patch("app.core.info.info_core.InformationCore._verify_agent_access", side_effect=BaseHwControlError)
+    mocker.patch("app.core.info.info_core.InformationCore._verify_agent_access", side_effect=BaseHWControlError)
 
     mocker.patch.object(settings, "HW_CONTROL_AGENT_ENABLED", True)
 
@@ -1096,7 +1092,7 @@ def test_get_metric_info_verify_agent_access_base_exception(mocker):
 
 def test_get_metric_info_create_metric_info_base_exception(mocker):
     """metric exception"""
-    mocker.patch("app.core.info.info_core.InformationCore._create_metric_info", side_effect=BaseHwControlError)
+    mocker.patch("app.core.info.info_core.InformationCore._create_metric_info", side_effect=BaseHWControlError)
 
     _, errors = _get_metric_info(mocker, "0001", "CPU", AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU, False)
 
@@ -1105,7 +1101,26 @@ def test_get_metric_info_create_metric_info_base_exception(mocker):
 
 
 def test_get_metric_info_create_metric_info_device_type_none():
-    """create_metric_info device type none"""
+    """create_metric_info Device Type none"""
     get_information = InformationCore()
     resp = get_information._create_metric_info("0001", None, {}, {}, {})  # pylint: disable=protected-access
     assert {"deviceID": "0001", "type": None} == resp
+
+
+def test_get_metric_info_create_metric_info_get_mapping_table_none(mocker):
+    """create_metric_info get_mapping_table none"""
+
+    oob_data = {"devices": [{"type": "CPU", "deviceID": "0001"}]}
+    fm_data = {"data": [{"deviceID": "0001", "type": "CPU"}]}
+    agent_data = {"data": [{"type": "CPU"}]}
+
+    def mock_get_mapping_table(_, __, ___):
+        return None
+
+    mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=mock_get_mapping_table)
+
+    get_information = InformationCore()
+    resp = get_information._create_metric_info(
+        "0001", "CPU", agent_data, fm_data, oob_data
+    )  # pylint: disable=protected-access
+    assert {"deviceID": "0001", "type": "CPU"} == resp

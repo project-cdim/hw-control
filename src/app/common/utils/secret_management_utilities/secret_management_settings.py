@@ -23,34 +23,6 @@ These settings can be used to facilitate requests to a Secret Management service
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.common.messages import message
-
-
-class SecretManagementSettingsLog(message.BaseLogMessage):
-    """Log Message Model class for logging Secret API setting."""
-
-    action: str = Field(default="Get secret API settings form environment variables.")
-
-    host: str | None = Field(
-        default=None,
-        description="The value of the Secret API host obtained from the environment variable.",
-    )
-
-    port: int | None = Field(
-        default=None,
-        description="The value of the Secret API port obtained from the environment variable.",
-    )
-
-    path: str | None = Field(
-        default=None,
-        description="The value of the Secret API path obtained from the environment variable.",
-    )
-
-    timeout: int | None = Field(
-        default=None,
-        description="The timeout value for requests to the Secret API obtained from the environment variable.",
-    )
-
 
 class SecretManagementSettings(BaseSettings):
     """

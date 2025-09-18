@@ -15,7 +15,7 @@
 """HW independent section - Get Information process (Response generation)
 
 Upon receiving a request from the information acquisition API,
-make an information acquisition request for the specified device ID to FM and OOB.
+make an information acquisition request for the specified Device ID to FM and OOB.
 Merge the device information returned from FM and OOB for each device
 type and return it to the information acquisition API.
 
@@ -28,7 +28,7 @@ from typing import Any
 def get_socket_number(mapping_data: dict, key: str, item_value: str) -> Any:  # pylint: disable=W0613
     """Get socket number
 
-    Get Socket number from Socket string.
+    Get socket number from socket string.
 
     Args:
         mapping_data (dict): mapping data
@@ -48,35 +48,118 @@ def get_socket_number(mapping_data: dict, key: str, item_value: str) -> Any:  # 
     return int(match.group(1)) if match else None
 
 
-def duration_to_seconds(mapping_data: dict, key: str, item_value: str) -> Any:  # pylint: disable=W0613
-    """Convert duration to seconds
-
-    Convert duration(PnDTnHnMnS) to seconds.
+def _parse_days(date_part: str) -> int | None:
+    """
+    Parses a string representing a number of days and returns it as a float.
 
     Args:
-        mapping_data (dict): mapping data
-        key (str): item key
-        item_value (str): item value
+        date_part (str): A string expected to be in the format "<number>D",
+            where <number> is a float or integer representing days.
 
     Returns:
-        Any: seconds(float) or None
+        int | None: The number of days as a int if parsing is successful.
+            Returns 0 if the input is empty or None if the format is invalid.
     """
 
-    # Regular expression for period format. (PnDTnHnMnS)
-    pattern = re.compile(r"^P(\d+D)?(T(\d+H)?(\d+M)?(\d+(.\d+)?S)?)?$")  # NOSONAR
+    if not date_part:
+        return 0
 
-    # Is the input date string matching the regular expression?
-    match = pattern.match(item_value)
-    if not match:
+    if "D" in date_part:
+        try:
+            days_str = date_part.split("D")[0]
+            # If there are extra characters other than "D"
+            if len(date_part) != len(days_str) + 1:
+                return None
+            days = int(days_str)
+            # If a negative value is specified for day, it is considered invalid.
+            if days < 0:
+                return None
+            return days
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_time(time_part: str) -> tuple[int, int, float] | None:
+    """
+    Parses a time string in the format "[<hours>H][<minutes>M][<seconds>S]"
+    and returns a tuple of (hours, minutes, seconds).
+
+    Args:
+        time_part (str): The time string to parse, e.g., "1H30M15S", "45M", or "20.5S".
+
+    Returns:
+        tuple[int, int, float] | None: A tuple containing hours, minutes, and seconds as floats
+        if parsing is successful; otherwise, None if the input is invalid.
+    """
+
+    hours = minutes = 0
+    seconds = 0.0
+
+    if not time_part:
+        return hours, minutes, seconds
+
+    rest = time_part
+    try:
+        if "H" in rest:
+            hours_str, _, rest = rest.partition("H")
+            hours = int(hours_str)
+        if "M" in rest:
+            minutes_str, _, rest = rest.partition("M")
+            minutes = int(minutes_str)
+        if "S" in rest:
+            seconds_str, _, rest = rest.partition("S")
+            seconds = float(seconds_str)
+        # If extra characters remain, or if a negative value is specified for time, it is considered invalid.
+        if rest or hours < 0 or minutes < 0 or seconds < 0:
+            return None
+        return hours, minutes, seconds
+    except ValueError:
         return None
 
-    # Extracts date, time, minutes, and seconds. (non-existent items are set to 0)
-    # All are converted to floats for rounding to integers later.
-    matches = match.groups()
-    days = float(matches[0][:-1]) if matches[0] else 0
-    hours = float(matches[2][:-1]) if matches[2] else 0
-    minutes = float(matches[3][:-1]) if matches[3] else 0
-    seconds = float(matches[4][:-1]) if matches[4] else 0
+
+def duration_to_seconds(mapping_data: dict, key: str, item_value: str) -> Any:  # pylint: disable=W0613
+    """
+    Converts an ISO 8601 duration string (format: PnDTnHnMnS) to the total number of seconds.
+
+    Args:
+        mapping_data (dict): Unused parameter, present for interface compatibility.
+        key (str): Unused parameter, present for interface compatibility.
+        item_value (str): The duration string to convert (e.g., 'P2DT3H4M5.5S').
+
+    Returns:
+        Any: The total duration in seconds as an integer if whole,
+             or float if fractional seconds are present.
+             Returns None if the input is invalid or cannot be parsed.
+
+    Notes:
+        - Only supports durations with days, hours, minutes, and seconds (e.g., 'P2DT3H4M5.5S').
+        - Does not support months or years.
+        - Does not use regular expressions for parsing.
+    """
+
+    if not isinstance(item_value, str) or not item_value.startswith("P"):
+        return None
+
+    # Separate date and time
+    date_time_str = item_value[1:]
+    if "T" in date_time_str:
+        date_part, time_part = date_time_str.split("T", 1)
+    else:
+        date_part, time_part = date_time_str, ""
+
+    # Invalid if both date and time are not specified.
+    if not date_part and not time_part:
+        return None
+
+    days = _parse_days(date_part)
+    if days is None:
+        return None
+
+    time_result = _parse_time(time_part)
+    if time_result is None:
+        return None
+    hours, minutes, seconds = time_result
 
     # Total value.
     total_seconds = (days * 24 * 60 * 60) + (hours * 60 * 60) + (minutes * 60) + seconds

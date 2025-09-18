@@ -17,73 +17,10 @@
 import pytest
 from pydantic import ValidationError
 
-from tests import test_util
-
-from app.common.messages import message  # type: ignore
-
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils.authorization_utilities import authorization_server_settings  # type: ignore
+from app.common.utils.authorization_utilities import authorization_server_settings
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-class TestLogMessageModel:
-    """Unit test class for Log Message Class"""
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, expected_default_value",
-        [
-            (
-                authorization_server_settings.AuthorizationServerSettingsLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Get Authorization Server settings form environment variables.",
-                    "token_endpoint": None,
-                    "timeout": None,
-                },
-            ),
-        ],
-    )
-    def test_default_values(self, log_message_class: message.BaseLogMessage, expected_default_value):
-        """test create instance default values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_log_message = log_message_class().to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_log_message == expected_default_value
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, logging_contents, expected_contents",
-        [
-            (
-                authorization_server_settings.AuthorizationServerSettingsLog,
-                {
-                    "detail": "test_string",
-                    "token_endpoint": "https://authorization-server.example.com/path/to/access_token_endpoint",
-                    "timeout": 10,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Get Authorization Server settings form environment variables.",
-                    "token_endpoint": "https://authorization-server.example.com/path/to/access_token_endpoint",
-                    "timeout": 10,
-                },
-            ),
-        ],
-    )
-    def test_custom_values(
-        self, log_message_class: message.BaseLogMessage, logging_contents: dict, expected_contents: dict
-    ):
-        """test create instance custom values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        log_message = log_message_class(**logging_contents).to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert log_message == expected_contents
 
 
 class TestSecretManagementSettings:

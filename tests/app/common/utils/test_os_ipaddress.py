@@ -12,24 +12,23 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# test_os_ipaddress.py
 """UT test module
 
 UT of app/common/utils/os_ipaddress.py
 """
-import json
+
 import logging
 import uuid
-
 import yaml
 
+from pytest import MonkeyPatch, LogCaptureFixture
 from pytest_mock import MockFixture
 
-import app.common.basic_exceptions as exc  # type: ignore
-from app.common.deviceIdManager import device_id_base  # type: ignore
+import app.common.basic_exceptions as exc
+from app.common.dim import device_id_base
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils import os_ipaddress  # type: ignore
+from app.common.utils import os_ipaddress
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -77,7 +76,7 @@ def mock_device_id_to_fm_port_id(device_id: str) -> str | None:
     return ""
 
 
-class TestOsIpAddress:
+class TestOSIPAddress:
     """
     Test Class for os_ip_address module
     """
@@ -140,7 +139,7 @@ class TestOsIpAddress:
         # verification
         assert expected_response == actual
 
-    def test_get_os_ipaddress_except_yamlerror(self, mocker: MockFixture):
+    def test_get_os_ipaddress_except_yaml_error(self, mocker: MockFixture):
         """
         get_os_ipaddress test
         cpu not found (use os_ipaddress.yaml)
@@ -188,7 +187,7 @@ class TestOsIpAddress:
         def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
             """
             mock_safe_load_keyerror
-              KeyError in yaml file data(TEST_OS_IPAddress)
+                KeyError in yaml file data(TEST_OS_IPAddress)
 
             """
             response = {
@@ -225,7 +224,7 @@ class TestOsIpAddress:
         def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
             """
             mock_safe_load_keyerror
-              KeyError in yaml file data(TEST_fmPortID)
+                KeyError in yaml file data(TEST_fmPortID)
 
             """
             response = {
@@ -262,7 +261,7 @@ class TestOsIpAddress:
         def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
             """
             mock_safe_load_keyerror
-              KeyError in yaml file data(TEST_IPAddress)
+                KeyError in yaml file data(TEST_IPAddress)
 
             """
             response = {
@@ -289,7 +288,7 @@ class TestOsIpAddress:
         # verification
         assert expected_response == actual
 
-    def test_get_os_ipaddress_except_filenotfound(self, mocker: MockFixture):
+    def test_get_os_ipaddress_except_file_not_found(self, mocker: MockFixture):
         """
         get_os_ipaddress test
         except FileNotFoundError (os_ipaddress.yaml)
@@ -311,7 +310,7 @@ class TestOsIpAddress:
     def test_get_os_ipaddress_except_device_id_notfound(self, mocker: MockFixture):
         """
         get_os_ipaddress test
-        except DeviceIdNotFoundHwControlError
+        except DeviceIDNotFoundHWControlError
 
         """
         # preparations
@@ -319,7 +318,7 @@ class TestOsIpAddress:
         expected_response = (None, False)
         mocker.patch("builtins.open")
         mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
-        mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIdNotFoundHwControlError)
+        mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDNotFoundHWControlError)
 
         # test run
         actual = os_ipaddress.get_os_ipaddress(cpu_device_id)
@@ -330,7 +329,7 @@ class TestOsIpAddress:
     def test_get_os_ipaddress_except_device_id_file_incorrect(self, mocker: MockFixture):
         """
         get_os_ipaddress test
-        except DeviceIdFileIncorrectHwControlError
+        except DeviceIDFileIncorrectHWControlError
 
         """
         # preparations
@@ -339,7 +338,7 @@ class TestOsIpAddress:
         mocker.patch("builtins.open")
         mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
         mocker.patch.object(
-            device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIdFileIncorrectHwControlError
+            device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDFileIncorrectHWControlError
         )
 
         # test run
@@ -351,7 +350,7 @@ class TestOsIpAddress:
     def test_get_os_ipaddress_except_device_id_file_notfound(self, mocker: MockFixture):
         """
         get_os_ipaddress test
-        except DeviceIdFileNotFoundHwControlError
+        except DeviceIDFileNotFoundHWControlError
 
         """
         # preparations
@@ -360,7 +359,7 @@ class TestOsIpAddress:
         mocker.patch("builtins.open")
         mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
         mocker.patch.object(
-            device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIdFileNotFoundHwControlError
+            device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDFileNotFoundHWControlError
         )
 
         # test run
@@ -369,13 +368,15 @@ class TestOsIpAddress:
         # verification
         assert expected_response == actual
 
-    def test_get_os_ipaddress_output_debug_log(self, mocker: MockFixture, caplog, monkeypatch):
+    def test_get_os_ipaddress_output_debug_log(
+        self, mocker: MockFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch
+    ):
         """
         get_os_ipaddress test
         logging path of os_ipaddress.yaml
 
         """
-        # preparations
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
 
         mocker.patch("builtins.open")
@@ -384,22 +385,28 @@ class TestOsIpAddress:
 
         monkeypatch.delenv("HW_CONTROL_CONFIG_FILE_DIR", raising=False)
 
-        # test run
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.DEBUG, logger="LOGGER"):
+        with caplog.at_level(logging.DEBUG, logger=os_ipaddress.__name__):
             os_ipaddress.get_os_ipaddress(cpu_device_id)
 
-        actual = json.loads(caplog.records[0].getMessage())["message"]
-        # verification
-        assert "[get_os_ipaddress] config_file_dir=/opt/cdim/hw-control/config/" == actual
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert len(caplog.records) == 1
 
-    def test_get_os_ipaddress_output_debug_log_with_env(self, mocker: MockFixture, caplog, monkeypatch):
+        # Inspection: Check the error debug log.
+        error_debug_log = caplog.records[-1]
+        assert error_debug_log.levelname == "DEBUG"
+        assert error_debug_log.getMessage() == "[get_os_ipaddress] config_file_dir=/opt/cdim/hw-control/config/"
+
+    def test_get_os_ipaddress_output_debug_log_with_env(
+        self, mocker: MockFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch
+    ):
         """
         get_os_ipaddress test
         logging path of os_ipaddress.yaml with environment variable
 
         """
-        # preparations
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
 
         mocker.patch("builtins.open")
@@ -408,11 +415,15 @@ class TestOsIpAddress:
 
         monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", "/dev/null")
 
-        # test run
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.DEBUG, logger="LOGGER"):
+        with caplog.at_level(logging.DEBUG, logger=os_ipaddress.__name__):
             os_ipaddress.get_os_ipaddress(cpu_device_id)
 
-        actual = json.loads(caplog.records[0].getMessage())["message"]
-        # verification
-        assert "[get_os_ipaddress] config_file_dir=/dev/null" == actual
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert len(caplog.records) == 1
+
+        # Inspection: Check the error debug log.
+        error_debug_log = caplog.records[-1]
+        assert error_debug_log.levelname == "DEBUG"
+        assert error_debug_log.getMessage() == "[get_os_ipaddress] config_file_dir=/dev/null"

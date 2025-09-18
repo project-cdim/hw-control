@@ -23,9 +23,9 @@ from app.common.settings import settings
 from app.core.info.info_core import InformationCore
 from app.common.constants import TIME_STAMP_FORMAT
 from app.common.basic_exceptions import (
-    BaseHwControlError,
-    InternalHwControlError,
-    DeviceNotFoundHwControlError,
+    BaseHWControlError,
+    InternalHWControlError,
+    DeviceNotFoundHWControlError,
 )
 from app.core.info.info_utils import load_mapping_table
 
@@ -44,8 +44,8 @@ OOB_DATA_CPU_LINK = {
                 "ProcessorType": "CPU",
                 "ProcessorArchitecture": "x86",
                 "InstructionSet": "x86-64",
-                "Manufacturer": "Intel(R) Corporation",  # NOSONAR
-                "Model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",  # NOSONAR
+                "Manufacturer": "Intel(R) Corporation",
+                "Model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
                 "ProcessorId": {
                     "VendorId": "GenuineIntel",
                     "IdentificationRegisters": "0x34AC34DC8901274A",
@@ -60,10 +60,10 @@ OOB_DATA_CPU_LINK = {
                 "ProcessorIndex": "xxx",
                 "Replaceable": True,
                 "SerialNumber": "PROCESSOR1",
-                "Socket": "CPU 1",  # NOSONAR
+                "Socket": "CPU 1",
                 "Links": {
-                    "Chassis": {"@odata.id": "/redfish/v1/Chassis/Chassis-1"},  # NOSONAR
-                    "ConnectedProcessors": {"@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001"},  # NOSONAR
+                    "Chassis": {"@odata.id": "/redfish/v1/Chassis/Chassis-1"},
+                    "ConnectedProcessors": {"@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001"},
                     "GraphicsController": {"@odata.id": "{rb}{suffix}/{suffix_id}/GraphicsControllers/{gs_id}"},
                     "NetworkDeviceFunctions": {
                         "@odata.id": "{rb}Chassis/{chassis_id}/NetworkAdapters/ \
@@ -85,22 +85,20 @@ OOB_DATA_CPU_LINK = {
                 ],
                 "MemorySummary": {
                     "MemoryMirroring": None,
-                    "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Memory/{memory_id}/MemoryMetrics"},  # NOSONAR
+                    "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Memory/{memory_id}/MemoryMetrics"},
                     "Status": {},
                     "TotalCacheSizeMiB": 4096,
                     "TotalMemorySizeMiB": 8192,
                     "ECCModeEnabled": True,
                 },
-                "Metrics": {
-                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/ProcessorMetrics"
-                },  # NOSONAR
+                "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/ProcessorMetrics"},
                 "EnvironmentMetrics": {
-                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/EnvironmentMetrics"  # NOSONAR
+                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/EnvironmentMetrics"
                 },
                 "Status": {"Health": "OK", "State": "Enabled"},
             },
             "link": [{"type": "memory", "deviceID": "1001"}],
-            "time": "2023-07-06T05:55:55Z",  # NOSONAR
+            "time": "2023-07-06T05:55:55Z",
         }
     ]
 }
@@ -112,8 +110,8 @@ OOB_DATA_CPU_NO_LINK = {
             "type": "CPU",
             "deviceID": "0001",
             "schema": {
-                "@odata.context": "/redfish/v1/$metadata#Processor.Processor",  # NOSONAR
-                "@odata.type": "#Processor.1_0_0.Processor",  # NOSONAR
+                "@odata.context": "/redfish/v1/$metadata#Processor.Processor",
+                "@odata.type": "#Processor.1_0_0.Processor",
                 "@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001",
                 "Name": "Processor",
                 "Id": "PROC-0001",
@@ -994,7 +992,7 @@ OOB_DATA_NIC_LINK = {
                             "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
                             "Location": {
                                 "PartLocation": {
-                                    "ServiceLabel": "Slot 1",  # NOSONAR
+                                    "ServiceLabel": "Slot 1",
                                     "LocationType": "Slot",
                                     "LocationOrdinalValue": 0,
                                     "Reference": "Rear",
@@ -1008,7 +1006,7 @@ OOB_DATA_NIC_LINK = {
                 "NetworkDeviceFunctions": {
                     "DeviceEnabled": True,
                     "Ethernet": {
-                        "MACAddress": "00:0C:29:9A:98:ED",  # NOSONAR
+                        "MACAddress": "00:0C:29:9A:98:ED",
                         "MTUSize": 1500,
                         "MTUSizeMaximum": 2500,
                         "PermanentMACAddress": "00:0C:29:9A:98:ED",
@@ -1086,7 +1084,7 @@ OOB_DATA_NIC_NO_LINK = {
                             "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
                             "Location": {
                                 "PartLocation": {
-                                    "ServiceLabel": "Slot 1",  # NOSONAR
+                                    "ServiceLabel": "Slot 1",
                                     "LocationType": "Slot",
                                     "LocationOrdinalValue": 0,
                                     "Reference": "Rear",
@@ -1100,7 +1098,7 @@ OOB_DATA_NIC_NO_LINK = {
                 "NetworkDeviceFunctions": {
                     "DeviceEnabled": True,
                     "Ethernet": {
-                        "MACAddress": "00:0C:29:9A:98:ED",  # NOSONAR
+                        "MACAddress": "00:0C:29:9A:98:ED",
                         "MTUSize": 1500,
                         "MTUSizeMaximum": 2500,
                         "PermanentMACAddress": "00:0C:29:9A:98:ED",
@@ -1328,8 +1326,8 @@ OOB_DATA_GPU_LINK = {
                 "ProcessorType": "GPU",
                 "ProcessorArchitecture": "x86",
                 "InstructionSet": "x86-64",
-                "Manufacturer": "Intel(R) Corporation",  # NOSONAR
-                "Model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",  # NOSONAR
+                "Manufacturer": "Intel(R) Corporation",
+                "Model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
                 "ProcessorId": {
                     "VendorId": "GenuineIntel",
                     "IdentificationRegisters": "0x34AC34DC8901274A",
@@ -1344,10 +1342,10 @@ OOB_DATA_GPU_LINK = {
                 "ProcessorIndex": "xxx",
                 "Replaceable": True,
                 "SerialNumber": "GPU1",
-                "Socket": "CPU 1",  # NOSONAR
+                "Socket": "CPU 1",
                 "Links": {
-                    "Chassis": {"@odata.id": "/redfish/v1/Chassis/Chassis-1"},  # NOSONAR
-                    "ConnectedProcessors": {"@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001"},  # NOSONAR
+                    "Chassis": {"@odata.id": "/redfish/v1/Chassis/Chassis-1"},
+                    "ConnectedProcessors": {"@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001"},
                     "GraphicsController": {"@odata.id": "{rb}{suffix}/{suffix_id}/GraphicsControllers/{gs_id}"},
                     "NetworkDeviceFunctions": {
                         "@odata.id": "{rb}Chassis/{chassis_id}/NetworkAdapters/ \
@@ -1369,22 +1367,20 @@ OOB_DATA_GPU_LINK = {
                 ],
                 "MemorySummary": {
                     "MemoryMirroring": None,
-                    "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Memory/{memory_id}/MemoryMetrics"},  # NOSONAR
+                    "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Memory/{memory_id}/MemoryMetrics"},
                     "Status": {},
                     "TotalCacheSizeMiB": 4096,
                     "TotalMemorySizeMiB": 8192,
                     "ECCModeEnabled": True,
                 },
-                "Metrics": {
-                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/ProcessorMetrics"
-                },  # NOSONAR
+                "Metrics": {"@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/ProcessorMetrics"},
                 "EnvironmentMetrics": {
-                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/EnvironmentMetrics"  # NOSONAR
+                    "@odata.id": "{rb}{suffix}/{suffix_id}/Processors/{ProcessorId}/EnvironmentMetrics"
                 },
                 "Status": {"Health": "OK", "State": "Enabled"},
             },
             "link": [{"type": "graphicController", "deviceID": "5001"}],
-            "time": "2023-07-06T05:55:55Z",  # NOSONAR
+            "time": "2023-07-06T05:55:55Z",
         }
     ]
 }
@@ -1396,8 +1392,8 @@ OOB_DATA_GPU_NO_LINK = {
             "type": "GPU",
             "deviceID": "4001",
             "schema": {
-                "@odata.context": "/redfish/v1/$metadata#Processor.Processor",  # NOSONAR
-                "@odata.type": "#Processor.1_0_0.Processor",  # NOSONAR
+                "@odata.context": "/redfish/v1/$metadata#Processor.Processor",
+                "@odata.type": "#Processor.1_0_0.Processor",
                 "@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001",
                 "Name": "Processor",
                 "Id": "PROC-0001",
@@ -1669,7 +1665,7 @@ def _constraints_nonremovable_sort(source):
     return source
 
 
-def _get_spec_info(mocker, device_id, device_type, oob_data, fm_data, cut_timestamp, fm_valid=True):
+def _get_spec_info(mocker, device_id, device_type, oob_data, fm_data, cut_timestamp, fm_valid: bool | None = True):
     """Get Information"""
 
     def mock_device_id_to_device_type(_):
@@ -1697,20 +1693,16 @@ def _get_spec_info(mocker, device_id, device_type, oob_data, fm_data, cut_timest
     load_mapping_table()
 
     # Replace device information retrieval for Device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type
-    )
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
 
     # Replace OOB device information retrieval with mock
     mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_spec_oob", side_effect=mock_oob)
     # Replace fetching FM device information with a mock.
     mocker.patch("app.core.info.spec_fm.GetSpecFMInfo.get_spec_fm", side_effect=mock_fm)
 
-    # Replace the retrieval of the FM information enable flag for device ID management.
+    # Replace the retrieval of the FM information enable flag for Device ID management.
     if fm_valid is not None:
-        mocker.patch(
-            "app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=mock_device_id_to_fm_valid
-        )
+        mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=mock_device_id_to_fm_valid)
 
     get_information = InformationCore()
 
@@ -1825,7 +1817,7 @@ def test_get_spec_info_nic_float(mocker):
 
 
 def test_get_spec_info_other_device_type(mocker, caplog):
-    """Test Get Information other device type"""
+    """Test Get Information other Device Type"""
     spec_data, errors = _get_spec_info(mocker, "5001", None, {}, {}, False)
 
     assert spec_data is None
@@ -1834,15 +1826,15 @@ def test_get_spec_info_other_device_type(mocker, caplog):
         {
             "errorCode": "EF010BAS000",
             "errorMessage": "The server encountered an internal error. "
-            "Unable to retrieve the device type corresponding to Device ID: 5001.",
+            "Unable to retrieve the Device Type corresponding to Device ID: 5001.",
         }
     ]
 
     assert _log_contains(
         caplog.record_tuples,
         logging.WARNING,
-        "W00006: Device information not found: Unable to retrieve the device type corresponding to Device ID: 5001.",
-    )  # NOSONAR
+        "W00006: Device information not found: Unable to retrieve the Device Type corresponding to Device ID: 5001.",
+    )
 
 
 def test_get_spec_info_gpu_link(mocker):
@@ -1878,13 +1870,11 @@ def test_get_spec_info_get_spec_fm_base_exception(mocker):
     def mock_device_id_to_device_type(_):
         return "CPU"
 
-    # Replace device information retrieval in device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type
-    )
+    # Replace device information retrieval in Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
 
-    # By forcibly triggering an BaseHwControlError in get_spec_fm, a BaseHwControlError is raised.
-    mocker.patch("app.core.info.spec_fm.GetSpecFMInfo.get_spec_fm", side_effect=BaseHwControlError)
+    # By forcibly triggering an BaseHWControlError in get_spec_fm, a BaseHWControlError is raised.
+    mocker.patch("app.core.info.spec_fm.GetSpecFMInfo.get_spec_fm", side_effect=BaseHWControlError)
     get_information = InformationCore()
     _, errors = get_information.get_spec_info("0001")
 
@@ -1893,7 +1883,7 @@ def test_get_spec_info_get_spec_fm_base_exception(mocker):
 
 
 def test_get_spec_info_create_spec_info_device_type_none():
-    """create_spec_info device type none"""
+    """create_spec_info Device Type none"""
     get_information = InformationCore()
     resp = get_information._create_spec_info("0001", None, {}, {})  # pylint: disable=protected-access
     assert {"deviceID": "0001", "type": None} == resp
@@ -1916,10 +1906,10 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_oob(m
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHwControlError)
+    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHWControlError)
 
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
         get_information._create_spec_info("0001", "CPU", None, oob_data)  # pylint: disable=protected-access
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
@@ -1942,13 +1932,33 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_fm(mo
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHwControlError)
+    mocker.patch("app.core.info.info_core.info_utils.create_resp_from_mapping", side_effect=InternalHWControlError)
 
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
         get_information._create_spec_info("0001", "CPU", fm_data, None)  # pylint: disable=protected-access
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
+
+
+def test_get_spec_info_create_spec_info_get_mapping_table_none(mocker):
+    """create_spec_info get_mapping_table none"""
+
+    oob_data = {"devices": [{"type": "CPU", "deviceID": "0001"}]}
+    fm_data = {"data": [{"deviceID": "0001", "type": "CPU"}]}
+
+    def mock_get_mapping_table(_, __, ___):
+        return None
+
+    def mock_create_constraints(_, __):
+        return {"constraints": None}
+
+    mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=mock_get_mapping_table)
+    mocker.patch("app.core.info.info_core.InformationCore._create_constraints", side_effect=mock_create_constraints)
+
+    get_information = InformationCore()
+    resp = get_information._create_spec_info("0001", "CPU", fm_data, oob_data)  # pylint: disable=protected-access
+    assert {"deviceID": "0001", "type": "CPU"} == resp
 
 
 def test_get_spec_info_time_stamp(mocker):
@@ -1992,11 +2002,9 @@ def test_get_spec_info_built_in_cpu_constraints_nonremovable(mocker):
     resp_cpu_constraints_dict.update(constraints)
     resp_cpu_constraints = json.dumps(resp_cpu_constraints_dict)
 
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "0001", "CPU", OOB_DATA_CPU_NO_LINK, FM_DATA_CPU_LINK_CPU, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "0001", "CPU", OOB_DATA_CPU_NO_LINK, FM_DATA_CPU_LINK_CPU, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2032,11 +2040,9 @@ def test_get_spec_info_built_in_memory_constraints_nonremovable(mocker):
     resp_memory_constraints_dict.update(constraints)
     resp_memory_constraints = json.dumps(resp_memory_constraints_dict)
 
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "1001", "memory", OOB_DATA_MEMORY_LINK, FM_DATA_MEMORY_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "1001", "memory", OOB_DATA_MEMORY_LINK, FM_DATA_MEMORY_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2045,11 +2051,9 @@ def test_get_spec_info_built_in_memory_constraints_nonremovable(mocker):
 
 def test_get_spec_info_cxl_memory_constraints_nonremovable(mocker):
     """Test Get Information memory"""
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "1001", "memory", OOB_DATA_MEMORY_LINK, FM_DATA_MEMORY_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "1001", "memory", OOB_DATA_MEMORY_LINK, FM_DATA_MEMORY_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2089,11 +2093,9 @@ def test_get_spec_info_built_in_storage_constraints_nonremovable(mocker):
     resp_constraints_dict.update(constraints)
     resp_constraints = json.dumps(resp_constraints_dict)
 
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "2001", "storage", OOB_DATA_STORAGE_LINK, FM_DATA_STORAGE_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "2001", "storage", OOB_DATA_STORAGE_LINK, FM_DATA_STORAGE_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2102,11 +2104,9 @@ def test_get_spec_info_built_in_storage_constraints_nonremovable(mocker):
 
 def test_get_spec_info_cxl_storage_constraints_nonremovable(mocker):
     """Test Get Information storage"""
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "2001", "storage", OOB_DATA_STORAGE_LINK, FM_DATA_STORAGE_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "2001", "storage", OOB_DATA_STORAGE_LINK, FM_DATA_STORAGE_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2146,11 +2146,9 @@ def test_get_spec_info_built_in_nic_constraints_nonremovable(mocker):
     resp_constraints_dict.update(constraints)
     resp_constraints = json.dumps(resp_constraints_dict)
 
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "3001", "networkInterface", OOB_DATA_NIC_LINK, FM_DATA_NIC_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "3001", "networkInterface", OOB_DATA_NIC_LINK, FM_DATA_NIC_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2159,11 +2157,9 @@ def test_get_spec_info_built_in_nic_constraints_nonremovable(mocker):
 
 def test_get_spec_info_cxl_nic_constraints_nonremovable(mocker):
     """Test Get Information networkInterface"""
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
 
-    resp, errors = _get_spec_info(
-        mocker, "3001", "networkInterface", OOB_DATA_NIC_LINK, FM_DATA_NIC_LINK, True, None  # type: ignore
-    )
+    resp, errors = _get_spec_info(mocker, "3001", "networkInterface", OOB_DATA_NIC_LINK, FM_DATA_NIC_LINK, True, None)
     ret = _constraints_nonremovable_sort(_link_sort(resp))
 
     assert len(errors) == 0
@@ -2247,18 +2243,16 @@ def test_get_spec_info_create_constraints_exception_devicenotfound(mocker):
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
-    # Replace device information retrieval in device ID management.
-    mocker.patch("app.common.deviceIdManager.device_id_base.device_id_to_device_type", return_value="CPU")
+    # Replace device information retrieval in Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", return_value="CPU")
 
     # Replace obtaining OOB device information with a mock.
     mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_spec_oob", return_value=OOB_DATA_CPU_LINK)
     # Replace FM device information retrieval with a mock.
     mocker.patch("app.core.info.spec_fm.GetSpecFMInfo.get_spec_fm", return_value=FM_DATA_CPU_LINK)
 
-    # Replace the acquisition of the FM information enable flag for device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_fm_valid", side_effect=DeviceNotFoundHwControlError
-    )
+    # Replace the acquisition of the FM information enable flag for Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=DeviceNotFoundHWControlError)
     get_information = InformationCore()
 
     _, errors = get_information.get_spec_info("0001")

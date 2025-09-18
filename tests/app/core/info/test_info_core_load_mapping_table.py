@@ -18,7 +18,7 @@ import os
 import logging
 import pytest
 from app.common.settings import settings
-from app.common.basic_exceptions import InternalHwControlError
+from app.common.basic_exceptions import InternalHWControlError
 from app.core.info.info_utils import load_mapping_table
 
 
@@ -51,6 +51,6 @@ def test_load_mapping_table_not_exist_mapping_file(mocker, caplog):
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", test_mapping_file)
 
     # Exception
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         load_mapping_table()
     assert _log_contains(caplog.record_tuples, logging.WARNING, "W00007: File does not exist: ")

@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
+# pylint: disable=C0302
+
 """This is a test program."""
 
 import logging
@@ -19,10 +21,10 @@ import datetime
 import pytest
 from fastapi.testclient import TestClient
 from app.routers.info.devices import router
-from app.common.basic_exceptions import BaseHwControlError
-from app.common.basic_exceptions import DeviceIdFileNotFoundHwControlError
-from app.common.basic_exceptions import DeviceIdFileIncorrectHwControlError
-from app.common.basic_exceptions import InternalHwControlError
+from app.common.basic_exceptions import BaseHWControlError
+from app.common.basic_exceptions import DeviceIDFileNotFoundHWControlError
+from app.common.basic_exceptions import DeviceIDFileIncorrectHWControlError
+from app.common.basic_exceptions import InternalHWControlError
 from app.routers.info.devices import _get_individually_specified_device_info
 
 from app.common.constants import TIME_STAMP_FORMAT
@@ -32,7 +34,7 @@ DEVICE_LIST_ITEM_NAME_TIME_STAMP = "infoTimestamp"
 
 client = TestClient(router)
 
-mock_list_ret = {
+MOCK_LIST_RET = {
     "deviceList": [
         {"type": "CPU", "deviceID": "0001"},
         {"type": "CPU", "deviceID": "0002"},
@@ -47,23 +49,27 @@ mock_list_ret = {
     "infoTimestamp": "2023-10-14T12:25:00-05:00",
 }
 
-mock_list_device_ret = {
+MOCK_LIST_DEVICE_RET = {
     "deviceList": ["CPU", "memory", "storage", "networkInterface"],
     "infoTimestamp": "2023-10-14T13:25:00-05:00",
 }
 
-mock_list_no_list_ret = {"deviceList": [], "infoTimestamp": "2023-10-14T13:25:00-05:00"}
+MOCK_LIST_NO_LIST_RET = {"deviceList": [], "infoTimestamp": "2023-10-14T13:25:00-05:00"}
 
-mock_list_not_list_ret = {"deviceList": "CPU", "infoTimestamp": "2023-10-14T13:25:00-05:00"}
+MOCK_LIST_NOT_LIST_RET = {"deviceList": "CPU", "infoTimestamp": "2023-10-14T13:25:00-05:00"}
 
-mock_list_none_ret = {"infoTimestamp": "2023-10-14T14:25:00-05:00"}
+MOCK_LIST_NONE_RET = {"infoTimestamp": "2023-10-14T14:25:00-05:00"}
 
-mock_list_cpu_ret = {
-    "deviceList": [{"type": "CPU", "deviceID": "0001"}, {"type": "CPU", "deviceID": "0002"}],
+MOCK_LIST_CPU_RET = {
+    "deviceList": [
+        {"type": "CPU", "deviceID": "0001"},
+        {"type": "CPU", "deviceID": "0002"},
+        {"type": "CPU", "deviceID": ""},
+    ],
     "infoTimestamp": "2023-10-14T13:25:00-05:00",
 }
 
-mock_list_mem_ret = {
+MOCK_LIST_MEM_RET = {
     "deviceList": [
         {"type": "memory", "deviceID": "1001"},
         {"type": "memory", "deviceID": "1002"},
@@ -72,22 +78,24 @@ mock_list_mem_ret = {
     "infoTimestamp": "2023-10-14T14:25:00-05:00",
 }
 
-mock_list_resource_ret = {
+MOCK_LIST_RESOURCE_RET = {
     "deviceList": [
         {"type": "CPU", "deviceID": "0001"},
         {"type": "memory", "deviceID": "1001"},
         {"type": "storage", "deviceID": "2001"},
         {"type": "networkInterface", "deviceID": "3001"},
+        {"type": "nic", "deviceID": ""},
     ],
     "infoTimestamp": "2023-10-14T12:25:00-05:00",
 }
 
-mock_list_resource_multiple_ret = {
+MOCK_LIST_RESOURCE_MULTIPLE_RET = {
     "deviceList": [
         {"type": "CPU", "deviceID": "0001"},
         {"type": "memory", "deviceID": "1001"},
         {"type": "storage", "deviceID": "2001"},
         {"type": "networkInterface", "deviceID": "3001"},
+        {"type": "nic", "deviceID": ""},
     ],
     "infoTimestamp": "2023-10-14T12:25:00-05:00",
 }
@@ -564,43 +572,44 @@ def _freeze_datetime(mocker):
 
 
 def test_device_ids_all(mocker, caplog):
-    """Get device ID list information(all)"""
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    """Get Device ID list information(all)"""
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_RET)
 
     # Compare and evaluate the results of the Web API execution with the results of the mock JSON data.
 
     response = client.get("/cdim/api/v1/device-ids")
     assert response.status_code == 200
-    assert response.json() == mock_list_ret
+    assert response.json() == MOCK_LIST_RET
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
 def test_device_ids(mocker, caplog):
-    """Get device ID list information(memory)"""
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    """Get Device ID list information(memory)"""
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_mem_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_MEM_RET)
 
     # Compare and evaluate the results of the Web API execution with the results of the mock JSON data.
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=memory")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=memory")
     assert response.status_code == 200
-    assert response.json() == mock_list_mem_ret
+    assert response.json() == MOCK_LIST_MEM_RET
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=memory"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=memory"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
 def test_devices_all(mocker, caplog):
     """Get all resource information at once(all)"""
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         if device_id == "0001":
@@ -611,11 +620,12 @@ def test_devices_all(mocker, caplog):
             return mock_storage_ret, ""
         if device_id == "3001":
             return mock_networkInterface_ret, ""
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_resource_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_RESOURCE_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
     # Compare and evaluate the results of the Web API execution with the results of the mock JSON data.
@@ -628,31 +638,31 @@ def test_devices_all(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_all_resource_list_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
 def test_devices(mocker, caplog):
     """Get all resource information at once(CPU)"""
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         if device_id == "0001":
             return mock_cpu_ret, ""
         if device_id == "0002":
             return mock_cpu_002_ret, ""
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
 
     # Compare and evaluate the results of the Web API execution with the results of the mock JSON data.
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
 
     # Update current date and time
     mock_all_resource_ret["infoTimestamp"] = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
@@ -661,28 +671,29 @@ def test_devices(mocker, caplog):
     assert response.json() == mock_all_resource_ret
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_devices_invalid(mocker, caplog):
+def test_devices_invalid(mocker, caplog) -> None:
     """Get all resource information at once(CPU failure)
     No data obtained(status_code == 404)
 
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_device_invalid_ret, mock_error_ret
 
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
 
     # Compare and evaluate the results of the Web API execution with the results of the mock JSON data.
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
 
     # Update current date and time
     mock_all_resource_ret["infoTimestamp"] = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
@@ -691,13 +702,14 @@ def test_devices_invalid(mocker, caplog):
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_devices_information(mocker, caplog):
+def test_devices_information(mocker, caplog) -> None:
     """Get device information(deviceID=0001)"""
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu_ret, mock_error_ret
 
@@ -711,12 +723,13 @@ def test_devices_information(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_metrics_information(mocker, caplog):
+def test_metrics_information(mocker, caplog) -> None:
     """Get metric information(deviceID=0001)"""
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_metric_ret, mock_error_ret
 
@@ -730,12 +743,13 @@ def test_metrics_information(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_resources_information(mocker, caplog):
+def test_resources_information(mocker, caplog) -> None:
     """Get resource information(deviceID=0001)"""
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu_ret, mock_error_ret
 
@@ -751,16 +765,15 @@ def test_resources_information(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_resource_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_devices_invalid_information(mocker, caplog):
+def test_devices_invalid_information(mocker, caplog) -> None:
     """Get device information(deviceID=0001 failure)
-    The return value is only the device ID.
+    The return value is only the Device ID.
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu_invalid_ret, mock_error_ret
 
@@ -774,14 +787,15 @@ def test_devices_invalid_information(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_metrics_invalid_information(mocker, caplog):
+def test_metrics_invalid_information(mocker, caplog) -> None:
     """Get metric information(deviceID=0001 failure)
-    There is no device ID in the return value.(status_code == 500)
+    There is no Device ID in the return value.(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_metric_invalid_ret, mock_error_ret
 
@@ -795,14 +809,15 @@ def test_metrics_invalid_information(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_invalid_information(mocker, caplog):
+def test_resources_invalid_information(mocker, caplog) -> None:
     """Get resource information(deviceID=0001 failure)
-    The return value is only the device ID.
+    The return value is only the Device ID.
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu_invalid2_ret, mock_error_ret
 
@@ -818,161 +833,162 @@ def test_resources_invalid_information(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == {**mock_cpu_invalid2_ret, **mock_metric_invalid2_ret}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
 def test_device_ids_err400(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     No data obtained(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value="")
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=nic")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=nic")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=nic"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=nic"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_err400none(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     No data obtained(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=None)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=nic")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=nic")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=nic"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=nic"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_err404_no_list(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_no_list_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_NO_LIST_RET)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=cpu")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=cpu"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_err400_none_list(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_none_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_NONE_RET)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=cpu")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=cpu"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_err500(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     Request Error(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=BaseHwControlError)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=BaseHWControlError)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=nic")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=nic")
     assert response.status_code == 500
     err_msg = "The server encountered an internal error and was unable to complete your request."
     assert response.json() == {"code": "CF000BAS000", "message": err_msg}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=nic"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=nic"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_error(mocker):
-    """Get device ID list information
+    """Get Device ID list information
 
     Switched general exceptions to custom_exception_handler handling
       (The handling of unexpected exceptions implemented in each process has been deleted.)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=Exception)
 
 
 def test_device_ids_dim_err010(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     Information acquisition failure(status_code == 500)
     """
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=DeviceIdFileNotFoundHwControlError
-    )
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=DeviceIDFileNotFoundHWControlError)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=memory")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=memory")
     assert response.status_code == 500
     assert response.json() == {"code": "EF007BAS010", "message": "The Device ID Management File is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=memory"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=memory"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_dim_err011(mocker, caplog):
-    """Get device ID list information
+    """Get Device ID list information
     Information acquisition failure(status_code == 500)
     """
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=DeviceIdFileIncorrectHwControlError
-    )
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=DeviceIDFileIncorrectHWControlError)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
-    response = client.get("/cdim/api/v1/device-ids?device_type=memory")
+    response = client.get("/cdim/api/v1/device-ids?deviceType=memory")
     assert response.status_code == 500
     assert response.json() == {"code": "EF007BAS011", "message": "The Device ID Management File is incorrect."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?device_type=memory"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/device-ids?deviceType=memory"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_ids_dim_error(mocker):
-    """Get device ID list information
+    """Get Device ID list information
 
     Switched general exceptions to custom_exception_handler handling
       (The handling of unexpected exceptions implemented in each process has been deleted.)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=Exception)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=Exception)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
@@ -981,6 +997,7 @@ def test_device_information_err200none(mocker, caplog):
     """Get device information
     No data obtained, error information available(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_errors_ret
 
@@ -997,14 +1014,15 @@ def test_device_information_err200none(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_device_information_err200(mocker, caplog):
     """Get device information
     Acquired data mismatch, error information valid(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_metric_ret, mock_errors_ret
 
     _freeze_datetime(mocker)
@@ -1020,14 +1038,15 @@ def test_device_information_err200(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_device_information_err200data(mocker, caplog):
     """Get device information
     Acquired data is valid, error information is valid(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_cpu_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
@@ -1038,14 +1057,15 @@ def test_device_information_err200data(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_device_information_err400mismatch(mocker, caplog):
+def test_device_information_err400mismatch(mocker, caplog) -> None:
     """Get device information
     No data obtained, no error information(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_metric_ret, mock_error_ret
 
@@ -1057,14 +1077,15 @@ def test_device_information_err400mismatch(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_device_information_err400(mocker, caplog):
+def test_device_information_err400(mocker, caplog) -> None:
     """Get device information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1077,14 +1098,15 @@ def test_device_information_err400(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_device_information_err400none(mocker, caplog):
+def test_device_information_err400none(mocker, caplog) -> None:
     """Get device information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = None
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1097,15 +1119,16 @@ def test_device_information_err400none(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_information_err500(mocker, caplog):
     """Get device information
     Request Error(status_code == 500)
     """
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=BaseHwControlError)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=BaseHWControlError)
 
     response = client.get("/cdim/api/v1/devices/6001/specs")
     assert response.status_code == 500
@@ -1114,8 +1137,8 @@ def test_device_information_err500(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/6001/specs"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_device_information_error(mocker):
@@ -1131,6 +1154,7 @@ def test_devices_information_err200none(mocker, caplog):
     """Get all resource information at once
     No data obtained, error information available(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         mock_ret = ""
@@ -1138,11 +1162,12 @@ def test_devices_information_err200none(mocker, caplog):
             return mock_ret, mock_errors_ret
         if device_id == "0002":
             return mock_ret, mock_errors_multiple_ret
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
 
@@ -1158,31 +1183,31 @@ def test_devices_information_err200none(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_incomplete_list_no_data_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_devices_information_err200data(mocker, caplog):
     """Get all resource information at once
     Data obtained, error information available(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         if device_id == "0001":
             return mock_cpu_ret, mock_errors_ret
         if device_id == "0002":
             return mock_cpu_002_ret, mock_errors_ret
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
 
     # Update current date and time
     mock_incomplete_list_ret["infoTimestamp"] = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
@@ -1191,30 +1216,32 @@ def test_devices_information_err200data(mocker, caplog):
     assert response.json() == mock_incomplete_list_ret
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_devices_information_err200mismatch(mocker, caplog):
     """Get all resource information at once
-    No device ID in the return value, error information available(status_code == 200)
+    No Device ID in the return value, error information available(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         if device_id == "0001":
             return mock_cpu2_ret, mock_errors_ret
         if device_id == "0002":
             return mock_cpu_002_ret, mock_errors_ret
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
 
     # Update current date and time
     mock_cpu2_err_info_ret["infoTimestamp"] = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
@@ -1224,189 +1251,198 @@ def test_devices_information_err200mismatch(mocker, caplog):
     assert response.json() == mock_incomplete_list_mismatch_ret
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_devices_err400(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value="")
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value="")
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err400none(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err404(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value="")
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err404none(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err404_no_list(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_no_list_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_NO_LIST_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err404_not_list(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_not_list_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_NOT_LIST_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err400_none_list(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_none_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_NONE_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_err400_ng_list(mocker, caplog):
     """Get all resource information at once
     No data obtained(status_code == 500)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_device_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_DEVICE_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=None)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_error404(mocker, caplog):
     """Get all resource information at once
     Invalid request(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=BaseHwControlError)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=BaseHWControlError)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_error500(mocker):
@@ -1415,7 +1451,7 @@ def test_devices_error500(mocker):
     Switched general exceptions to custom_exception_handler handling
       (The handling of unexpected exceptions implemented in each process has been deleted.)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=Exception)
 
@@ -1426,64 +1462,63 @@ def test_devices_error(mocker, caplog):
     """Get all resource information at once
     Invalid request(status_code == 404)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_cpu_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_CPU_RET)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=Exception)
 
-    response = client.get("/cdim/api/v1/devices?device_type=CPU")
+    response = client.get("/cdim/api/v1/devices?deviceType=CPU")
     assert response.status_code == 404
     assert response.json() == {"code": "EF013BAS000", "message": "The specified target device is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=CPU"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=CPU"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_dim_err010(mocker, caplog):
     """Get all resource information at once
     Information acquisition failure(status_code == 500)
     """
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=DeviceIdFileNotFoundHwControlError
-    )
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=DeviceIDFileNotFoundHWControlError)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=Exception)
 
-    response = client.get("/cdim/api/v1/devices?device_type=memory")
+    response = client.get("/cdim/api/v1/devices?deviceType=memory")
     assert response.status_code == 500
     assert response.json() == {"code": "EF007BAS010", "message": "The Device ID Management File is not found."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=memory"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=memory"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_dim_err011(mocker, caplog):
     """Get all resource information at once
     Information acquisition failure(status_code == 500)
     """
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=DeviceIdFileIncorrectHwControlError
-    )
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=DeviceIDFileIncorrectHWControlError)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=Exception)
 
-    response = client.get("/cdim/api/v1/devices?device_type=memory")
+    response = client.get("/cdim/api/v1/devices?deviceType=memory")
     assert response.status_code == 500
     assert response.json() == {"code": "EF007BAS011", "message": "The Device ID Management File is incorrect."}
 
     assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?device_type=memory"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices?deviceType=memory"
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_devices_dim_error(mocker):
@@ -1492,7 +1527,7 @@ def test_devices_dim_error(mocker):
     Switched general exceptions to custom_exception_handler handling
       (The handling of unexpected exceptions implemented in each process has been deleted.)
     """
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=Exception)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=Exception)
 
     mocker.patch("app.core.info.info_core.InformationCore.get_device_list", side_effect=None)
 
@@ -1503,6 +1538,7 @@ def test_metric_information_err200none(mocker, caplog):
     """Get metric information
     No data obtained, error information available(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_errors_ret
 
@@ -1519,14 +1555,15 @@ def test_metric_information_err200none(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_metric_information_err200(mocker, caplog):
     """Get metric information
     Acquired data mismatch, error information valid(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_metric_ret, mock_errors_ret
 
     _freeze_datetime(mocker)
@@ -1542,14 +1579,15 @@ def test_metric_information_err200(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_metric_information_err200data(mocker, caplog):
     """Get metric information
     Acquired data is valid, error information is valid(status_code == 200)
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_metric_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret)
@@ -1560,14 +1598,15 @@ def test_metric_information_err200data(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_metric_information_err400(mocker, caplog):
+def test_metric_information_err400(mocker, caplog) -> None:
     """Get metric information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1580,14 +1619,15 @@ def test_metric_information_err400(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_metric_information_err400none(mocker, caplog):
+def test_metric_information_err400none(mocker, caplog) -> None:
     """Get metric information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = None
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1600,15 +1640,16 @@ def test_metric_information_err400none(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_metric_information_err500(mocker, caplog):
     """Get metric information
     Request Error(status_code == 500)
     """
-    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", side_effect=BaseHwControlError)
+    caplog.set_level(logging.INFO)
+    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", side_effect=BaseHWControlError)
 
     response = client.get("/cdim/api/v1/devices/6001/metrics")
     assert response.status_code == 500
@@ -1617,8 +1658,8 @@ def test_metric_information_err500(mocker, caplog):
 
     assert _log_contains(
         caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/6001/metrics"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    )
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
 def test_metric_information_error(mocker):
@@ -1630,11 +1671,12 @@ def test_metric_information_error(mocker):
     mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", side_effect=Exception)
 
 
-def test_resources_information_err200none_sp(mocker, caplog):
+def test_resources_information_err200none_sp(mocker, caplog) -> None:
     """Get resource information
     get_spec_info:No data obtained, error information available
     get_metric_info:No data obtained, no error information
     """
+    caplog.set_level(logging.INFO)
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_errors_ret
 
@@ -1654,17 +1696,16 @@ def test_resources_information_err200none_sp(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_no_device_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_resources_information_err200_sp(mocker, caplog):
+def test_resources_information_err200_sp(mocker, caplog) -> None:
     """Get resource information
-    There is no device ID in the return value.
+    There is no Device ID in the return value.
     get_spec_info: error information available
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_cpu2_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
@@ -1683,17 +1724,16 @@ def test_resources_information_err200_sp(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_no_device_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_resources_information_err200none_mt(mocker, caplog):
+def test_resources_information_err200none_mt(mocker, caplog) -> None:
     """Get resource information
     get_spec_info:No data obtained, no error information
     get_metric_info:No data obtained, error information available
     """
+    caplog.set_level(logging.INFO)
     mock_ret = ""
     mock_error_ret: list = []
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1713,17 +1753,16 @@ def test_resources_information_err200none_mt(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_no_device_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_resources_information_err200_mt(mocker, caplog):
+def test_resources_information_err200_mt(mocker, caplog) -> None:
     """Get resource information
-    There is no device ID in the return value.
+    There is no Device ID in the return value.
     get_metric_info: error information available
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu2_ret, mock_error_ret
 
@@ -1742,10 +1781,8 @@ def test_resources_information_err200_mt(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_no_device_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_resources_information_err200_mix(mocker, caplog):
@@ -1753,6 +1790,7 @@ def test_resources_information_err200_mix(mocker, caplog):
     get_spec_info:No data obtained, error information available
     get_metric_info:No data obtained, error information available
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_cpu2_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
@@ -1770,17 +1808,16 @@ def test_resources_information_err200_mix(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_no_device_mix_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_resources_information_err200data(mocker, caplog):
+def test_resources_information_err200data(mocker, caplog) -> None:
     """Get resource information
     get_spec_info:Data obtained, error information available
     get_metric_info:No data obtained, no error information
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_cpu_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
@@ -1794,10 +1831,8 @@ def test_resources_information_err200data(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_cpu_err_info_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
 def test_resources_information_multiple_err200data(mocker, caplog):
@@ -1805,6 +1840,7 @@ def test_resources_information_multiple_err200data(mocker, caplog):
     get_spec_info:Data obtained, error information available
     get_metric_info:No data obtained, error information available
     """
+    caplog.set_level(logging.INFO)
     mock_tuple_ret = mock_cpu_ret, mock_errors_ret
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
@@ -1817,17 +1853,16 @@ def test_resources_information_multiple_err200data(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_cpu_err_info_multiple_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Partial failure")
 
 
-def test_resources_information_devices(mocker, caplog):
+def test_resources_information_devices(mocker, caplog) -> None:
     """Get resource information
     get_spec_info:Data obtained, no error information
     get_metric_info:No data obtained, no error information
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu_ret, mock_error_ret
 
@@ -1843,17 +1878,16 @@ def test_resources_information_devices(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_cpu_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_resources_information_metric(mocker, caplog):
+def test_resources_information_metric(mocker, caplog) -> None:
     """Get resource information
     get_spec_info:No data obtained, no error information
     get_metric_info:Data obtained, no error information
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_tuple_ret = mock_cpu2_ret, mock_error_ret
 
@@ -1867,17 +1901,16 @@ def test_resources_information_metric(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_metric_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/0001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
-def test_resources_information_error400(mocker, caplog):
+def test_resources_information_error400(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
 
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = ""
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1892,17 +1925,16 @@ def test_resources_information_error400(mocker, caplog):
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_error400none(mocker, caplog):
+def test_resources_information_error400none(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
 
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = None
     mock_tuple_ret = mock_ret, mock_error_ret
@@ -1917,111 +1949,105 @@ def test_resources_information_error400none(mocker, caplog):
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_err400nu(mocker, caplog):
+def test_resources_information_err400nu(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
 
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = ""
-    mock_tuple_ret = mock_ret, mock_error_ret
+    mock_tuple_ret1 = mock_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret1)
 
-    mock_tuple_ret = mock_metric_ret, mock_error_ret
+    mock_tuple_ret2 = mock_metric_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret2)
 
     response = client.get("/cdim/api/v1/devices/5001")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_err400no(mocker, caplog):
+def test_resources_information_err400no(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
 
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
     mock_ret = None
-    mock_tuple_ret = mock_ret, mock_error_ret
+    mock_tuple_ret1 = mock_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret1)
 
-    mock_tuple_ret = mock_metric_ret, mock_error_ret
+    mock_tuple_ret2 = mock_metric_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret2)
 
     response = client.get("/cdim/api/v1/devices/5001")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_err400none(mocker, caplog):
+def test_resources_information_err400none(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
-    mock_tuple_ret = mock_cpu_ret, mock_error_ret
+    mock_tuple_ret1 = mock_cpu_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret1)
 
     mock_ret = None
-    mock_tuple_ret = mock_ret, mock_error_ret
+    mock_tuple_ret2 = mock_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret2)
 
     response = client.get("/cdim/api/v1/devices/5001")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_err400null(mocker, caplog):
+def test_resources_information_err400null(mocker, caplog) -> None:
     """Get resource information
     No data obtained(status_code == 500)
     """
+    caplog.set_level(logging.INFO)
     mock_error_ret: list = []
-    mock_tuple_ret = mock_cpu_ret, mock_error_ret
+    mock_tuple_ret1 = mock_cpu_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", return_value=mock_tuple_ret1)
 
     mock_ret = ""
-    mock_tuple_ret = mock_ret, mock_error_ret
+    mock_tuple_ret2 = mock_ret, mock_error_ret
 
-    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret)
+    mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", return_value=mock_tuple_ret2)
 
     response = client.get("/cdim/api/v1/devices/5001")
     assert response.status_code == 500
     assert response.json() == {"code": "EF010BAS000", "message": "The server encountered an internal error."}
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices/5001")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Failure")
 
 
-def test_resources_information_err500metric(mocker):
+def test_resources_information_err500metric(mocker) -> None:
     """Get resource information
 
     Switched general exceptions to custom_exception_handler handling
@@ -2035,7 +2061,7 @@ def test_resources_information_err500metric(mocker):
     mocker.patch("app.core.info.info_core.InformationCore.get_metric_info", side_effect=Exception)
 
 
-def test_resources_information_err500spec(mocker):
+def test_resources_information_err500spec(mocker) -> None:
     """Get resource information
 
     Switched general exceptions to custom_exception_handler handling
@@ -2051,6 +2077,7 @@ def test_resources_information_err500spec(mocker):
 
 def test_devices_all_multiple_types(mocker, caplog):
     """Get all resource information at once"""
+    caplog.set_level(logging.INFO)
 
     def _mock_device_id_to_deviceinfo(device_id):
         if device_id == "0001":
@@ -2061,12 +2088,13 @@ def test_devices_all_multiple_types(mocker, caplog):
             return mock_storage_ret, ""
         if device_id == "3001":
             return mock_networkInterface_ret, ""
+        return None, ""
 
     _freeze_datetime(mocker)
-    mocker.patch("app.common.deviceIdManager.device_id_base.assign_device_id", side_effect=None)
+    mocker.patch("app.common.dim.device_id_base.assign_device_id", side_effect=None)
 
     mocker.patch(
-        "app.core.info.info_core.InformationCore.get_device_list", return_value=mock_list_resource_multiple_ret
+        "app.core.info.info_core.InformationCore.get_device_list", return_value=MOCK_LIST_RESOURCE_MULTIPLE_RET
     )
 
     mocker.patch("app.core.info.info_core.InformationCore.get_spec_info", side_effect=_mock_device_id_to_deviceinfo)
@@ -2083,17 +2111,16 @@ def test_devices_all_multiple_types(mocker, caplog):
     assert response.status_code == 200
     assert response.json() == mock_all_resource_list_multiple_ret
 
-    assert _log_contains(
-        caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices"
-    )  # NOSONAR
-    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00001: devices API Start /cdim/api/v1/devices")
+    assert _log_contains(caplog.record_tuples, logging.INFO, "I00002: devices API Respond Success")
 
 
 def test_get_individually_specified_device_info(caplog):
     """Get individual device information
     info_type Error
     """
-    with pytest.raises(InternalHwControlError):
+    caplog.set_level(logging.WARNING)
+    with pytest.raises(InternalHWControlError):
         _get_individually_specified_device_info("0001", "xxx")
 
     assert _log_contains(
@@ -2101,4 +2128,4 @@ def test_get_individually_specified_device_info(caplog):
         logging.WARNING,
         "W00006: Device information not found: _get_individually_specified_device_info"
         + "( device_id: 0001, info_type: xxx)",
-    )  # NOSONAR
+    )

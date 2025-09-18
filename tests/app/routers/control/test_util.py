@@ -15,12 +15,10 @@
 """unit test util"""
 from enum import Enum
 
-from app.common import constants  # type: ignore
-
-CONSTANT_REQUEST_ID = "test_request_id"
+from app.common import constants
 
 
-class DummyCpuInfo(Enum):
+class DummyCPUInfo(Enum):
     """Define a collection of name/plugin_type value pairs."""
 
     DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"

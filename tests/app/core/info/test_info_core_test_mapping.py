@@ -19,7 +19,7 @@ import logging
 import pytest
 from app.common.settings import settings
 from app.common.basic_exceptions import (
-    InternalHwControlError,
+    InternalHWControlError,
 )
 from app.core.info.info_utils import load_mapping_table
 import app.core.info.info_utils as info_utils
@@ -226,6 +226,20 @@ CONVERT_DATA = {
     },
 }
 
+# Convert invalid data SensingInterval
+CONVERT_INVALID_DATA_SENSING_INTERVAL = {
+    "deviceID": "1001",
+    "type": "memory",
+    "schema": {"SensingInterval": "PTaS"},
+}
+
+# Convert invalid data Socket
+CONVERT_INVALID_DATA_SOCKET = {
+    "deviceID": "1001",
+    "type": "memory",
+    "schema": {"Socket": "CPU a"},
+}
+
 # Mapping table file
 MAPPING_TABLE_FILE1 = {
     "fm": {"spec": "test_info_core_fm_spec_mapping.json"},
@@ -262,13 +276,14 @@ def _create_resp(
     # Loading the mapping table file used in the information retrieval process (response generation)
     load_mapping_table()
 
+    resp = {}
     # Retrieve mapping table
     mapping = info_utils.get_mapping_table(device_type, data_type, data_source_type)  # pylint: disable=W0212
-    # Response generation
-    resp_agent = info_utils.create_resp_from_mapping(mapping, input_data)  # pylint: disable=W0212
-
-    # Remove items with no values from the response.
-    resp = info_utils.remove_empty_item(resp_agent)
+    if mapping is not None:
+        # Response generation
+        resp_agent = info_utils.create_resp_from_mapping(mapping, input_data)  # pylint: disable=W0212
+        # Remove items with no values from the response.
+        resp = info_utils.remove_empty_item(resp_agent)
 
     # Return without the current date and time.
     return {key: val for key, val in resp.items() if key != RESP_ITEM_NAME_TIME_STAMP}
@@ -288,7 +303,7 @@ def test_mapping_normal_nic(mocker):
 
 def test_mapping_required1(mocker, caplog):
     """Test mapping required"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         # Required field is an empty string.
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_REQUIRED1)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "W00008: Required item does not exist: key:type")
@@ -296,7 +311,7 @@ def test_mapping_required1(mocker, caplog):
 
 def test_mapping_required2(mocker, caplog):
     """Test mapping required"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         # Required field is None.
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_REQUIRED2)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "W00008: Required item does not exist: key:type")
@@ -304,17 +319,15 @@ def test_mapping_required2(mocker, caplog):
 
 def test_mapping_required3(mocker, caplog):
     """Test mapping required"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         # There is no required field itself.
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_REQUIRED3)
-    assert _log_contains(
-        caplog.record_tuples, logging.WARNING, "W00008: Required item does not exist: key:type"
-    )  # NOSONAR
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00008: Required item does not exist: key:type")
 
 
 def test_mapping_list_item_data_type_error(mocker, caplog):
     """Test mapping list item data_type error"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_LIST_ITEM_TYPE_ERROR)
     assert _log_contains(
         caplog.record_tuples,
@@ -325,7 +338,7 @@ def test_mapping_list_item_data_type_error(mocker, caplog):
 
 def test_mapping_data_type_error_int(mocker, caplog):
     """Test mapping type error int"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_TYPE_ERROR_INT)
     assert _log_contains(
         caplog.record_tuples,
@@ -336,7 +349,7 @@ def test_mapping_data_type_error_int(mocker, caplog):
 
 def test_mapping_data_type_error_float(mocker, caplog):
     """Test mapping type error float"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_TYPE_ERROR_FLOAT)
     assert _log_contains(
         caplog.record_tuples,
@@ -347,7 +360,7 @@ def test_mapping_data_type_error_float(mocker, caplog):
 
 def test_mapping_data_type_error_str(mocker, caplog):
     """Test mapping type error str"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_TYPE_ERROR_STR)
     assert _log_contains(
         caplog.record_tuples,
@@ -358,7 +371,7 @@ def test_mapping_data_type_error_str(mocker, caplog):
 
 def test_mapping_data_type_error_bool(mocker, caplog):
     """Test mapping type error bool"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_TYPE_ERROR_BOOL)
     assert _log_contains(
         caplog.record_tuples,
@@ -369,7 +382,7 @@ def test_mapping_data_type_error_bool(mocker, caplog):
 
 def test_mapping_data_type_error_int_float(mocker, caplog):
     """Test mapping type error int float"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "1001", "memory", "agent", "metric", DATA_TYPE_ERROR_INT_FLOAT)
     assert _log_contains(
         caplog.record_tuples,
@@ -383,7 +396,7 @@ def test_mapping_data_type_error_int_float(mocker, caplog):
 
 def test_mapping_data_item_type_error_int_float(mocker, caplog):
     """Test mapping type error int float"""
-    with pytest.raises(InternalHwControlError):
+    with pytest.raises(InternalHWControlError):
         _create_resp(mocker, "3001", "networkInterface", "oob", "spec", DATA_ITEM_TYPE_ERROR_INT_FLOAT)
     assert _log_contains(
         caplog.record_tuples,
@@ -397,6 +410,30 @@ def test_mapping_convert_function(mocker):
     assert RESP_CONVERT_FUNC == _create_resp(mocker, "1001", "memory", "agent", "metric", CONVERT_DATA)
 
 
+def test_mapping_convert_function_returned_none_sensing_interval(mocker, caplog):
+    """Test mapping convert function returned none SensingInterval"""
+    with pytest.raises(InternalHWControlError):
+        _create_resp(mocker, "1001", "memory", "agent", "metric", CONVERT_INVALID_DATA_SENSING_INTERVAL)
+    assert _log_contains(
+        caplog.record_tuples,
+        logging.WARNING,
+        "W00009: Invalid type value: Key:SensingInterval, Value:PTaS, Value type:str, "
+        "Convert function:duration_to_seconds returned None.",
+    )
+
+
+def test_mapping_convert_function_returned_none_socket(mocker, caplog):
+    """Test mapping convert function returned none Socket"""
+    with pytest.raises(InternalHWControlError):
+        _create_resp(mocker, "1001", "memory", "agent", "metric", CONVERT_INVALID_DATA_SOCKET)
+    assert _log_contains(
+        caplog.record_tuples,
+        logging.WARNING,
+        "W00009: Invalid type value: Key:Socket, Value:CPU a, Value type:str, "
+        "Convert function:get_socket_number returned None.",
+    )
+
+
 def test_mapping_get_socket_number():
     """Test mapping _get_socket_number"""
     assert 1 == info_conv_funcs.get_socket_number({}, "", "CPU 1")  # pylint: disable=W0212
@@ -406,13 +443,58 @@ def test_mapping_get_socket_number():
     assert info_conv_funcs.get_socket_number({}, "", "memory 12345") is None  # pylint: disable=W0212
 
 
-def test_mapping_duration_to_seconds():
-    """Test mapping _duration_to_seconds"""
-    assert info_conv_funcs.duration_to_seconds({}, "", "12345") is None  # pylint: disable=W0212
+def test_mapping_duration_to_seconds_normal():
+    """Test mapping _duration_to_seconds normal input"""
+    assert 86400 == info_conv_funcs.duration_to_seconds({}, "", "P1D")  # pylint: disable=W0212
+    assert 3600 == info_conv_funcs.duration_to_seconds({}, "", "PT1H")  # pylint: disable=W0212
+    assert 60 == info_conv_funcs.duration_to_seconds({}, "", "PT1M")  # pylint: disable=W0212
     assert 1 == info_conv_funcs.duration_to_seconds({}, "", "PT1S")  # pylint: disable=W0212
-    assert 1.5 == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")  # NOSONAR pylint: disable=W0212
+    assert 1.5 == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")  # pylint: disable=W0212
+    assert 3660 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M")  # pylint: disable=W0212
+    assert 3610 == info_conv_funcs.duration_to_seconds({}, "", "PT1H10S")  # pylint: disable=W0212
     assert 70 == info_conv_funcs.duration_to_seconds({}, "", "PT1M10S")  # pylint: disable=W0212
     assert 3670 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M10S")  # pylint: disable=W0212
     assert 183845 == info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S")  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "¥d") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "¥f¥v¥y") is None  # pylint: disable=W0212
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0DT0H0M0S")  # pylint: disable=W0212
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0D")  # pylint: disable=W0212
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0H")  # pylint: disable=W0212
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0M")  # pylint: disable=W0212
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0S")  # pylint: disable=W0212
+    assert 183845 == info_conv_funcs.duration_to_seconds({"a": 1}, "b", "P2DT3H4M5S")  # pylint: disable=W0212
+
+
+def test_mapping_duration_to_seconds_invalid():
+    """Test mapping _duration_to_seconds invalid input"""
+    assert info_conv_funcs.duration_to_seconds({}, "", "") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", None) is None  # type: ignore[arg-type]
+    assert info_conv_funcs.duration_to_seconds({}, "", "T1S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PaDT3H4M5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DTaH4M5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3HaM5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4MaS") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5Sa") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", " P1D") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1D ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", 123) is None  # type: ignore[arg-type]
+    assert info_conv_funcs.duration_to_seconds({}, "", "P") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PD") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PDT") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P-1D") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1H") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1M") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1.5D") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5H") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5M") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1M1DT3H4M5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1M1DT3H4M5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1DT3H4M5S") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "p2DT3H4M5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2dT3H4M5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2Dt3H4M5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3h4M5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4m5S ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5s ") is None  # pylint: disable=W0212

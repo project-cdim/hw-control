@@ -14,11 +14,11 @@
 
 """Unit test module for secret_management_client.py ."""
 
-import json
 import logging
 from http import HTTPStatus
 
 import pytest
+from pytest import MonkeyPatch, LogCaptureFixture
 from pytest_mock import MockFixture
 
 from pydantic import ValidationError
@@ -26,12 +26,11 @@ import requests
 
 from tests import test_util
 
-import app.common.basic_exceptions as exc  # type: ignore
-from app.common.messages import message  # type: ignore
-from app.common.utils.secret_management_utilities import secret_management_client  # type: ignore
+import app.common.basic_exceptions as exc
+from app.common.utils.secret_management_utilities import secret_management_client
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils.authorization_utilities import authorization_server_client  # type: ignore
+from app.common.utils.authorization_utilities import authorization_server_client
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -87,98 +86,22 @@ class TestClientCredential:
             _ = authorization_server_client.ClientCredential(**client_credential)
 
 
-class TestLogMessageModel:
-    """Unit test class for Log Message Class"""
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, expected_default_value",
-        [
-            (
-                authorization_server_client.AuthorizationServerRequestLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Request to the Authorization Server.",
-                    "url": None,
-                    "timeout": None,
-                },
-            ),
-            (
-                authorization_server_client.AuthorizationServerResponseLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Receive the Authorization Server response.",
-                    "status_code": None,
-                },
-            ),
-        ],
-    )
-    def test_default_values(self, log_message_class: message.BaseLogMessage, expected_default_value):
-        """test create instance default values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_log_message = log_message_class().to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_log_message == expected_default_value
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, logging_contents, expected_contents",
-        [
-            (
-                authorization_server_client.AuthorizationServerRequestLog,
-                {
-                    "detail": "test_string",
-                    "url": "http://localhost:8082/realms/test_auth_server/protocol/openid-connect/token",
-                    "timeout": 10,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Request to the Authorization Server.",
-                    "url": "http://localhost:8082/realms/test_auth_server/protocol/openid-connect/token",
-                    "timeout": 10,
-                },
-            ),
-            (
-                authorization_server_client.AuthorizationServerResponseLog,
-                {
-                    "detail": "test_string",
-                    "status_code": 500,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Receive the Authorization Server response.",
-                    "status_code": 500,
-                },
-            ),
-        ],
-    )
-    def test_custom_values(
-        self, log_message_class: message.BaseLogMessage, logging_contents: dict, expected_contents: dict
-    ):
-        """test create instance custom values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        log_message = log_message_class(**logging_contents).to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert log_message == expected_contents
-
-
 class TestGetSecret:
     """Unit test class for get_agent_access_token"""
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     def test_success(
         self,
-        caplog,
-        monkeypatch,
+        caplog: LogCaptureFixture,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
     ):
-        """test success case"""
+        """Test success case.
+
+        Args:
+            caplog (LogCaptureFixture): The pytest fixture for capturing log messages.
+            monkeypatch (MonkeyPatch): The pytest fixture for modifying environment variables.
+            mocker (MockFixture): The pytest fixture for mocking objects and functions.
+        """
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
         # Set up the expected value.
@@ -221,60 +144,57 @@ class TestGetSecret:
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.INFO, logger="LOGGER"):
+        with caplog.at_level(logging.INFO, logger=authorization_server_client.__name__):
             actual_access_token = authorization_server_client.get_agent_access_token()
-
-        # AuthorizationServerSettingsLog
-        settings_log_message = json.loads(caplog.records[0].getMessage())
-
-        # AuthorizationServerRequestLog
-        request_log_message = json.loads(caplog.records[1].getMessage())
-
-        # AuthorizationServerRequestLog
-        response_log_message = json.loads(caplog.records[-1].getMessage())
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_access_token == expected_access_token
+
         assert len(caplog.records) == 3
 
-        assert caplog.records[0].levelname == "INFO"
-        assert settings_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert settings_log_message["message"]["detail"] is None
+        # Inspection: Check the Authorization Server Settings Log
+        settings_log = caplog.records[0]
+        assert settings_log.levelname == "INFO"
+        assert settings_log.getMessage() == "Get Authorization Server settings form environment variables."
+
+        assert hasattr(settings_log, "token_endpoint"), "token_endpoint should be present in the log record"
         assert (
-            settings_log_message["message"]["action"] == "Get Authorization Server settings form environment variables."
-        )
-        assert (
-            settings_log_message["message"]["token_endpoint"]
+            getattr(settings_log, "token_endpoint")
             == "https://authorization-server.example.com/path/to/access_token_endpoint"
         )
-        assert settings_log_message["message"]["timeout"] == 3
 
-        assert caplog.records[1].levelname == "INFO"
-        assert request_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert request_log_message["message"]["detail"] is None
-        assert request_log_message["message"]["action"] == "Request to the Authorization Server."
-        assert (
-            request_log_message["message"]["url"]
-            == "https://authorization-server.example.com/path/to/access_token_endpoint"
-        )
-        assert request_log_message["message"]["timeout"] == 3
+        assert hasattr(settings_log, "timeout"), "timeout should be present in the log record"
+        assert getattr(settings_log, "timeout") == 3
 
-        assert caplog.records[-1].levelname == "INFO"
-        assert response_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert response_log_message["message"]["detail"] is None
-        assert response_log_message["message"]["action"] == "Receive the Authorization Server response."
-        assert response_log_message["message"]["status_code"] == 200
+        # Inspection: Check the Authorization Server Request Log
+        request_log = caplog.records[1]
+        assert request_log.levelname == "INFO"
+        assert request_log.getMessage() == "Request to the Authorization Server."
+
+        assert hasattr(request_log, "url"), "url should be present in the log record"
+        assert getattr(request_log, "url") == "https://authorization-server.example.com/path/to/access_token_endpoint"
+
+        assert hasattr(request_log, "timeout"), "timeout should be present in the log record"
+        assert getattr(request_log, "timeout") == 3
+
+        # Inspection: Check the Authorization Server Response Log
+        response_log = caplog.records[-1]
+        assert response_log.levelname == "INFO"
+        assert response_log.getMessage() == "Receive the Authorization Server response."
+
+        assert hasattr(response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(response_log, "status_code") == 200
 
     @pytest.mark.parametrize(
         "secret_client_raise_exception, expected_exception",
         [
-            (exc.DependencyServiceHwControlError, exc.DependencyServiceHwControlError),
-            (exc.InternalHwControlError, exc.InternalHwControlError),
-            (exc.ConfigurationHwControlError, exc.ConfigurationHwControlError),
+            (exc.DependencyServiceHWControlError, exc.DependencyServiceHWControlError),
+            (exc.InternalHWControlError, exc.InternalHWControlError),
+            (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
         ],
     )
     def test_secret_client_raise(
-        self, monkeypatch, mocker: MockFixture, secret_client_raise_exception, expected_exception
+        self, monkeypatch: MonkeyPatch, mocker: MockFixture, secret_client_raise_exception, expected_exception
     ):
         """test secret management client raise case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -304,15 +224,15 @@ class TestGetSecret:
 
         # ++++ execution and inspection +++++++++++++++++++++++++++++++#
 
-        with pytest.raises(exc.InternalHwControlError):
+        with pytest.raises(exc.InternalHWControlError):
             _ = authorization_server_client.get_agent_access_token()
 
-    def test_setting_invalid(self, mocker: MockFixture, monkeypatch):
+    def test_setting_invalid(self, mocker: MockFixture, monkeypatch: MonkeyPatch):
         """test invalid env setting case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
         # Set up the expected value.
-        expected_exception = exc.ConfigurationHwControlError
+        expected_exception = exc.ConfigurationHWControlError
 
         # Clean up the environment variables in the current test environment.
         monkeypatch.delenv("HW_CONTROL_AUTHORIZATION_SERVER_TIMEOUT", raising=False)
@@ -339,13 +259,15 @@ class TestGetSecret:
     @pytest.mark.parametrize(
         "requests_raise_exception, expected_exception",
         [
-            (requests.exceptions.ReadTimeout, exc.InternalHwControlError),
-            (requests.exceptions.ConnectTimeout, exc.InternalHwControlError),
-            (requests.exceptions.ConnectionError, exc.InternalHwControlError),
-            (requests.exceptions.RequestException, exc.InternalHwControlError),
+            (requests.exceptions.ReadTimeout, exc.InternalHWControlError),
+            (requests.exceptions.ConnectTimeout, exc.InternalHWControlError),
+            (requests.exceptions.ConnectionError, exc.InternalHWControlError),
+            (requests.exceptions.RequestException, exc.InternalHWControlError),
         ],
     )
-    def test_requests_raised(self, monkeypatch, mocker: MockFixture, requests_raise_exception, expected_exception):
+    def test_requests_raised(
+        self, monkeypatch: MonkeyPatch, mocker: MockFixture, requests_raise_exception, expected_exception
+    ):
         """test requests raise case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -385,13 +307,13 @@ class TestGetSecret:
         ],
     )
     def test_auth_server_return_invalid_data(
-        self, monkeypatch, mocker: MockFixture, auth_server_response_headers, auth_server_response_body
+        self, monkeypatch: MonkeyPatch, mocker: MockFixture, auth_server_response_headers, auth_server_response_body
     ):
         """test Authorization Server return invalid data case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
         # Set up the expected value.
-        expected_exception = exc.InternalHwControlError
+        expected_exception = exc.InternalHWControlError
 
         # Clean up the environment variables in the current test environment.
         monkeypatch.delenv("HW_CONTROL_AUTHORIZATION_SERVER_TIMEOUT", raising=False)
@@ -424,22 +346,22 @@ class TestGetSecret:
     @pytest.mark.parametrize(
         "auth_server_response_status_code, auth_server_response_body,expected_exception",
         [
-            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_client"}, exc.AuthenticationHwControlError),
-            (HTTPStatus.UNAUTHORIZED.value, {"error": "invalid_client"}, exc.AuthenticationHwControlError),
-            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_request"}, exc.InternalHwControlError),
-            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_grant"}, exc.InternalHwControlError),
-            (HTTPStatus.BAD_REQUEST.value, {"error": "unauthorized_client"}, exc.AuthenticationHwControlError),
-            (HTTPStatus.BAD_REQUEST.value, {"error": "unsupported_grant_type"}, exc.InternalHwControlError),
+            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_client"}, exc.AuthenticationHWControlError),
+            (HTTPStatus.UNAUTHORIZED.value, {"error": "invalid_client"}, exc.AuthenticationHWControlError),
+            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_request"}, exc.InternalHWControlError),
+            (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_grant"}, exc.InternalHWControlError),
+            (HTTPStatus.BAD_REQUEST.value, {"error": "unauthorized_client"}, exc.AuthenticationHWControlError),
+            (HTTPStatus.BAD_REQUEST.value, {"error": "unsupported_grant_type"}, exc.InternalHWControlError),
             (
                 HTTPStatus.NOT_FOUND.value,
                 {"test_key": "test_value"},
-                exc.DependencyServiceHwControlError,
+                exc.DependencyServiceHWControlError,
             ),  # Unexpected HTTP status code was returned case.
         ],
     )
-    def test_secret_manager_return_error(  # pylint: disable=R0913
+    def test_secret_manager_return_error(  # pylint: disable=R0913, R0917
         self,
-        monkeypatch,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
         auth_server_response_status_code,
         auth_server_response_body,

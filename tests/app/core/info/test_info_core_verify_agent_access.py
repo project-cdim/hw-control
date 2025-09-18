@@ -17,7 +17,7 @@
 import logging
 import pytest
 from app.core.info.info_core import InformationCore
-from app.common.basic_exceptions import BaseHwControlError
+from app.common.basic_exceptions import BaseHWControlError
 
 # OOB metric data CPU On
 OOB_METRIC_DATA_CPU_ON = {
@@ -271,9 +271,10 @@ def _log_contains(record, level, message) -> bool:
 
 
 def _moc_verify_agent_access(
-    mocker, device_id, device_type, oob_data, fm_data, moc_oob_spec_data, moc_oob_metric_cpu_data
+    mocker, caplog, device_id, device_type, oob_data, fm_data, moc_oob_spec_data, moc_oob_metric_cpu_data
 ):
     """Get Information"""
+    caplog.set_level(logging.INFO)
 
     def mock_oob_spec(_, __):
         return moc_oob_spec_data
@@ -297,7 +298,7 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     """Test argument none"""
     # When there are no arguments
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, None, "CPU", OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, None, "CPU", OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -307,7 +308,7 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     )
 
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "0001", None, OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, "0001", None, OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -317,7 +318,7 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     )
 
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "0001", "CPU", None, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, "0001", "CPU", None, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -327,7 +328,7 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     )
 
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "0001", "CPU", OOB_METRIC_DATA_CPU_ON, None, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, "0001", "CPU", OOB_METRIC_DATA_CPU_ON, None, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -337,7 +338,7 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     )
 
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, None, None, OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, None, None, OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -348,10 +349,10 @@ def test_verify_agent_access_arg_check(mocker, caplog):
     )
 
 
-def test_verify_agent_access_cpu_on(mocker):
+def test_verify_agent_access_cpu_on(mocker, caplog):
     """Test CPU power on"""
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "0001", "CPU", OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, "0001", "CPU", OOB_METRIC_DATA_CPU_ON, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert is_access and cpu_device_id == "0001"
 
@@ -359,7 +360,7 @@ def test_verify_agent_access_cpu_on(mocker):
 def test_verify_agent_access_cpu_off(mocker, caplog):
     """Test CPU power off"""
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "0001", "CPU", OOB_METRIC_DATA_CPU_OFF, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
+        mocker, caplog, "0001", "CPU", OOB_METRIC_DATA_CPU_OFF, FM_DATA_CPU, OOB_SPEC_DATA_CPU, OOB_METRIC_DATA_CPU_ON
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
@@ -369,10 +370,11 @@ def test_verify_agent_access_cpu_off(mocker, caplog):
     )
 
 
-def test_verify_agent_access_memory_on(mocker):
+def test_verify_agent_access_memory_on(mocker, caplog):
     """Test memory power on"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,
@@ -383,10 +385,11 @@ def test_verify_agent_access_memory_on(mocker):
     assert is_access and cpu_device_id == "0001"
 
 
-def test_verify_agent_access_memory_fm_no_link(mocker):
+def test_verify_agent_access_memory_fm_no_link(mocker, caplog):
     """Test memory fm no link"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,
@@ -401,6 +404,7 @@ def test_verify_agent_access_memory_off(mocker, caplog):
     """Test memory power off"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_OFF,
@@ -416,10 +420,11 @@ def test_verify_agent_access_memory_off(mocker, caplog):
     )
 
 
-def test_verify_agent_access_storage_on(mocker):
+def test_verify_agent_access_storage_on(mocker, caplog):
     """Test storage power on"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "2001",
         "storage",
         OOB_METRIC_DATA_STORAGE_ON,
@@ -430,10 +435,11 @@ def test_verify_agent_access_storage_on(mocker):
     assert is_access and cpu_device_id == "0001"
 
 
-def test_verify_agent_access_storage_fm_no_link(mocker):
+def test_verify_agent_access_storage_fm_no_link(mocker, caplog):
     """Test storage fm no link"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "2001",
         "storage",
         OOB_METRIC_DATA_STORAGE_ON,
@@ -448,6 +454,7 @@ def test_verify_agent_access_storage_off(mocker, caplog):
     """Test storage power off"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "2001",
         "storage",
         OOB_METRIC_DATA_STORAGE_OFF,
@@ -463,10 +470,11 @@ def test_verify_agent_access_storage_off(mocker, caplog):
     )
 
 
-def test_verify_agent_access_nic_on(mocker):
+def test_verify_agent_access_nic_on(mocker, caplog):
     """Test networkInterface power on"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "3001",
         "networkInterface",
         OOB_METRIC_DATA_NIC_ON,
@@ -477,10 +485,11 @@ def test_verify_agent_access_nic_on(mocker):
     assert is_access and cpu_device_id == "0001"
 
 
-def test_verify_agent_access_nic_fm_no_link(mocker):
+def test_verify_agent_access_nic_fm_no_link(mocker, caplog):
     """Test networkInterface fm no link"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "3001",
         "networkInterface",
         OOB_METRIC_DATA_NIC_ON,
@@ -495,6 +504,7 @@ def test_verify_agent_access_nic_off(mocker, caplog):
     """Test networkInterface power off"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "3001",
         "networkInterface",
         OOB_METRIC_DATA_NIC_OFF,
@@ -513,10 +523,10 @@ def test_verify_agent_access_nic_off(mocker, caplog):
 
 def test_verify_agent_access_base_exception(mocker):
     """base exception"""
-    # Forcing an BaseHwControlError in get_metric_oob triggers the BaseHwControlError to be thrown.
-    mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=BaseHwControlError)
+    # Forcing an BaseHWControlError in get_metric_oob triggers the BaseHWControlError to be thrown.
+    mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=BaseHWControlError)
     get_information = InformationCore()
-    with pytest.raises(BaseHwControlError):
+    with pytest.raises(BaseHWControlError):
         get_information._verify_agent_access(  # pylint: disable=protected-access
             "1001", "memory", OOB_METRIC_DATA_MEMORY_ON, FM_DATA_MEMORY_NO_LINK
         )
@@ -524,7 +534,7 @@ def test_verify_agent_access_base_exception(mocker):
 
 def test_verify_agent_access_device_type_none(mocker, caplog):
     """Test device_type None"""
-    is_access, cpu_device_id = _moc_verify_agent_access(mocker, "3001", None, {}, {}, {}, {})
+    is_access, cpu_device_id = _moc_verify_agent_access(mocker, caplog, "3001", None, {}, {}, {}, {})
     assert not is_access and cpu_device_id is None
     assert _log_contains(
         caplog.record_tuples,
@@ -537,20 +547,28 @@ def test_verify_agent_access_device_type_none(mocker, caplog):
 def test_verify_agent_access_device_type_gpu(mocker, caplog):
     """Test device_type None"""
     is_access, cpu_device_id = _moc_verify_agent_access(
-        mocker, "5001", "GPU", OOB_METRIC_DATA_NIC_ON, FM_DATA_NIC_LINK, OOB_SPEC_DATA_NIC, OOB_METRIC_DATA_CPU_ON
+        mocker,
+        caplog,
+        "5001",
+        "GPU",
+        OOB_METRIC_DATA_NIC_ON,
+        FM_DATA_NIC_LINK,
+        OOB_SPEC_DATA_NIC,
+        OOB_METRIC_DATA_CPU_ON,
     )
     assert not is_access and cpu_device_id is None
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "device_id: 5001, device_type: GPU,  Skipping connection to the Agent. Device type GPU is not supported.",
+        "device_id: 5001, device_type: GPU,  Skipping connection to the Agent. Device Type GPU is not supported.",
     )
 
 
-def test_verify_agent_access_fm_cpu_device_id_none(mocker):
+def test_verify_agent_access_fm_cpu_device_id_none(mocker, caplog):
     """Test fm cpu_device_id none"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,
@@ -565,6 +583,7 @@ def test_verify_agent_access_oob_cpu_device_id_none(mocker, caplog):
     """Test oob cpu_device_id none"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,
@@ -585,6 +604,7 @@ def test_verify_agent_access_memory_oob_no_link(mocker, caplog):
     """Test memory oob no link"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,
@@ -605,6 +625,7 @@ def test_verify_agent_access_memory_oob_link_cpu_off(mocker, caplog):
     """Test memory oob no link"""
     is_access, cpu_device_id = _moc_verify_agent_access(
         mocker,
+        caplog,
         "1001",
         "memory",
         OOB_METRIC_DATA_MEMORY_ON,

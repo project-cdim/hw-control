@@ -19,21 +19,20 @@ app.core.control.control_base
 This module defines common constants and processes used 
 in control functions.
 """
-from typing import cast
+import logging
 
 from pydantic import BaseModel, Field
 
-from app.common.utils.oob_plugin_base import OOBPluginBase
-from app.common.deviceIdManager import device_id_base as deviceIdManager
+from app.common.dim import device_id_base as dim
 from app.common.utils.device_exclusive import DeviceExclusive
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
 from app.common import constants
 from app.common.utils import plugin_manager
 
+logger = logging.getLogger(__name__)
 
-class OobPluginRequestTarget(BaseModel):
+
+class OOBPluginRequestTarget(BaseModel):
     """generate OOB plugin request format
 
     Attributes:
@@ -77,12 +76,12 @@ class ControlTargetDevice(BaseModel):
             None
 
         Raises:
-            DeviceBusyHwControlError:
+            DeviceBusyHWControlError:
                 If the target device is already locked and thus busy.
         """
         device_lock = DeviceExclusive.lock(device_id=self.device_id)
         if not device_lock:
-            raise exc.DeviceBusyHwControlError(additional_message=f"The target Device ID is follow: {self.device_id}")
+            raise exc.DeviceBusyHWControlError(additional_message=f"The target Device ID is follow: {self.device_id}")
 
     def release_lock(self) -> None:
         """
@@ -136,28 +135,28 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
     power_state: constants.DevicePowerState = Field(default=constants.DevicePowerState.UNKNOWN)
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context, /):
         """Post-initialization method for PowerControlTargetDevice.
 
         This method is called after the initialization of an instance of PowerControlTargetDevice. It sets
         the 'Device Type', 'OOB Manager ID', and 'OOB Manager ID' for the target device. If any of these
-        settings fail, a RequestNotSupportedHwControlError is raised.
+        settings fail, a RequestNotSupportedHWControlError is raised.
 
         Raises:
-            exc.RequestNotSupportedHwControlError: If setting the fm_port_id, fm_port_id, or switch_port_type fails.
+            exc.RequestNotSupportedHWControlError: If setting the fm_port_id, fm_port_id, or switch_port_type fails.
         """
         try:
             self.set_device_type()
             self.set_oob_device_id()
             self.set_oob_manager_id()
         except ValueError as e:
-            raise exc.RequestNotSupportedHwControlError from e
+            raise exc.RequestNotSupportedHWControlError from e
 
     def set_oob_manager_id(self) -> None:
         """
-        Set oob_manager_id from information of deviceIdManager.
+        Set oob_manager_id from information of dim.
 
-        This method gets the 'OOB Manager ID' of the specified device from app.common.deviceIdManager
+        This method gets the 'OOB Manager ID' of the specified device from app.common.dim
         and set self.oob_manager_id.
 
         Args:
@@ -168,30 +167,30 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
         Raises:
             ValueError:
-            - The 'OOB Manager ID' could not be obtained from deviceIdManager.
+            - The 'OOB Manager ID' could not be obtained from dim.
 
-            DeviceNotFoundHwControlError:
+            DeviceNotFoundHWControlError:
                 The specified device is not found.
 
             Raise the following exception thrown from device_id_to_manager_id.
 
-            DeviceIdFileIncorrectHwControlError:
+            DeviceIDFileIncorrectHWControlError:
                 When there is an error in the contents of the
                 device_ID_info.json file.
 
-            DeviceIdFileNotFoundHwControlError:
+            DeviceIDFileNotFoundHWControlError:
                 If the device_ID_info.json file did not exist
                 in "/app/common/device_id_manager/".
 
         """
         try:
-            raw_manager_ids: dict = deviceIdManager.device_id_to_manager_id(device_id=self.device_id)
-        # ApiUsageHwControlError: Raised when the specified device_id
+            raw_manager_ids: dict = dim.device_id_to_manager_id(device_id=self.device_id)
+        # APIUsageHWControlError: Raised when the specified device_id
         # is an invalid UUID.
-        # DeviceIdNotFoundHwControlError: Raised when the specified
+        # DeviceIDNotFoundHWControlError: Raised when the specified
         # device_id does not exist in device id manager.
-        except (exc.ApiUsageHwControlError, exc.DeviceIdNotFoundHwControlError) as e:
-            raise exc.DeviceNotFoundHwControlError(
+        except (exc.APIUsageHWControlError, exc.DeviceIDNotFoundHWControlError) as e:
+            raise exc.DeviceNotFoundHWControlError(
                 additional_message=f"The target Device ID is follow: {self.device_id}"
             ) from e
 
@@ -202,9 +201,9 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
     def set_device_type(self) -> None:
         """
-        Set device_type from information of deviceIdManager.
+        Set device_type from information of dim.
 
-        This method gets the 'Device Type' of the specified device from app.common.deviceIdManager
+        This method gets the 'Device Type' of the specified device from app.common.dim
         and set self.device_type.
 
         Args:
@@ -215,30 +214,30 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
         Raises:
             ValueError:
-            - The 'Device Type' could not be obtained from deviceIdManager.
+            - The 'Device Type' could not be obtained from dim.
 
-            DeviceNotFoundHwControlError:
+            DeviceNotFoundHWControlError:
                 The specified device is not found.
 
             Raise the following exception thrown from device_id_to_device_type.
 
-            DeviceIdFileIncorrectHwControlError:
+            DeviceIDFileIncorrectHWControlError:
                 When there is an error in the contents of the
                 device_ID_info.json file.
 
-            DeviceIdFileNotFoundHwControlError:
+            DeviceIDFileNotFoundHWControlError:
                 If the device_ID_info.json file did not exist
                 in "/app/common/device_id_manager/".
 
         """
         try:
-            raw_device_type = deviceIdManager.device_id_to_device_type(device_id=self.device_id)
-        # ApiUsageHwControlError: Raised when the specified device_id
+            raw_device_type = dim.device_id_to_device_type(device_id=self.device_id)
+        # APIUsageHWControlError: Raised when the specified device_id
         # is an invalid UUID.
-        # DeviceIdNotFoundHwControlError: Raised when the specified
+        # DeviceIDNotFoundHWControlError: Raised when the specified
         # device_id does not exist in device id manager.
-        except (exc.ApiUsageHwControlError, exc.DeviceIdNotFoundHwControlError) as e:
-            raise exc.DeviceNotFoundHwControlError(
+        except (exc.APIUsageHWControlError, exc.DeviceIDNotFoundHWControlError) as e:
+            raise exc.DeviceNotFoundHWControlError(
                 additional_message=f"The target Device ID is follow: {self.device_id}"
             ) from e
 
@@ -248,10 +247,10 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
     def set_oob_device_id(self) -> None:
         """
-        Set oob_device_id from information of deviceIdManager.
+        Set oob_device_id from information of dim.
 
         This method gets the 'OOB Device ID' of the specified device
-        from deviceIdManager and set self.oob_device_id.
+        from dim and set self.oob_device_id.
 
         Args:
             None
@@ -261,30 +260,30 @@ class PowerControlTargetDevice(ControlTargetDevice):
 
         Raises:
             ValueError:
-            - The 'OOB Device ID' could not be obtained from deviceIdManager.
+            - The 'OOB Device ID' could not be obtained from dim.
 
-            DeviceNotFoundHwControlError:
+            DeviceNotFoundHWControlError:
                 The specified device is not found.
 
             Raise the following exception thrown from device_id_to_oob_device_id.
 
-            DeviceIdFileIncorrectHwControlError:
+            DeviceIDFileIncorrectHWControlError:
                 When there is an error in the contents of the
                 device_ID_info.json file.
 
-            DeviceIdFileNotFoundHwControlError:
+            DeviceIDFileNotFoundHWControlError:
                 If the device_ID_info.json file did not exist
                 in "/app/common/device_id_manager/".
 
         """
         try:
-            raw_oob_device_id = deviceIdManager.device_id_to_oob_device_id(device_id=self.device_id)
-        # ApiUsageHwControlError: Raised when the specified device_id
+            raw_oob_device_id = dim.device_id_to_oob_device_id(device_id=self.device_id)
+        # APIUsageHWControlError: Raised when the specified device_id
         # is an invalid UUID.
-        # DeviceIdNotFoundHwControlError: Raised when the specified
+        # DeviceIDNotFoundHWControlError: Raised when the specified
         # device_id does not exist in device id manager.
-        except (exc.ApiUsageHwControlError, exc.DeviceIdNotFoundHwControlError) as e:
-            raise exc.DeviceNotFoundHwControlError(
+        except (exc.APIUsageHWControlError, exc.DeviceIDNotFoundHWControlError) as e:
+            raise exc.DeviceNotFoundHWControlError(
                 additional_message=f"The target Device ID is follow: {self.device_id}"
             ) from e
 
@@ -305,15 +304,15 @@ class PowerControlTargetDevice(ControlTargetDevice):
             None
 
         Raises:
-            Subclass of BaseHwControlError:
-                Raise the subclass of BaseHwControlError dispatched
+            Subclass of BaseHWControlError:
+                Raise the subclass of BaseHWControlError dispatched
                 by the FM plug-in as it is.
 
-            UnexpectedExceptionHwControlError:
+            UnexpectedExceptionHWControlError:
                 If the FM-plugin raises an unexpected exception,
                 convert it to this exception.
 
-            InternalHwControlError:
+            InternalHWControlError:
                 The spec information of the device was obtained,
                 but the power status could not be retrieved, or
                 the retrieved power status was an unknown value.
@@ -322,34 +321,34 @@ class PowerControlTargetDevice(ControlTargetDevice):
                 ValueError is raised when specifying device
                 that does not support power control.
         """
-        plugin = plugin_manager.get_plugin(manager_type=constants.ManagerType.OOB.value, manager_id=self.oob_manager_id)
-        oob_plugin = cast(OOBPluginBase, plugin)
+        oob_plugin = plugin_manager.get_oob_plugin(manager_id=self.oob_manager_id)
 
         oob_plugin_argument = [
-            OobPluginRequestTarget(
+            OOBPluginRequestTarget(
                 oob_device_id=self.oob_device_id,
                 device_type=self.device_type,
             ).model_dump()
         ]
 
-        LOGGER.info(
-            message=message.PluginCallLog(
-                manager_type=constants.ManagerType.OOB.value,
-                manager_id=self.oob_manager_id,
-                class_name=plugin.__class__.__name__,
-                method_name="get_power_state",
-            ).to_json_encodable()
+        logger.info(
+            "Request get device power state to OOB plugin.",
+            extra={
+                "manager_type": constants.ManagerType.OOB.value,
+                "manager_id": self.oob_manager_id,
+                "class_name": oob_plugin.__class__.__name__,
+                "method_name": "get_power_state",
+            },
         )
 
         try:
             response_data = oob_plugin.get_power_state(oob_plugin_argument)
-        except exc.DeviceNotFoundHwControlError as e:
+        except exc.DeviceNotFoundHWControlError as e:
             e.append_error_message(f"The target Device ID is follow: {self.device_id}")
             raise
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             raise
         except Exception as e:
-            raise exc.UnexpectedExceptionHwControlError from e
+            raise exc.UnexpectedExceptionHWControlError from e
 
         power_state_response = response_data["devices"][0]["powerState"]
 
@@ -359,7 +358,11 @@ class PowerControlTargetDevice(ControlTargetDevice):
         try:
             power_state = constants.DevicePowerState(power_state_response)
         except ValueError:
-            LOGGER.warning(message=message.BaseLogMessage(detail=power_state_response).to_json_encodable())
+            logger.warning(
+                "The obtained power state is not a valid DevicePowerState.",
+                exc_info=True,
+                extra={"obtained_power_state": power_state_response},
+            )
             power_state = constants.DevicePowerState.UNKNOWN
 
         self.power_state = power_state

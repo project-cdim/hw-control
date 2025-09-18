@@ -22,13 +22,11 @@ import requests.exceptions
 import pytest
 from app.core.info.metric_agent import InfoMetricAgent
 from app.common.basic_exceptions import (
-    AgentConnectFailureHwControlError,
-    AgentGetInformationFailureHwControlError,
+    AgentConnectFailureHWControlError,
+    AgentGetInformationFailureHWControlError,
 )
-import app.common
-import app.common.utils
-import app.common.utils.file_location_settings
 import app.core.info.metric_agent
+from app.common.utils.authorization_utilities import authorization_server_client
 
 # Device Attribute Information File Name (Generated)
 TEST_DEVICE_DATA_FILE = "test_metric_agent_device_attribute1.yaml"
@@ -72,23 +70,29 @@ def _log_contains(record, level, message) -> bool:
     return next(filter(lambda x: (x[1] == level) and (message in x[2]), record), None) is not None
 
 
-def _set_device_data_file(mocker, monkeypatch):
+def _set_device_data_file(mocker, monkeypatch, trailing_slash: bool = True):
     """set device data file"""
     # Current path
     current_path = Path(os.path.dirname(os.path.abspath(__file__)))
     # Replace the environment variable setting file directory with the current path.
-    monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", str(current_path) + "/")
+    config_path = str(current_path)
+    if trailing_slash:
+        config_path += "/"
+    monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", config_path)
     # Replace the device attribute information file name with the test device attribute information file name.
     mocker.patch.object(app.core.info.metric_agent, "DEVICE_DATA_FILE", TEST_DEVICE_DATA_FILE)
 
 
-def _get_metric_agent(mocker, monkeypatch, status_code, return_value, device_id, device_type, cpu_device_id):
+def _get_metric_agent(
+    mocker, monkeypatch, status_code, return_value, device_id, device_type, cpu_device_id, trailing_slash: bool = True
+):  # pylint: disable=R0913,R0917
     """request get mock"""
     mock_get = mocker.patch("requests.get")
     mock_get.return_value.status_code = status_code
     mock_get.return_value.json.return_value = return_value
 
-    _set_device_data_file(mocker, monkeypatch)
+    _set_device_data_file(mocker, monkeypatch, trailing_slash)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
     return get_metric_info.get_metric_agent(device_id, device_type, cpu_device_id)
@@ -96,21 +100,29 @@ def _get_metric_agent(mocker, monkeypatch, status_code, return_value, device_id,
 
 def test_get_metric_agent_cpu(mocker, caplog, monkeypatch):
     """metric CPU"""
+    caplog.set_level(logging.INFO)
     assert AGENT_DATA_CPU == _get_metric_agent(mocker, monkeypatch, 200, AGENT_DATA_CPU, "0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00006: device_id: 0001,  Agent Respond.")
 
 
+def test_get_metric_agent_cpu_no_slash(mocker, monkeypatch):
+    """metric CPU. No trailing slash in configuration path."""
+    assert AGENT_DATA_CPU == _get_metric_agent(mocker, monkeypatch, 200, AGENT_DATA_CPU, "0001", "CPU", "0001", False)
+
+
 def test_get_metric_agent_request_connect_exception(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     mock_get = mocker.patch("requests.get")
     mock_get.side_effect = requests.exceptions.ConnectionError("Error")
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # Raising a ConnectionError with a request will trigger an AgentConnectFailureHwControlError.
-    with pytest.raises(AgentConnectFailureHwControlError):
+    # Raising a ConnectionError with a request will trigger an AgentConnectFailureHWControlError.
+    with pytest.raises(AgentConnectFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
@@ -120,14 +132,16 @@ def test_get_metric_agent_request_connect_exception(mocker, caplog, monkeypatch)
 
 def test_get_metric_agent_request_exception(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     mock_get = mocker.patch("requests.get")
     mock_get.side_effect = requests.exceptions.RequestException("Error")
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # By causing a RequestException in the request, an AgentConnectFailureHwControlError will be thrown.
-    with pytest.raises(AgentConnectFailureHwControlError):
+    # By causing a RequestException in the request, an AgentConnectFailureHWControlError will be thrown.
+    with pytest.raises(AgentConnectFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
@@ -136,14 +150,16 @@ def test_get_metric_agent_request_exception(mocker, caplog, monkeypatch):
 
 def test_get_metric_agent_request_timeout_exception(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     mock_get = mocker.patch("requests.get")
     mock_get.side_effect = requests.exceptions.Timeout("Error")
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # By causing a Timeout on the Request, an AgentConnectFailureHwControlError will be triggered.
-    with pytest.raises(AgentConnectFailureHwControlError):
+    # By causing a Timeout on the Request, an AgentConnectFailureHWControlError will be triggered.
+    with pytest.raises(AgentConnectFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
@@ -152,6 +168,7 @@ def test_get_metric_agent_request_timeout_exception(mocker, caplog, monkeypatch)
 
 def test_get_metric_agent_request_http_exception(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     custom_resp = requests.Response()
     custom_resp.status_code = 404
     custom_resp._content = b'{"code": "ERROR0001", "message": "Error Message"}'  # pylint: disable=W0212
@@ -162,10 +179,11 @@ def test_get_metric_agent_request_http_exception(mocker, caplog, monkeypatch):
     mocker.patch("requests.get", side_effect=http_error)
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # By raising an HTTPError in the request, an AgentGetInformationFailureHwControlError is thrown.
-    with pytest.raises(AgentGetInformationFailureHwControlError):
+    # By raising an HTTPError in the request, an AgentGetInformationFailureHWControlError is thrown.
+    with pytest.raises(AgentGetInformationFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
@@ -174,16 +192,18 @@ def test_get_metric_agent_request_http_exception(mocker, caplog, monkeypatch):
 
 def test_get_metric_agent_request_http_exception_non_response(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     http_error = requests.exceptions.HTTPError()
     http_error.response = None
 
     mocker.patch("requests.get", side_effect=http_error)
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # By raising an HTTPError in the request, an AgentGetInformationFailureHwControlError is thrown.
-    with pytest.raises(AgentGetInformationFailureHwControlError):
+    # By raising an HTTPError in the request, an AgentGetInformationFailureHWControlError is thrown.
+    with pytest.raises(AgentGetInformationFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")
@@ -195,16 +215,18 @@ def test_get_metric_agent_request_http_exception_non_response(mocker, caplog, mo
 
 def test_get_metric_agent_request_http_exception_response_json_error(mocker, caplog, monkeypatch):
     """metric request exception"""
+    caplog.set_level(logging.INFO)
     http_error = requests.exceptions.HTTPError()
     http_error.response = '{"key":'
 
     mocker.patch("requests.get", side_effect=http_error)
 
     _set_device_data_file(mocker, monkeypatch)
+    mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
     get_metric_info = InfoMetricAgent()
-    # By raising an HTTPError in the request, an AgentGetInformationFailureHwControlError is thrown.
-    with pytest.raises(AgentGetInformationFailureHwControlError):
+    # By raising an HTTPError in the request, an AgentGetInformationFailureHWControlError is thrown.
+    with pytest.raises(AgentGetInformationFailureHWControlError):
         # Specify the CPU as a representative.
         get_metric_info.get_metric_agent("0001", "CPU", "0001")
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00005: device_id: 0001,  Agent Call.")

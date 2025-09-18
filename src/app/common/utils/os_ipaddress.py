@@ -19,16 +19,17 @@ Obtain the IP address of the operating system running on the CPU.
 
 """
 
+import logging
 import os
-import traceback
 import yaml
 
 import app.common.basic_exceptions as exc
-from app.common.deviceIdManager import device_id_base
-from app.common.utils.log import LOGGER
+from app.common.dim import device_id_base
 from app.common.utils.file_location_settings import FileLocationSettings
 
 BASE_PATH = os.path.dirname(__file__)
+
+logger = logging.getLogger(__name__)
 
 
 def get_os_ipaddress(cpu_device_id: str) -> tuple[str | None, bool]:
@@ -52,7 +53,7 @@ def get_os_ipaddress(cpu_device_id: str) -> tuple[str | None, bool]:
     try:
         fm_port_id = device_id_base.device_id_to_fm_port_id(cpu_device_id)
         config_file_dir = FileLocationSettings().config_file_dir
-        LOGGER.debug(f"[get_os_ipaddress] config_file_dir={config_file_dir}")
+        logger.debug("[get_os_ipaddress] config_file_dir=%s", config_file_dir)
 
         with open(os.path.join(config_file_dir, "os_ipaddress.yaml"), encoding="utf-8") as file:
             ipaddr_data = yaml.safe_load(file)
@@ -63,7 +64,7 @@ def get_os_ipaddress(cpu_device_id: str) -> tuple[str | None, bool]:
                 is_agent_exist = True
                 break
 
-    except (FileNotFoundError, yaml.YAMLError, AttributeError, KeyError, exc.BaseHwControlError):
-        LOGGER.debug(f"[get_os_ipaddress] cpu_device_id={cpu_device_id} traceback={traceback.format_exc()}")
+    except (FileNotFoundError, yaml.YAMLError, AttributeError, KeyError, exc.BaseHWControlError):
+        logger.debug("[get_os_ipaddress] cpu_device_id=%s", cpu_device_id, exc_info=True)
 
     return ip_address, is_agent_exist

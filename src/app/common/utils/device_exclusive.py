@@ -15,16 +15,12 @@
 """Manages the lock state of devices.
 
 This module manages the exclusive lock state of the specified device.
-
-file path:/app/common/utils/device_exclusive.py
-
 """
 
-import traceback
+import logging
 import threading
 
-from app.common.utils.log import LOGGER
-from app.common.messages import message
+logger = logging.getLogger(__name__)
 
 
 class DeviceExclusive:
@@ -83,24 +79,24 @@ class DeviceExclusive:
 
         """
 
-        LOGGER.debug(f"[{DeviceExclusive.lock.__name__}] begin device_id={device_id}")
+        logger.debug("[%s] begin device_id=%s", DeviceExclusive.lock.__name__, device_id)
         with DeviceExclusive._internal_lock:  # Exclusive _locks.
             # check the specified device lock state.
             if device_id not in DeviceExclusive._locks:
                 # If it does not exist, add a lock object with the device ID as the key.
                 DeviceExclusive._locks[device_id] = threading.Lock()
-                LOGGER.debug(f"[{DeviceExclusive.lock.__name__}] new lock for {device_id}")
+                logger.debug("[%s] new lock for %s", DeviceExclusive.lock.__name__, device_id)
 
             # acquire device lock.
             result = DeviceExclusive._locks[device_id].acquire(blocking=False)
 
             if result:
-                LOGGER.info(message.DeviceLockLog(target_device=device_id).to_json_encodable())
+                logger.info("Acquire the device lock.", extra={"target_device_id": device_id})
 
             else:
-                LOGGER.warning(message.DeviceLockFailedLog(target_device=device_id).to_json_encodable())
+                logger.warning("Failed to acquire the device lock.", extra={"target_device_id": device_id})
 
-            LOGGER.debug(f"[{DeviceExclusive.lock.__name__}] end")
+            logger.debug("[%s] end", DeviceExclusive.lock.__name__)
             return result
 
     @staticmethod
@@ -122,15 +118,14 @@ class DeviceExclusive:
             None
 
         """
-        LOGGER.debug(f"[{DeviceExclusive.unlock.__name__}] begin device_id={device_id}")
+        logger.debug("[%s] begin device_id=%s", DeviceExclusive.unlock.__name__, device_id)
 
         with DeviceExclusive._internal_lock:  # Exclusive _locks.
             # check the specified device lock state.
             if device_id not in DeviceExclusive._locks:
-                LOGGER.error(
-                    message.DeviceLockReleaseFailedLog(
-                        detail="The specified device is not locked.", target_device=device_id
-                    ).to_json_encodable()
+                logger.error(
+                    "Failed to release the device lock. The specified device is not locked.",
+                    extra={"target_device_id": device_id},
                 )
                 result = False
             else:
@@ -138,11 +133,10 @@ class DeviceExclusive:
                     # release device lock.
                     DeviceExclusive._locks[device_id].release()
                     del DeviceExclusive._locks[device_id]
-                    LOGGER.info(message.DeviceLockReleasedLog(target_device=device_id).to_json_encodable())
+                    logger.info("Released the device lock.", extra={"target_device_id": device_id})
                     result = True
                 except RuntimeError:
-                    LOGGER.error(message.ExceptionLog(trace_back=traceback.format_exc()).to_json_encodable())
-                    LOGGER.error(message.DeviceLockReleaseFailedLog(target_device=device_id).to_json_encodable())
+                    logger.exception("Failed to release the device lock.", extra={"target_device_id": device_id})
                     result = False
-            LOGGER.debug(f"[{DeviceExclusive.unlock.__name__}] end")
+            logger.debug("[%s] end", DeviceExclusive.unlock.__name__)
             return result

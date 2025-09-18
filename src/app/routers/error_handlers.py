@@ -21,64 +21,63 @@ generate appropriate JSON responses, and handle various types of
 exceptions that might occur during API requests.
 """
 
-import traceback
-import uuid
+import logging
 from http import HTTPStatus
 from typing import cast
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
+from fastapi.encoders import jsonable_encoder
 
 import app.common.basic_exceptions as custom_exceptions
-from app.common.utils.log import LOGGER
-from app.common.messages import message
-from app.routers.control import control_responses
+from app.routers import response_models
 
+logger = logging.getLogger(__name__)
 
-available_status_codes: list = [
+_AVAILABLE_STATUS_CODES: list = [
     HTTPStatus.BAD_REQUEST.value,
     HTTPStatus.UNAUTHORIZED.value,
     HTTPStatus.FORBIDDEN.value,
     HTTPStatus.NOT_FOUND.value,
+    HTTPStatus.METHOD_NOT_ALLOWED.value,
     HTTPStatus.CONFLICT.value,
     HTTPStatus.INTERNAL_SERVER_ERROR.value,
     HTTPStatus.SERVICE_UNAVAILABLE.value,
-]
+]  # TODO: Consider adding newly allowed HTTP status codes according to the updated common REST API
 # List of HTTP status codes that are allowed to be used in error responses
 # according to the project's REST API common rules.
 
 
-def hw_control_error_handler(request: Request, exc: Exception) -> Response:  # pylint: disable=W0613
+def hw_control_error_handler(_: Request, exc: Exception) -> Response:
     """
-    Handle BaseHwControlError.
+    Handle BaseHWControlError.
 
-    This function handles exceptions of type BaseHwControlError.
-    It logs the error and returns a JSON response with the 'status' code and detail
-    'message', 'error code', provided by the exception.
+    This function handles exceptions of type BaseHWControlError.
+    It logs the error and returns an HTTP response containing error details in JSON format.
 
     Args:
-        exc (BaseHwControlError): The BaseHwControlError that was raised.
+        _ (fastapi.Request): The request object (not used in this handler).
+        exc (Exception): The exception that was raised. (Should be an instance of BaseHWControlError)
 
     Returns:
-        JSONResponse:
-            - status_code: The 'status_code' of the BaseHwControlError.
-            - content:
-                - code: The 'error_code' of the BaseHwControlError.
-                - message: The 'message' of the BaseHwControlError.
+        Response:
+            An HTTP response object (typically a JSONResponse) containing:
+                - status_code: The `status_code` of the BaseHWControlError.
+                - content:
+                    - code: The `error_code` of the BaseHWControlError.
+                    - message: The `message` of the BaseHWControlError.
     """
-    hw_control_exc = cast(custom_exceptions.BaseHwControlError, exc)
+    hw_control_exc = cast(custom_exceptions.BaseHWControlError, exc)
 
-    trace_back_str = "".join(
-        traceback.format_exception(type(hw_control_exc), hw_control_exc, hw_control_exc.__traceback__)
+    logger.exception(
+        msg="An error occurred during processing.",
+        exc_info=exc,
+        extra={"error_code": hw_control_exc.error_code, "error_message": hw_control_exc.message},
     )
-    LOGGER.error(message.ExceptionLog(trace_back=trace_back_str).to_json_encodable())
 
     response = hw_control_exc.generate_api_response()
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
 
     return response
 
@@ -97,134 +96,120 @@ def _is_client_error(status_code: int) -> bool:
     return HTTPStatus.BAD_REQUEST <= status_code < HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def custom_http_exception_handler(request: Request, exc: Exception) -> Response:
+def custom_http_exception_handler(_: Request, exc: Exception) -> Response:
     """
     Handle HTTP exceptions.
 
     This function handles exceptions of type starlette.exceptions.HTTPException.
-    It logs the error and returns a JSON response with the status code and detail
-    message provided by the exception.
+    It logs the error and returns an HTTP response containing error details in JSON format.
 
     Args:
         request (fastapi.Request): The request object that triggered the exception.
-        exc (HTTPException): The HTTPException that was raised.
+        exc (Exception): The exception that was raised. (Should be an instance of HTTPException)
 
     Returns:
-        JSONResponse:
-            - status_code: The 'status_code' of the HTTPException.
-            - content:
-                - code: "EF003BAS011" (Fixed error code).
-                - message: Exception detail message.
+        Response:
+            An HTTP response object (typically a JSONResponse) containing:
+                - status_code: The status code of the HTTPException.
+                - content:
+                    - code: "EF003BAS011" (Fixed error code).
+                    - message: Exception detail message.
     """
 
     http_exc = cast(StarletteHTTPException, exc)
 
-    message.set_request_id(
-        request_id=str(uuid.uuid4())
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-
-    LOGGER.info(
-        message.HttpRequestLog.create_from_request(request=request).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-
-    trace_back_str = "".join(traceback.format_exception(type(http_exc), http_exc, http_exc.__traceback__))
-    LOGGER.error(message.ExceptionLog(trace_back=trace_back_str).to_json_encodable())
-
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR.value
-    if http_exc.status_code in available_status_codes:
+    if http_exc.status_code in _AVAILABLE_STATUS_CODES:
         status_code = http_exc.status_code
     elif _is_client_error(http_exc.status_code):
         status_code = HTTPStatus.BAD_REQUEST.value
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.ErrorResponseBody(code="EF003BAS011", message=http_exc.detail),
-        status_code=status_code,
+    error_code = "EF003BAS011"
+    error_message = http_exc.detail
+
+    logger.exception(
+        msg="Failed to process an invalid request.",
+        exc_info=exc,
+        extra={"error_code": error_code, "error_message": error_message},
     )
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+
+    response_body = response_models.ErrorResponseModel(code=error_code, message=error_message)
+    response = JSONResponse(status_code=status_code, content=jsonable_encoder(response_body))
 
     return response
 
 
-def custom_validation_exception_handler(request: Request, exc: Exception) -> Response:
+def custom_validation_exception_handler(_: Request, exc: Exception) -> Response:
     """
     Handle RequestValidationError.
 
     This function handles exceptions of type 'fastapi.exceptions.RequestValidationError'.
-    It logs the error and returns a JSON response with a 422 status code, an error code, and
-    the validation errors.
+    It logs the error and returns an HTTP response containing validation error details in JSON format.
 
     Args:
-        request (fastapi.Request): The request object that triggered the exception.
-        exc (RequestValidationError): The RequestValidationError that was raised.
+        _ (fastapi.Request): The request object that triggered the exception.
+        exc (Exception): The exception that was raised. (Should be an instance of RequestValidationError)
 
     Returns:
-        JSONResponse:
-            - status_code: 400
-            - content:
-                - code: "EF003BAS012" (Fixed error code).
-                - message: The validation errors that occurred.
+        Response:
+            An HTTP response object (typically a JSONResponse) containing:
+                - status_code: 422
+                - content:
+                    - code: "EF003BAS012" (Fixed error code).
+                    - message: The validation errors that occurred.
     """
 
     request_validation_exc = cast(RequestValidationError, exc)
 
-    message.set_request_id(
-        request_id=str(uuid.uuid4())
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    status_code = HTTPStatus.UNPROCESSABLE_ENTITY.value
 
-    LOGGER.info(
-        message.HttpRequestLog.create_from_request(request=request).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    error_code = "EF003BAS012"
+    error_message = request_validation_exc.errors()
 
-    trace_back_str = "".join(
-        traceback.format_exception(
-            type(request_validation_exc), request_validation_exc, request_validation_exc.__traceback__
-        )
+    logger.exception(
+        msg="Request parameter validation error occurred.",
+        exc_info=exc,
+        extra={"error_code": error_code, "error_message": error_message},
     )
-    LOGGER.error(message.ExceptionLog(trace_back=trace_back_str).to_json_encodable())
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.ErrorResponseBody(code="EF003BAS012", message=request_validation_exc.errors()),
-        status_code=HTTPStatus.BAD_REQUEST.value,
-    )
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    response_body = response_models.ErrorResponseModel(code=error_code, message=error_message)
+    response = JSONResponse(status_code=status_code, content=jsonable_encoder(response_body))
 
     return response
 
 
-def custom_exception_handler(request: Request, exc: Exception) -> Response:  # pylint: disable=W0613
+def custom_exception_handler(_: Request, exc: Exception) -> Response:
     """
     Handle unexpected exceptions.
 
-    This function logs the unexpected exception and generates a JSON response
-    with a 500 status code and a general error message.
+    This function logs the unexpected exception and generates an HTTP response
+    containing a general error message in JSON format with a 500 status code.
 
     Args:
+        _ (fastapi.Request): The request object (not used in this handler).
         exc (Exception): The unexpected exception that was raised.
 
     Returns:
-        JSONResponse:
-            - status_code: 500
-            - content:
-                - code: "CF010BAS001" (Fixed error code)
-                - message: The general error message indicating an internal server error.
+        Response:
+            An HTTP response object (typically a JSONResponse) containing:
+                - status_code: 500
+                - content:
+                    - code: "CF010BAS001" (Fixed error code)
+                    - message: The general error message indicating an internal server error.
     """
-    trace_back_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-    LOGGER.error(message.ExceptionLog(trace_back=trace_back_str).to_json_encodable())
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.ErrorResponseBody(
-            code="CF010BAS001",
-            message="The server encountered an unexpected internal error and was unable to complete your request.",
-        ),
-        status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
+    status_code = HTTPStatus.INTERNAL_SERVER_ERROR.value
+
+    error_code = "CF010BAS001"
+    error_message = "The server encountered an unexpected internal error and was unable to complete your request."
+
+    logger.exception(
+        msg="An unexpected error occurred.",
+        exc_info=exc,
+        extra={"error_code": error_code, "error_message": error_message},
     )
 
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    response_body = response_models.ErrorResponseModel(code=error_code, message=error_message)
+    response = JSONResponse(status_code=status_code, content=jsonable_encoder(response_body))
 
     return response

@@ -15,14 +15,14 @@
 """Tests bad_request_exceptions module."""
 import pytest
 
-import app.common.basic_exceptions as exc  # type: ignore
+import app.common.basic_exceptions as exc
 
 
 @pytest.mark.parametrize(
     "exception_class, expected_status_code, expected_error_code, expected_error_message",
     [
         (
-            exc.OobAuthenticationHwControlError,
+            exc.OOBAuthenticationHWControlError,
             401,
             "EF002BAS002",
             (
@@ -40,7 +40,7 @@ def test_set_additional_message_message(
 ):
     """Test can initialize instance and generate response.
 
-    This test checks that the AuthenticationHwControlError various derived
+    This test checks that the AuthenticationHWControlError various derived
     exception classes are correctly initialized with the expected status code,
     error code, error message, and additional message.
     It also ensures that the generated API response
@@ -61,7 +61,7 @@ def test_set_additional_message_message(
 
     try:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.AuthenticationHwControlError as error_object:
+    except exc.AuthenticationHWControlError as error_object:
         error_object.append_error_message(additional_message="test_additional_message_02")
 
         actual_response_object = error_object.generate_api_response()

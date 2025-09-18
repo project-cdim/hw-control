@@ -15,80 +15,80 @@
 """Tests configuration_exceptions module."""
 import pytest
 
-import app.common.basic_exceptions as exc  # type: ignore
+import app.common.basic_exceptions as exc
 
 
 @pytest.mark.parametrize(
     "exception_class, expected_status_code, expected_error_code, expected_error_message",
     [
         (
-            exc.ApiUsageHwControlError,
+            exc.APIUsageHWControlError,
             500,
             "EF007BAS002",
             "The specified argument is invalid. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.ManagerIdHwControlError,
+            exc.ManagerIDHWControlError,
             500,
             "EF007BAS003",
             "The specified Manager ID is invalid. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.PluginGetInstanceHwControlError,
+            exc.PluginGetInstanceHWControlError,
             500,
             "EF007BAS006",
             "Failed to get the Plugin class instance. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.PluginRespondUnExpectedTypeHwControlError,
+            exc.PluginRespondUnExpectedTypeHWControlError,
             500,
             "EF007BAS007",
             "The Plugin returned invalid type data. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.InvalidSerialNumberConfigFileNotFoundHwControlError,
+            exc.InvalidSerialNumberConfigFileNotFoundHWControlError,
             500,
             "EF007BAS008",
             "The Invalid Serial Number List File is not found. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.InvalidSerialNumberConfigFileIncorrectHwControlError,
+            exc.InvalidSerialNumberConfigFileIncorrectHWControlError,
             500,
             "EF007BAS009",
             "The Invalid Serial Number List File is incorrect. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.DeviceIdFileNotFoundHwControlError,
+            exc.DeviceIDFileNotFoundHWControlError,
             500,
             "EF007BAS010",
             "The Device ID Management File is not found. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.DeviceIdFileIncorrectHwControlError,
+            exc.DeviceIDFileIncorrectHWControlError,
             500,
             "EF007BAS011",
             "The Device ID Management File is incorrect. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.DeviceIdFileUpdateHwControlError,
+            exc.DeviceIDFileUpdateHWControlError,
             500,
             "EF007BAS012",
             "Failed to update the Device ID Management File. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.InvalidTypeDeviceIdHwControlError,
+            exc.InvalidTypeDeviceIDHWControlError,
             500,
             "EF007BAS015",
             "An unexpected type device was specified. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.InvalidDeviceTypeParameterHwControlError,
+            exc.InvalidDeviceTypeParameterHWControlError,
             500,
             "EF007BAS016",
             "The specified Device Type is invalid. test_additional_message_01 test_additional_message_02",
         ),
         (
-            exc.InvalidLogMessageParameterHwControlError,
+            exc.InvalidLogMessageParameterHWControlError,
             500,
             "EF007BAS017",
             (
@@ -97,7 +97,7 @@ import app.common.basic_exceptions as exc  # type: ignore
             ),
         ),
         (
-            exc.PluginRespondNoneHwControlError,
+            exc.PluginRespondNoneHWControlError,
             500,
             "EF007BAS018",
             "The Plugin returned None. test_additional_message_01 test_additional_message_02",
@@ -112,7 +112,7 @@ def test_initialize_instance_and_set_additional_message(
 ):
     """Test can initialize instance and generate response.
 
-    This test checks that the ConfigurationHwControlError various derived
+    This test checks that the ConfigurationHWControlError various derived
     exception classes are correctly initialized with the expected status code,
     error code, error message, and additional message.
     It also ensures that the generated API response
@@ -133,7 +133,7 @@ def test_initialize_instance_and_set_additional_message(
 
     try:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.ConfigurationHwControlError as error_object:
+    except exc.ConfigurationHWControlError as error_object:
         error_object.append_error_message(additional_message="test_additional_message_02")
 
         actual_response_object = error_object.generate_api_response()

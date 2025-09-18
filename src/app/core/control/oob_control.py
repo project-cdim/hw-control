@@ -19,21 +19,21 @@ Upon receiving a request from the control API,
 Makes a control request to OOB for the device
 specified by the device id.
 """
-from typing import cast
+
+import logging
 
 from app.core.control.control_base import (
     PowerControlTargetDevice,
-    OobPluginRequestTarget,
+    OOBPluginRequestTarget,
 )
-from app.common.utils.oob_plugin_base import OOBPluginBase
 from app.common import constants
 from app.common.utils import plugin_manager
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
+
+logger = logging.getLogger(__name__)
 
 
-class OobController:
+class OOBController:
     """
     A class to control the OOB (Out-of-Band) Manager by calling methods
     defined in different OOB plugins.
@@ -67,43 +67,40 @@ class OobController:
             None
 
         Raises:
-            UnexpectedExceptionHwControlError:
+            UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
 
-        plugin = plugin_manager.get_plugin(
-            manager_type=constants.ManagerType.OOB.value,
-            manager_id=target_device.oob_manager_id,
-        )
-        oob_plugin = cast(OOBPluginBase, plugin)
+        oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
-            OobPluginRequestTarget(
+            OOBPluginRequestTarget(
                 oob_device_id=target_device.oob_device_id,
                 device_type=target_device.device_type,
             ).model_dump()
         ]
 
-        LOGGER.info(
-            message=message.PluginCallLog(
-                manager_type=constants.ManagerType.OOB.value,
-                manager_id=target_device.oob_manager_id,
-                class_name=plugin.__class__.__name__,
-                method_name="post_power_on",
-            ).to_json_encodable()
+        logger.info(
+            "Request device power on to OOB plugin.",
+            extra={
+                "manager_type": constants.ManagerType.OOB.value,
+                "manager_id": target_device.oob_manager_id,
+                "class_name": oob_plugin.__class__.__name__,
+                "method_name": "post_power_on",
+            },
         )
 
         try:
             oob_plugin.post_power_on(oob_plugin_argument)
-        except exc.DeviceNotFoundHwControlError as e:
+        except exc.DeviceNotFoundHWControlError as e:
             e.append_error_message(f"The target Device ID is follow: {target_device.device_id}")
             raise
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             raise
         except Exception as e:
-            # Raise UnexpectedExceptionHwControlError
+            # Raise UnexpectedExceptionHWControlError
             # when OOB-plugin raise Unexpected Exception.
-            raise exc.UnexpectedExceptionHwControlError from e
+            raise exc.UnexpectedExceptionHWControlError from e
 
     @staticmethod
     def reset(target_device: PowerControlTargetDevice) -> None:
@@ -118,49 +115,46 @@ class OobController:
             None
 
         Raises:
-            RequestNotSupportedHwControlError:
+            RequestNotSupportedHWControlError:
                 If the specified device is not a CPU.
 
-            UnexpectedExceptionHwControlError:
+            UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
 
         if target_device.device_type != constants.DeviceType.CPU.value:
-            raise exc.RequestNotSupportedHwControlError("Reset is supported only by the CPU.")
+            raise exc.RequestNotSupportedHWControlError("Reset is supported only by the CPU.")
 
-        plugin = plugin_manager.get_plugin(
-            manager_type=constants.ManagerType.OOB.value,
-            manager_id=target_device.oob_manager_id,
-        )
-        oob_plugin = cast(OOBPluginBase, plugin)
+        oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
-            OobPluginRequestTarget(
+            OOBPluginRequestTarget(
                 oob_device_id=target_device.oob_device_id,
                 device_type=target_device.device_type,
             ).model_dump()
         ]
 
-        LOGGER.info(
-            message=message.PluginCallLog(
-                manager_type=constants.ManagerType.OOB.value,
-                manager_id=target_device.oob_manager_id,
-                class_name=plugin.__class__.__name__,
-                method_name="post_cpu_reset",
-            ).to_json_encodable()
+        logger.info(
+            "Request Host CPU reset to OOB plugin.",
+            extra={
+                "manager_type": constants.ManagerType.OOB.value,
+                "manager_id": target_device.oob_manager_id,
+                "class_name": oob_plugin.__class__.__name__,
+                "method_name": "post_cpu_reset",
+            },
         )
 
         try:
             oob_plugin.post_cpu_reset(oob_plugin_argument)
-        except exc.DeviceNotFoundHwControlError as e:
+        except exc.DeviceNotFoundHWControlError as e:
             e.append_error_message(f"The target Device ID is follow: {target_device.device_id}")
             raise
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             raise
         except Exception as e:
-            # Raise UnexpectedExceptionHwControlError
+            # Raise UnexpectedExceptionHWControlError
             # when OOB-plugin raise Unexpected Exception.
-            raise exc.UnexpectedExceptionHwControlError from e
+            raise exc.UnexpectedExceptionHWControlError from e
 
     @staticmethod
     def force_off(target_device: PowerControlTargetDevice) -> None:
@@ -175,42 +169,39 @@ class OobController:
             None
 
         Raises:
-            UnexpectedExceptionHwControlError:
+            UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
-        plugin = plugin_manager.get_plugin(
-            manager_type=constants.ManagerType.OOB.value,
-            manager_id=target_device.oob_manager_id,
-        )
-        oob_plugin = cast(OOBPluginBase, plugin)
+        oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
-            OobPluginRequestTarget(
+            OOBPluginRequestTarget(
                 oob_device_id=target_device.oob_device_id,
                 device_type=target_device.device_type,
             ).model_dump()
         ]
 
-        LOGGER.info(
-            message=message.PluginCallLog(
-                manager_type=constants.ManagerType.OOB.value,
-                manager_id=target_device.oob_manager_id,
-                class_name=plugin.__class__.__name__,
-                method_name="post_power_off",
-            ).to_json_encodable()
+        logger.info(
+            "Request device power off to OOB plugin.",
+            extra={
+                "manager_type": constants.ManagerType.OOB.value,
+                "manager_id": target_device.oob_manager_id,
+                "class_name": oob_plugin.__class__.__name__,
+                "method_name": "post_power_off",
+            },
         )
 
         try:
             oob_plugin.post_power_off(oob_plugin_argument)
-        except exc.DeviceNotFoundHwControlError as e:
+        except exc.DeviceNotFoundHWControlError as e:
             e.append_error_message(f"The target Device ID is follow: {target_device.device_id}")
             raise
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             raise
         except Exception as e:
-            # Raise UnexpectedExceptionHwControlError
+            # Raise UnexpectedExceptionHWControlError
             # when OOB-plugin raise Unexpected Exception.
-            raise exc.UnexpectedExceptionHwControlError from e
+            raise exc.UnexpectedExceptionHWControlError from e
 
     @staticmethod
     def power_off(target_device: PowerControlTargetDevice) -> None:
@@ -224,18 +215,14 @@ class OobController:
             None
 
         Raises:
-            UnexpectedExceptionHwControlError:
+            UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
 
-        plugin = plugin_manager.get_plugin(
-            manager_type=constants.ManagerType.OOB.value,
-            manager_id=target_device.oob_manager_id,
-        )
-        oob_plugin = cast(OOBPluginBase, plugin)
+        oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
-            OobPluginRequestTarget(
+            OOBPluginRequestTarget(
                 oob_device_id=target_device.oob_device_id,
                 device_type=target_device.device_type,
             ).model_dump()
@@ -244,35 +231,37 @@ class OobController:
         try:
             if target_device.device_type == constants.DeviceType.CPU.value:
 
-                LOGGER.info(
-                    message=message.PluginCallLog(
-                        manager_type=constants.ManagerType.OOB.value,
-                        manager_id=target_device.oob_manager_id,
-                        class_name=plugin.__class__.__name__,
-                        method_name="post_os_shutdown",
-                    ).to_json_encodable()
+                logger.info(
+                    "Request Host CPU shutdown to OOB plugin.",
+                    extra={
+                        "manager_type": constants.ManagerType.OOB.value,
+                        "manager_id": target_device.oob_manager_id,
+                        "class_name": oob_plugin.__class__.__name__,
+                        "method_name": "post_os_shutdown",
+                    },
                 )
 
                 oob_plugin.post_os_shutdown(oob_plugin_argument)
 
             else:
-                LOGGER.info(
-                    message=message.PluginCallLog(
-                        manager_type=constants.ManagerType.OOB.value,
-                        manager_id=target_device.oob_manager_id,
-                        class_name=plugin.__class__.__name__,
-                        method_name="post_power_off",
-                    ).to_json_encodable()
+                logger.info(
+                    "Request device power off to OOB plugin.",
+                    extra={
+                        "manager_type": constants.ManagerType.OOB.value,
+                        "manager_id": target_device.oob_manager_id,
+                        "class_name": oob_plugin.__class__.__name__,
+                        "method_name": "post_power_off",
+                    },
                 )
 
                 oob_plugin.post_power_off(oob_plugin_argument)
 
-        except exc.DeviceNotFoundHwControlError as e:
+        except exc.DeviceNotFoundHWControlError as e:
             e.append_error_message(f"The target Device ID is follow: {target_device.device_id}")
             raise
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             raise
         except Exception as e:
-            # Raise UnexpectedExceptionHwControlError
+            # Raise UnexpectedExceptionHWControlError
             # when OOB-plugin raise Unexpected Exception.
-            raise exc.UnexpectedExceptionHwControlError from e
+            raise exc.UnexpectedExceptionHWControlError from e

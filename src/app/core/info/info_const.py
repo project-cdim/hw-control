@@ -15,16 +15,11 @@
 """HW independent section - Get Information process (Response generation)
 
 Upon receiving a request from the information acquisition API,
-make an information acquisition request for the specified device ID to FM and OOB.
+make an information acquisition request for the specified Device ID to FM and OOB.
 Merge the device information returned from FM and OOB for each device
 type and return it to the information acquisition API.
 
 """
-
-
-# Data source type
-from typing import Dict
-
 
 DATA_SOURCE_TYPE_FM = "fm"
 DATA_SOURCE_TYPE_OOB = "oob"
@@ -35,7 +30,7 @@ DATA_TYPE_SPEC = "spec"
 DATA_TYPE_METRIC = "metric"
 
 # Mapping table (for memory retention)
-MAPPING_TABLE: Dict = {}
+MAPPING_TABLE: dict = {}
 
 # Mapping item
 MAPPING_ITEM_KEY = "key"
@@ -90,7 +85,7 @@ STRING_DATA_TYPE_TARGETS = [MAPPING_ITEM_TYPE, MAPPING_ITEM_ITEM_TYPE]
 # Device list information item name
 DEVICE_LIST_ITEM_NAME_DEVICE_LIST = "deviceList"  # Device Information Array
 DEVICE_LIST_ITEM_NAME_DEVICE_ID = "deviceID"  # Device ID
-DEVICE_LIST_ITEM_NAME_DEVICE_TYPE = "type"  # Device type
+DEVICE_LIST_ITEM_NAME_DEVICE_TYPE = "type"  # Device Type
 
 # Response item name
 RESP_ITEM_NAME_LINK = "links"

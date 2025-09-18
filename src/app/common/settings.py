@@ -19,7 +19,6 @@ from functools import lru_cache
 from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings
-import cdimlogger.common
 
 
 class Settings(BaseSettings):
@@ -28,48 +27,6 @@ class Settings(BaseSettings):
     Set constants used in the system from environment variables.
 
     """
-
-    DEBUG: bool = Field(
-        default=False,
-        alias="HW_CONTROL_DEBUG",
-        description="Specification of debug mode",
-    )
-
-    LOG_TAG: str = Field(
-        default=cdimlogger.common.TAG_APP_HWCONTROL,
-        alias="HW_CONTROL_LOG_TAG",
-        description="Tag representing a component",
-    )
-    LOG_DIR: str = Field(
-        default="/var/log/cdim",
-        alias="HW_CONTROL_LOG_DIR",
-        description="Log output directory.",
-    )
-    LOG_FILE: str = Field(
-        default="app_hw_control.log",
-        alias="HW_CONTROL_LOG_FILE",
-        description="Log file name",
-    )
-    LOGGING_LEVEL: str = Field(
-        default="INFO",
-        alias="HW_CONTROL_LOGGING_LEVEL",
-        description="Logging level",
-    )
-    LOG_ROTATION_SIZE: int = Field(
-        default=1000000,
-        alias="HW_CONTROL_LOG_ROTATION_SIZE",
-        description="File size (bytes) when rotating logs.",
-    )
-    LOG_BACKUP_FILES: int = Field(
-        default=3,
-        alias="HW_CONTROL_LOG_BACKUP_FILES",
-        description="Number of backup files to retain through rotation.",
-    )
-    LOG_STDOUT: bool = Field(
-        default=False,
-        alias="HW_CONTROL_LOG_STDOUT",
-        description="If true is specified, logs are also output to standard output.",
-    )
 
     MAPPING_TABLE_PATH: str = Field(
         default=str((Path(__file__).parent.parent / "mapping").resolve()),
@@ -83,7 +40,7 @@ class Settings(BaseSettings):
     )
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get device information
 

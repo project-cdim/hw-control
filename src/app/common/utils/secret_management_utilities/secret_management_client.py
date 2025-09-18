@@ -16,18 +16,19 @@
 A module for handling secret management operations.
 """
 
+import logging
 from enum import Enum
 from http import HTTPStatus
 from http import HTTPMethod
 
-from pydantic import validate_call, ValidationError, Field
+from pydantic import validate_call, ValidationError
 import requests
 from urllib3.util import Url
 
 from app.common.utils.secret_management_utilities import secret_management_settings
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
+
+logger = logging.getLogger(__name__)
 
 
 class SecretStore(Enum):
@@ -47,38 +48,6 @@ class SecretStore(Enum):
     FM = "cdim-hw-control-fm"
     OOB = "cdim-hw-control-oob"
     AGENT = "cdim-hw-control-agent"
-
-
-class SecretAPIRequestLog(message.BaseLogMessage):
-    """Log Message Model class for logging request to secret api."""
-
-    action: str = Field(
-        default="Request to secret API",
-    )
-    secret_store_name: str | None = Field(default=None)
-
-    secret_name: str | None = Field(default=None)
-
-    ip_address: str | None = Field(default=None, description="The IP address of the secret API.")
-    port: int | None = Field(default=None, description="The port number on the secret API.")
-    url: str | None = Field(default=None, description="The URL to which the HTTP request was sent.")
-    http_method: str | None = Field(default=None, description="The HTTP method used for the request.")
-    time_out: int | float | None = Field(default=None, description="The timeout value for the HTTP request.")
-
-
-class SecretAPIResponseLog(message.BaseLogMessage):
-    """Log Message Model class for logging response from secret api."""
-
-    action: str = Field(
-        default="Receive secret API response",
-    )
-    status_code: int | None = Field(default=None, description="The HTTP status code returned from the secret API.")
-
-
-class SecretAPIErrorResponseLog(SecretAPIResponseLog):
-    """Log Message Model class for logging error response from secret api."""
-
-    response_body: dict | None = Field(default=None, description="The HTTP response body returned from the secret API.")
 
 
 @validate_call
@@ -107,10 +76,10 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
         ValueError:
             If the specified secret is not found in the specified secret store.
 
-        InternalHwControlError:
+        InternalHWControlError:
             If there are issues during the secret retrieval process, such as connection errors.
 
-        ConfigurationHwControlError:
+        ConfigurationHWControlError:
             If there are configuration errors with environment variables related to the secret management.
 
     Example:
@@ -122,13 +91,13 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
     try:
         setting = secret_management_settings.SecretManagementSettings()
     except ValidationError as e:
-        raise exc.ConfigurationHwControlError(
+        raise exc.ConfigurationHWControlError(
             additional_message=(
                 "There is an issue with the configuration of the environment variables related to the secret API."
             )
         ) from e
 
-    LOGGER.info(secret_management_settings.SecretManagementSettingsLog(**setting.model_dump()).to_json_encodable())
+    logger.info("Get secret API settings form environment variables.", extra={**setting.model_dump()})
 
     target_url = Url(
         scheme="http",
@@ -137,16 +106,17 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
         path=f"{setting.path}{secret_store.value}/{secret_name}",
     )
 
-    LOGGER.info(
-        SecretAPIRequestLog(
-            secret_store_name=secret_store.value,
-            secret_name=secret_name,
-            ip_address=setting.host,
-            port=setting.port,
-            url=str(target_url),
-            http_method=HTTPMethod.GET,
-            time_out=setting.timeout,
-        ).to_json_encodable()
+    logger.info(
+        "Request to secret API",
+        extra={
+            "secret_store_name": secret_store.value,
+            "secret_name": secret_name,
+            "ip_address": setting.host,
+            "port": setting.port,
+            "url": str(target_url),
+            "http_method": HTTPMethod.GET,
+            "time_out": setting.timeout,
+        },
     )
 
     try:
@@ -156,7 +126,7 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
         )
 
     except requests.exceptions.RequestException as e:
-        raise exc.InternalHwControlError(
+        raise exc.InternalHWControlError(
             additional_message="The secret request to the secret API failed due to an unexpected error."
         ) from e
 
@@ -164,21 +134,26 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
     try:
         secret_manager_response_body = secret_manager_return.json()
     except requests.exceptions.JSONDecodeError as e:  # Unexpected format response was returned case.
-        raise exc.DependencyServiceHwControlError(
+        raise exc.DependencyServiceHWControlError(
             secret_manager_return, additional_message="The secret API return invalid data."
         ) from e
 
     if secret_manager_return.status_code == HTTPStatus.OK.value:
-        LOGGER.info(SecretAPIResponseLog(status_code=secret_manager_return.status_code).to_json_encodable())
+        logger.info(
+            "Get secret from the secret API.",
+            extra={"status_code": secret_manager_return.status_code},
+        )
         secret = secret_manager_response_body
-        LOGGER.debug(f"obtained secret: {str(secret)}")
+        logger.debug("obtained secret: %s", {str(secret)})
 
     else:  # Secret retrieval failure case.
-        LOGGER.error(
-            SecretAPIErrorResponseLog(
-                status_code=secret_manager_return.status_code, response_body=secret_manager_response_body
-            ).to_json_encodable()
+        logger.error(
+            "Return error from the secret API.",
+            extra={
+                "status_code": secret_manager_return.status_code,
+                "response_body": secret_manager_response_body,
+            },
         )
-        raise exc.DependencyServiceHwControlError(additional_message="Failed to get secret due to an unexpected error.")
+        raise exc.DependencyServiceHWControlError(additional_message="Failed to get secret due to an unexpected error.")
 
     return secret

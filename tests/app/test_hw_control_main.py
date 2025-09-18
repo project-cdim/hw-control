@@ -14,19 +14,74 @@
 
 """Unit test module for hw_control_main.py."""
 
-from app import hw_control_main  # type: ignore
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app import app_life_span
+from app.routers import middlewares
+from app.routers import error_handlers
+import app.common.basic_exceptions as custom_exceptions
+
+# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+
+from app import hw_control_main
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
-class TestHwControlMain:
-    """Unit test class for hw_control_main."""
+class TestApplicationInstance:
+    """Test class for hw-control application instance.
 
-    def test_main(self):
-        """Test execution of hw_control_main."""
+    hw_control_main module generates the FastAPI application instance
+    and sets up.
+    This class tests that the application instance is correctly configured.
+    """
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        actual = hw_control_main
+    def test_exception_handlers_added(self):
+        """Test that exception handlers are added to the application."""
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        app = hw_control_main.app
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        # The test method will stop if an error occurs.
-        print(actual)
-        assert True
+        handlers = app.exception_handlers
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        # Check if the handlers for the expected exceptions are present
+        # and that they are the correct functions.
+
+        assert StarletteHTTPException in handlers
+        assert RequestValidationError in handlers
+        assert Exception in handlers
+        assert custom_exceptions.BaseHWControlError in handlers
+
+        # Check if the handler functions are correct
+        # pylint: disable=W0143
+        assert handlers[StarletteHTTPException] == error_handlers.custom_http_exception_handler
+        assert handlers[RequestValidationError] == error_handlers.custom_validation_exception_handler
+        assert handlers[Exception] == error_handlers.custom_exception_handler
+        assert handlers[custom_exceptions.BaseHWControlError] == error_handlers.hw_control_error_handler
+        # pylint: disable=W0143
+
+    def test_middlewares_ordering(self):
+        """Test the ordering of middlewares in the application.
+
+        This test ensures that the middlewares are applied in the correct order
+        as expected by the application.
+        """
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        app = hw_control_main.app
+        middleware_classes = [mw.cls for mw in app.user_middleware]
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert len(middleware_classes) == 2
+        assert middleware_classes[0] is middlewares.RequestIDMiddleware
+        assert middleware_classes[1] is middlewares.LoggingMiddleware
+
+    def test_lifespan_function_set(self):
+        """Test that lifespan function is set in the application."""
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        app = hw_control_main.app
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+
+        assert hasattr(app.router, "lifespan")
+        assert app.router.lifespan.__name__ == app_life_span.lifespan.__name__

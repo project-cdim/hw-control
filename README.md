@@ -21,28 +21,8 @@ pdm run start
 
 ### Environment Variables
 
-- `HW_CONTROL_LOG_DIR`
-  - This variable specifies the log directory path.
-  - Default to `/var/log/cdim`.
-
-- `HW_CONTROL_LOG_FILE`
-  - This variable specifies the log file name.
-  - Default to `app_hw_control.log`.
-
-- `HW_CONTROL_LOGGING_LEVEL`
-  - This variable specifies the logging level.(DEBUG/INFO/WARN/ERROR/CRITICAL)
-  - Default to `INFO`.
-
-- `HW_CONTROL_LOG_ROTATION_SIZE`
-  - This variable specifies the maximum size of the log.
-  - Default to `1000000`.
-
-- `HW_CONTROL_LOG_BACKUP_FILES`
-  - This variable specifies the number of log histories.
-  - Default to `3`.
-
-- `HW_CONTROL_LOG_STDOUT`
-  - This variable specifies whether to output information to the standard output.(True/False)
+- `HW_CONTROL_LOGGING_RAISE_EXCEPTIONS`
+  - This variable set [`logging.raiseExceptions`](https://docs.python.org/3.12/library/logging.html#logging.raiseExceptions).
   - Default to `False`.
 
 - `HW_CONTROL_AUTHORIZATION_SERVER_TOKEN_ENDPOINT`
@@ -73,12 +53,10 @@ pdm run start
 
 - `HW_CONTROL_CONFIG_FILE_DIR`
   - This variable specifies the base directory relative to which the configuration files are located.
-  - Specify that the end of the path should end with a slash "/".
   - Default to `/opt/cdim/hw-control/config/`.
 
 - `HW_CONTROL_DATA_FILE_DIR`
   - This variable specifies the base directory relative to which the data files are located.
-  - Specify that the end of the path should end with a slash "/".
   - Default to `/opt/cdim/hw-control/data/`.
 
 ### Configuration files
@@ -90,10 +68,11 @@ You need to create a directory to place the configuration files.
 #### Configuration files list
 
 <!-- markdownlint-disable MD033 -->
-| No | File Name | File Summary |
-| -- | -- | -- |
-| 1 | invalid_serial_number.json | Invalid Serial Number Configuration File |
-| 2 | device_attribute_setting.yaml <br> device_attribute.yaml | device attribute setting file |
+| No  | File Name                                                | File Summary                             |
+| --- | -------------------------------------------------------- | ---------------------------------------- |
+| 1   | invalid_serial_number.json                               | Invalid Serial Number Configuration File |
+| 2   | device_attribute_setting.yaml <br> device_attribute.yaml | device attribute setting file            |
+| 3   | logging_config.yaml                                      | logging system configuration file        |
 <!-- markdownlint-enable MD033 -->
 
 #### 1. invalid_serial_number.json
@@ -105,15 +84,15 @@ However, if you do not need to manage invalid serial numbers, you don't need to 
 
 ##### 1.1. Configuration items of invalid_serial_number.json
 
-| Item | Description |
-| -- | -- |
-| oobDeviceID | OOB Device ID. Identifier to identify a device in the OOB plugin. |
-| PCIeVendorId | PCIe vendor ID of the device connected to the DSP(*1). |
-| PCIeDeviceId | PCIe device ID of the device connected to the DSP(*1). |
+| Item                   | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| oobDeviceID            | OOB Device ID. Identifier to identify a device in the OOB plugin. |
+| PCIeVendorId           | PCIe vendor ID of the device connected to the DSP(*1).            |
+| PCIeDeviceId           | PCIe device ID of the device connected to the DSP(*1).            |
 | PCIeDeviceSerialNumber | PCIe device serial number of the device connected to the DSP(*1). |
-| CPUSerialNumber | Serial number of the CPU device (host) connected to the USP(*2). |
-| CPUManufacturer | Manufacturer of the CPU device (host) connected to the USP(*2). |
-| CPUModel | Model number of the CPU device (host) connected to the USP(*1). |
+| CPUSerialNumber        | Serial number of the CPU device (host) connected to the USP(*2).  |
+| CPUManufacturer        | Manufacturer of the CPU device (host) connected to the USP(*2).   |
+| CPUModel               | Model number of the CPU device (host) connected to the USP(*1).   |
 
   *1  Downstream Switch Port. Refers to the switch port type to which the device is connected.  
   *2  Upstream Switch Port. Refers to the switch port type to which the host (CPU device) is connected.  
@@ -160,13 +139,13 @@ If invalid serial numbers are not defined, an empty list (`[]`) should be set wi
     []
     ```
 
-##### 2. device_attribute_setting.yaml and device_attribute.yaml
+#### 2. device_attribute_setting.yaml and device_attribute.yaml
 
 Currently, there is no need to change the settings in this file, but the file itself needs to exist.  
 Therefore, these files need to be created.  
 You can use the files registered in the config directory of the repository.  
 
-###### 2.1. Example of file settings
+##### 2.1. Example of file settings
 
 1. Please write the following content to device_attribute_setting.yaml.  
    There is no need to change each setting value.  
@@ -178,8 +157,8 @@ You can use the files registered in the config directory of the repository.
             url: http://0.0.0.0:8100
             timeout: 600
         specific_data:
-            disk_id: 00000000000000000000
-            macaddress: 00:00:00:00:00:00
+            diskID: 00000000000000000000
+            macAddress: 00:00:00:00:00:00
     ...
     ```
 
@@ -191,6 +170,15 @@ You can use the files registered in the config directory of the repository.
     ...
     ```
 
+#### 3. logging_config.yaml
+
+This configuration file defines the default logging system used by hw-control.
+Specify the path to this file in the `--log-config` argument when starting hw-control with uvicorn.
+This will automatically configure the logging system when the uvicorn server starts.
+See [Uvicorn documentation](https://www.uvicorn.org/settings/#logging) for further details.
+
+If you want to customize the logging system, copy and edit this file, then specify the path in the startup argument.
+
 ### Data files
 
 The data files is located within the directory specified by the environment variable HW_CONTROL_DATA_FILE_DIR.  
@@ -199,15 +187,15 @@ You need to create a directory to place the data files.
 
 #### Data files list
 
-| No | File Name | File Summary |
-| -- | -- | -- |
-| 1 | device_id_info.json | Device ID management File |
-| 2 | device_id_info.json.tmp | Temporary files for device_id_info.json |
+| No  | File Name               | File Summary                            |
+| --- | ----------------------- | --------------------------------------- |
+| 1   | device_id_info.json     | Device ID Management File               |
+| 2   | device_id_info.json.tmp | Temporary files for device_id_info.json |
 
 ##### 1. device_id_info.json
 
 A management file that stores device information.  
-Only the device ID management feature has access to this file. The user does not need to edit it.  
+Only the Device ID Management feature has access to this file. The user does not need to edit it.  
 This file is generated automatically.  
 
 ##### 2. device_id_info.json.tmp
@@ -217,7 +205,7 @@ This file will be temporarily created when updating the device_id_info.json file
 ## How to read API specification
 
 1. Start API server
-1. Access <http://localhost:8000/docs>
+1. Access <http://localhost:8000/redoc>
 
 ## How to run lint
 

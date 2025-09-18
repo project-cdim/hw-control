@@ -22,33 +22,26 @@ Provide a REST API that receives a device information acquisition
 
 import datetime
 import traceback
-from typing import Union
-from fastapi import APIRouter
+import logging
+from typing import Annotated
+from fastapi import APIRouter, Path, Query
 from fastapi.responses import JSONResponse
 
 import app.common.messages.message as msg
 from app.common.constants import TIME_STAMP_FORMAT
-from app.common.utils.log import LOGGER
 from app.common.basic_exceptions import (
-    BaseHwControlError,
-    DeviceNotFoundHwControlError,
-    InternalHwControlError,
+    BaseHWControlError,
+    DeviceNotFoundHWControlError,
+    InternalHWControlError,
 )
-from app.common.deviceIdManager import device_id_base
+from app.common.dim import device_id_base
 
-from app.routers.info import const_devices
-from app.routers.info.const_devices import (
-    TAG_LIST,
-    TAG_ALL_DEVICES,
-    TAG_INFO,
-    TAG_METRIC,
-    TAG_RESOURCE,
-)
-from app.routers.info.const_devices import ResourceList
-from app.routers.info.const_devices import IncompleteList
-from app.routers.info.const_devices import DeviceResourceList
-from app.routers.info.const_devices import IncompleteResourceList
-
+from app.routers import api_metadata
+from app.routers.info import response_models
+from app.routers.info.response_models import ResourceList
+from app.routers.info.response_models import IncompleteList
+from app.routers.info.response_models import DeviceResourceList
+from app.routers.info.response_models import IncompleteResourceList
 from app.core.info.info_core import InformationCore
 from app.common.utils import error_utils
 from app.common import constants
@@ -62,7 +55,7 @@ DEVICES_INFO_TYPE_SPEC = "spec"  # Information acquisition type: Device informat
 DEVICES_INFO_TYPE_METRIC = "metric"  # Information Acquisition Type: Metric information
 DEVICES_INFO_TYPE_RESOURCE = "resource"  # Information Acquisition Type: Resource information
 
-DEVICES_API_LOG_TITLE = "/cdim/api/v1/devices"  # Log message title
+DEVICES_API_LOG_TITLE = f"{constants.BASE_URL}/v1/devices"  # Log message title
 DEVICES_API_LOG_RESULT_OK = "Success"  # Log message result: Success
 DEVICES_API_LOG_RESULT_NG = "Failure"  # Log message result: Failure
 DEVICES_API_LOG_RESULT_ERR = "Partial failure"  # Log message result: Partial failure
@@ -70,42 +63,85 @@ DEVICES_API_LOG_ERRCODE = " errcode: "  # Log message errcode
 DEVICES_API_LOG_ERR_MESSAGE = " err_message: "  # Log message err_message
 
 
-router = APIRouter(prefix=f"{constants.BASE_URL}/v1")
+router = APIRouter(
+    prefix=f"{constants.BASE_URL}/v1",
+    tags=[api_metadata.DEVICE_INFO_API],
+    responses={
+        422: {
+            "description": "HTTP status code 422 will not occur.",
+        }  # Remove the default response schema specification for 422 cases set in FastAPI.
+    },
+)
+
+# Get a logger object.
+logger = logging.getLogger(__name__)
 
 
 # No1_Device ID list information acquisition
 @router.get(
-    "/device-ids",
-    description=const_devices.DEVICE_LIST_DESC_STR,
+    path="/device-ids",
+    description="""\
+Gets a list of Device IDs for the Device Type specified in type.
+
+If no Device Type is specified, returns a list of all Device IDs.
+""",
+    response_description=(
+        "Successfully retrieved all device ID information.\
+         Returns devices ID information for the specified device Type."
+    ),
+    responses={
+        400: api_metadata.error_case_spec_factory(
+            case_description="The request is invalid.",
+        ),
+        404: api_metadata.error_case_spec_factory(
+            case_description="The specified device not found.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "The application internal error.",
+                "The application configuration error.",
+            ],
+        ),
+    },
+    response_model=response_models.GetsListDevicesResponseBody,
     response_class=JSONResponse,
-    tags=[TAG_LIST],
+    name="Gets a list of devices",
 )
-def get_device_ids(device_type: Union[str, None] = None) -> JSONResponse:
+def get_device_ids(
+    device_type: Annotated[
+        str | None,
+        Query(
+            alias="deviceType",
+            description="The device type of the target device for obtaining the device list information.",
+        ),
+    ] = None,
+) -> JSONResponse:
     """Device ID list information acquisition
 
-    If the specified device type is valid, collect the ID list information for that device type.
-    If not specified, all device ID list information will be collected.
+    If the specified Device Type is valid, collect the ID list information for that Device Type.
+    If not specified, all Device ID list information will be collected.
 
     Args:
-        device_type (Union[str, None]): specified device type
+        device_type (str | None): specified Device Type
 
     Returns:
-        response: Collect device ID list information for specified device type
+        JSONResponse: Collect Device ID list information for specified Device Type
         Refer to No1_device list information acquisition in the information acquisition interface specifications.
 
     """
-    log_param = "/cdim/api/v1/device-ids"
+    log_param = f"{constants.BASE_URL}/v1/device-ids"
     if device_type:
-        log_param += "?device_type=" + device_type
+        log_param += "?deviceType=" + device_type
 
-    LOGGER.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
+    logger.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
 
     # Initialization of return value
     result: str = DEVICES_API_LOG_RESULT_NG
     device_list: dict = {}
 
     try:
-        # Assign device ID
+        # Assign Device ID
         if assign_device_id_error := _assign_device_id(log_param):
             return assign_device_id_error
 
@@ -120,42 +156,76 @@ def get_device_ids(device_type: Union[str, None] = None) -> JSONResponse:
             response = device_list
         else:
             # If there is no information acquisition result data count
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return DeviceNotFoundHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return DeviceNotFoundHWControlError().generate_api_response()
 
     finally:
-        LOGGER.info(msg.get_log_message(msg.I00002, ["devices", result]))
+        logger.info(msg.get_log_message(msg.I00002, ["devices", result]))
 
     return JSONResponse(response)
 
 
 # No2_Batch acquisition of all resource information
 @router.get(
-    "/devices",
-    description=const_devices.BATCH_ACQUISITION_DESC_STR,
+    path="/devices",
+    description="""\
+Gets all resource information for the Device Type specified in type.
+
+All resource information refers to all device configuration information.
+
+If no Device Type is specified, returns all configuration information for all Device Type.
+""",
+    response_description=(
+        "Successfully retrieved all resource information.\
+         Returns resource information for the specified device Type."
+    ),
+    responses={
+        400: api_metadata.error_case_spec_factory(
+            case_description="The request is invalid.",
+        ),
+        404: api_metadata.error_case_spec_factory(
+            case_description="The specified device not found.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "The application internal error.",
+                "The application configuration error.",
+            ],
+        ),
+    },
+    response_model=response_models.GetsAllDevicesResponseBody,
     response_class=JSONResponse,
-    tags=[TAG_ALL_DEVICES],
+    name="Gets all resource information",
 )
-def get_all_devices_information(device_type: Union[str, None] = None) -> JSONResponse:
+def get_all_devices_information(
+    device_type: Annotated[
+        str | None,
+        Query(
+            alias="deviceType",
+            description="The device type of the target device for obtaining the device information.",
+        ),
+    ] = None,
+) -> JSONResponse:
     """Batch acquisition of all resource information
 
-    If the specified device type is valid, collect all resource information for the corresponding device type.
+    If the specified Device Type is valid, collect all resource information for the corresponding Device Type.
     If not specified, all resource information will be collected.
 
     Args:
-        device_type (Union[str, None]): specified device type
+        device_type (str | None): specified Device Type
 
     Returns:
-        response: Collect bulk resource information for the specified device type
+        JSONResponse: Collect bulk resource information for the specified Device Type
         Refer to No.2_Batch information acquisition of all resources
                 in the information acquisition interface specifications.
 
     """
     log_param = DEVICES_API_LOG_TITLE
     if device_type:
-        log_param += "?device_type=" + device_type
+        log_param += "?deviceType=" + device_type
 
-    LOGGER.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
+    logger.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
 
     # Initialization of return value
     result: str = DEVICES_API_LOG_RESULT_NG
@@ -164,7 +234,7 @@ def get_all_devices_information(device_type: Union[str, None] = None) -> JSONRes
     incomplete_device_infos = IncompleteResourceList()
 
     try:
-        # Assign device ID
+        # Assign Device ID
         if assign_device_id_error := _assign_device_id(log_param):
             return assign_device_id_error
 
@@ -182,54 +252,84 @@ def get_all_devices_information(device_type: Union[str, None] = None) -> JSONRes
 
         else:
             # If there is no information acquisition result data
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return DeviceNotFoundHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return DeviceNotFoundHWControlError().generate_api_response()
 
         # device information data exists
-        exists_devices = bool(device_infos.deviceList)
-        exists_incomplete_devices = bool(incomplete_device_infos.incompleteDeviceList)
+        exists_devices = bool(device_infos.device_list)
+        exists_incomplete_devices = bool(incomplete_device_infos.incomplete_device_list)
         if exists_devices or exists_incomplete_devices:
-
             # If the information acquisition result data is only normal
             if not exists_incomplete_devices:
                 result = DEVICES_API_LOG_RESULT_OK
                 # Convert a class type to a dict type and return it
-                response = vars(device_infos)
+                response = device_infos.model_dump(by_alias=True)
 
             elif not exists_devices:
                 result = DEVICES_API_LOG_RESULT_ERR
                 # Convert a class type to a dict type and return it
-                response = vars(incomplete_device_infos)
+                response = incomplete_device_infos.model_dump(by_alias=True)
 
             else:
                 result = DEVICES_API_LOG_RESULT_OK
                 device_info_array = ResourceList()
-                device_info_array.deviceList = device_infos.deviceList
-                device_info_array.incompleteDeviceList = incomplete_device_infos.incompleteDeviceList
-                device_info_array.infoTimestamp = device_infos.infoTimestamp
+                device_info_array.device_list = device_infos.device_list
+                device_info_array.incomplete_device_list = incomplete_device_infos.incomplete_device_list
+                device_info_array.info_timestamp = device_infos.info_timestamp
                 # Convert a class type to a dict type and return it
-                response = vars(device_info_array)
+                response = device_info_array.model_dump(by_alias=True)
 
         else:
             result = DEVICES_API_LOG_RESULT_NG
             # If there is no information acquisition result data count
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return DeviceNotFoundHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return DeviceNotFoundHWControlError().generate_api_response()
 
     finally:
-        LOGGER.info(msg.get_log_message(msg.I00002, ["devices", result]))
+        logger.info(msg.get_log_message(msg.I00002, ["devices", result]))
 
     return JSONResponse(response)
 
 
 # No3_Get device information
 @router.get(
-    "/devices/{device_id}/specs",
-    description=const_devices.DEVICES_DESC_STR,
+    path="/devices/{deviceID}/specs",
+    description="""\
+Gets configuration information for the Device ID specified in deviceID.
+""",
+    response_description=(
+        "Successfully retrieved device information.\
+         Returns configuration information for the specified device ID."
+    ),
+    responses={
+        400: api_metadata.error_case_spec_factory(
+            case_description="The request is invalid.",
+        ),
+        404: api_metadata.error_case_spec_factory(
+            case_description="The specified device not found.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "The application internal error.",
+                "The application configuration error.",
+            ],
+        ),
+    },
+    response_model=response_models.GetsDeviceInformationResponseBody,
     response_class=JSONResponse,
-    tags=[TAG_INFO],
+    name="Get device information",
 )
-def get_devices_information(device_id: str) -> JSONResponse:
+def get_devices_information(
+    device_id: Annotated[
+        str,
+        Path(
+            alias="deviceID",
+            description="The Device ID of get device information target device.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
+) -> JSONResponse:
     """Get device information
 
     Get device information corresponding to the specified deviceID
@@ -238,13 +338,13 @@ def get_devices_information(device_id: str) -> JSONResponse:
         device_id (str): specified deviceID
 
     Returns:
-        response: Individual device information corresponding to deviceID
+        JSONResponse: Individual device information corresponding to deviceID
         Please refer to No.3_Device information acquisition in the information acquisition interface specifications.
 
     """
     log_param = DEVICES_API_LOG_TITLE + "/" + device_id + "/specs"
 
-    LOGGER.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
+    logger.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
 
     # Initialization of return value
     result: str = DEVICES_API_LOG_RESULT_NG
@@ -261,23 +361,54 @@ def get_devices_information(device_id: str) -> JSONResponse:
             result = DEVICES_API_LOG_RESULT_ERR
         return JSONResponse(device_info)
 
-    except BaseHwControlError as error:
-        # Use JSONResponse generation method of BaseHwControlError
-        LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+    except BaseHWControlError as error:
+        # Use JSONResponse generation method of BaseHWControlError
+        logger.warning(msg.get_log_message(msg.W00001, [log_param]))
         return error.generate_api_response()
 
     finally:
-        LOGGER.info(msg.get_log_message(msg.I00002, ["devices", result]))
+        logger.info(msg.get_log_message(msg.I00002, ["devices", result]))
 
 
 # No4_Get resource information
 @router.get(
-    "/devices/{device_id}",
-    description=const_devices.RESOURCE_DESC_STR,
+    path="/devices/{deviceID}",
+    description="""\
+Gets configuration and metric information for the Device ID specified in deviceID.
+""",
+    response_description=(
+        "Successfully retrieved resource information.\
+         Returns configuration information and metric information for the specified device ID."
+    ),
+    responses={
+        400: api_metadata.error_case_spec_factory(
+            case_description="The request is invalid.",
+        ),
+        404: api_metadata.error_case_spec_factory(
+            case_description="The specified device not found.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "The application internal error.",
+                "The application configuration error.",
+            ],
+        ),
+    },
+    response_model=response_models.GetsResourceInformationResponseBody,
     response_class=JSONResponse,
-    tags=[TAG_RESOURCE],
+    name="Get resource information",
 )
-def get_devices_resource(device_id: str) -> JSONResponse:
+def get_devices_resource(
+    device_id: Annotated[
+        str,
+        Path(
+            alias="deviceID",
+            description="The Device ID of get resource information target device.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
+) -> JSONResponse:
     """Get resource information
 
     Get resource information corresponding to the specified deviceID
@@ -286,13 +417,13 @@ def get_devices_resource(device_id: str) -> JSONResponse:
         device_id (str): specified deviceID
 
     Returns:
-        response: resource device information corresponding to deviceID
+        JSONResponse: resource device information corresponding to deviceID
         Please refer to No.4_Resource information acquisition in the information acquisition interface specifications.
 
     """
     log_param = DEVICES_API_LOG_TITLE + "/" + device_id
 
-    LOGGER.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
+    logger.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
 
     # Initialization of return value
     result: str = DEVICES_API_LOG_RESULT_NG
@@ -309,23 +440,54 @@ def get_devices_resource(device_id: str) -> JSONResponse:
             result = DEVICES_API_LOG_RESULT_ERR
         return JSONResponse(resource_info)
 
-    except BaseHwControlError as error:
-        # Use JSONResponse generation method of BaseHwControlError
-        LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+    except BaseHWControlError as error:
+        # Use JSONResponse generation method of BaseHWControlError
+        logger.warning(msg.get_log_message(msg.W00001, [log_param]))
         return error.generate_api_response()
 
     finally:
-        LOGGER.info(msg.get_log_message(msg.I00002, ["devices", result]))
+        logger.info(msg.get_log_message(msg.I00002, ["devices", result]))
 
 
 # No5_Get metric information
 @router.get(
-    "/devices/{device_id}/metrics",
-    description=const_devices.METRICS_DESC_STR,
+    path="/devices/{deviceID}/metrics",
+    description="""\
+Gets metric information for the Device ID specified in deviceID.
+""",
+    response_description=(
+        "Successfully retrieved metric information.\
+         Returns metric information for the specified device ID."
+    ),
+    responses={
+        400: api_metadata.error_case_spec_factory(
+            case_description="The request is invalid.",
+        ),
+        404: api_metadata.error_case_spec_factory(
+            case_description="The specified device not found.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "The application internal error.",
+                "The application configuration error.",
+            ],
+        ),
+    },
+    response_model=response_models.GetsMetricInformationResponseBody,
     response_class=JSONResponse,
-    tags=[TAG_METRIC],
+    name="Get metric information",
 )
-def get_devices_metrics(device_id: str) -> JSONResponse:
+def get_devices_metrics(
+    device_id: Annotated[
+        str,
+        Path(
+            alias="deviceID",
+            description="The Device ID of get metrics information target device.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
+) -> JSONResponse:
     """Get metric information
 
     Get metrics information corresponding to the specified deviceID
@@ -334,13 +496,13 @@ def get_devices_metrics(device_id: str) -> JSONResponse:
         device_id (str): specified deviceID
 
     Returns:
-        response: Individual metric information corresponding to deviceID
+        JSONResponse: Individual metric information corresponding to deviceID
         Refer to No.5_Metric information acquisition in the information acquisition interface specifications.
 
     """
     log_param = DEVICES_API_LOG_TITLE + "/" + device_id + "/metrics"
 
-    LOGGER.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
+    logger.info(msg.get_log_message(msg.I00001, ["devices", log_param]))
 
     # Initialization of return value
     result: str = DEVICES_API_LOG_RESULT_NG
@@ -357,17 +519,17 @@ def get_devices_metrics(device_id: str) -> JSONResponse:
             result = DEVICES_API_LOG_RESULT_ERR
         return JSONResponse(metric_info)
 
-    except BaseHwControlError as error:
-        # Use JSONResponse generation method of BaseHwControlError
-        LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+    except BaseHWControlError as error:
+        # Use JSONResponse generation method of BaseHWControlError
+        logger.warning(msg.get_log_message(msg.W00001, [log_param]))
         return error.generate_api_response()
 
     finally:
-        LOGGER.info(msg.get_log_message(msg.I00002, ["devices", result]))
+        logger.info(msg.get_log_message(msg.I00002, ["devices", result]))
 
 
 def _assign_device_id(log_param: str) -> JSONResponse | None:
-    """Assign device ID
+    """Assign Device ID
 
     Discover devices and assign IDs.
 
@@ -378,16 +540,16 @@ def _assign_device_id(log_param: str) -> JSONResponse | None:
         JSONResponse | None: error response if an error occurred, otherwise None
     """
 
-    # Device ID management call
+    # Device ID Manager call
     # Add conditions in the future
     # e.g.(if not device_type:Implementation conditions)
     try:
-        # Calling the device ID issuing
+        # Calling the Device ID issuing
         device_id_base.assign_device_id()
 
-    except BaseHwControlError as error:
-        # Use JSONResponse generation method of BaseHwControlError
-        LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+    except BaseHWControlError as error:
+        # Use JSONResponse generation method of BaseHWControlError
+        logger.warning(msg.get_log_message(msg.W00001, [log_param]))
         return error.generate_api_response()
 
     return None
@@ -416,19 +578,19 @@ def _get_device_list(device_type: str | None, log_param: str, device_list: dict)
         device_list_result = get_info.get_device_list(device_type)
         if not device_list_result:
             # If the information acquisition result data is invalid
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return InternalHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return InternalHWControlError().generate_api_response()
         if DEVICE_LIST_ITEM_NAME_DEVICE_LIST not in device_list_result:
             # If the information acquisition result data is invalid
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return DeviceNotFoundHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return DeviceNotFoundHWControlError().generate_api_response()
 
         # Return device list
         device_list.update(device_list_result)
 
-    except BaseHwControlError as error:
-        # Use JSONResponse generation method of BaseHwControlError
-        LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+    except BaseHWControlError as error:
+        # Use JSONResponse generation method of BaseHWControlError
+        logger.warning(msg.get_log_message(msg.W00001, [log_param]))
         return error.generate_api_response()
 
     return None
@@ -440,7 +602,7 @@ def _get_all_device_info(
     device_infos: DeviceResourceList,
     incomplete_device_infos: IncompleteResourceList,
 ) -> JSONResponse | None:
-    """Get device information by device IDs
+    """Get device information by Device IDs
 
     Get information of the devices identified by IDs.
 
@@ -466,37 +628,37 @@ def _get_all_device_info(
                 # Added return of error information to information acquisition
                 err_info_flag, device_info = _get_individually_specified_device_info(device_id, DEVICES_INFO_TYPE_SPEC)
 
-            except BaseHwControlError as error:
-                # Use JSONResponse generation method of BaseHwControlError
+            except BaseHWControlError as error:
+                # Use JSONResponse generation method of BaseHWControlError
                 err_code = error.error_code
                 err_message = error.message
                 log_param_err_info = log_para_dev
                 log_param_err_info += DEVICES_API_LOG_ERRCODE + err_code + DEVICES_API_LOG_ERR_MESSAGE + err_message
-                LOGGER.warning(msg.get_log_message(msg.W00001, [log_param_err_info]))
+                logger.warning(msg.get_log_message(msg.W00001, [log_param_err_info]))
                 # If exception, proceed to next device
                 continue
 
             except Exception:  # pylint: disable=W0718
                 # unexpected exception occurred
-                LOGGER.error(msg.get_log_message(msg.E00001, [traceback.format_exc()]))
-                LOGGER.warning(msg.get_log_message(msg.W00001, [log_param]))
+                logger.error(msg.get_log_message(msg.E00001, [traceback.format_exc()]))
+                logger.warning(msg.get_log_message(msg.W00001, [log_param]))
                 # If exception, proceed to next device
                 continue
 
             # If the error information for information acquisition failure is valid
             if err_info_flag:
-                incomplete_device_infos.incompleteDeviceList.append(device_info)
-                incomplete_device_infos.infoTimestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
+                incomplete_device_infos.incomplete_device_list.append(device_info)
+                incomplete_device_infos.info_timestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
 
             # If the information acquisition result data is normal
             else:
-                device_infos.deviceList.append(device_info)
-                device_infos.infoTimestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
+                device_infos.device_list.append(device_info)
+                device_infos.info_timestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
 
         else:
             # If the information acquisition result data is invalid
-            LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-            return InternalHwControlError().generate_api_response()
+            logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+            return InternalHWControlError().generate_api_response()
 
     return None
 
@@ -504,7 +666,7 @@ def _get_all_device_info(
 def _get_individually_specified_device_info(device_id: str, info_type: str) -> tuple[bool, dict]:
     """Get individual device information
 
-    Gets the individual device information for the specified device ID and acquisition type.
+    Gets the individual device information for the specified Device ID and acquisition type.
 
     Args:
         device_type (str): specified deviceID
@@ -514,7 +676,7 @@ def _get_individually_specified_device_info(device_id: str, info_type: str) -> t
         bool: Whether the error information is valid
             [True]  Error information exists
             [False] Error information does not exist
-        response: Acquire individual information corresponding to the device ID
+        response: Acquire individual information corresponding to the Device ID
     """
     log_param = "_get_individually_specified_device_info( device_id: " + device_id + ", info_type: " + info_type + ")"
 
@@ -541,15 +703,15 @@ def _get_individually_specified_device_info(device_id: str, info_type: str) -> t
 
     else:
         # If the information acquisition result data is invalid
-        LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-        raise InternalHwControlError
+        logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+        raise InternalHWControlError
 
     # Make and return result
     return _make_get_device_info_result(device_id, device_info, error_info, log_param)
 
 
 def _get_resource_info(get_info: InformationCore, device_id: str) -> tuple[dict, list]:
-    """Get resource information by device ID
+    """Get resource information by Device ID
 
     Get resource information of the device identified by ID.
 
@@ -567,7 +729,7 @@ def _get_resource_info(get_info: InformationCore, device_id: str) -> tuple[dict,
 
     # Acquisition of device information including return of error information
     device_info_spec, error_info_spec = get_info.get_spec_info(device_id)
-    # If the device ID of the obtained device information matches
+    # If the Device ID of the obtained device information matches
     if device_info_spec and device_id == device_info_spec.get(DEVICES_ITEM_NAME_DEVICE_ID):
         # Store device information in resource information
         device_info = device_info_spec
@@ -608,7 +770,7 @@ def _make_get_device_info_result(
     incomplete_info = IncompleteList()
 
     # If the information obtained is invalid
-    # If the device ID in the acquired information does not match
+    # If the Device ID in the acquired information does not match
     if not device_info or device_id != device_info.get(DEVICES_ITEM_NAME_DEVICE_ID):
         if error_infos:
             # If the error information for information acquisition failure is valid
@@ -616,22 +778,24 @@ def _make_get_device_info_result(
 
             # Returns failure to obtain some information
             result = True
-            response = vars(incomplete_info)
+            response = incomplete_info.model_dump(by_alias=True)
+
             return result, response
 
         # If the information acquisition result data is invalid
-        LOGGER.warning(msg.get_log_message(msg.W00006, [log_param]))
-        raise InternalHwControlError
+        logger.warning(msg.get_log_message(msg.W00006, [log_param]))
+        raise InternalHWControlError
 
     if error_infos:
         # If the error information for information acquisition failure is valid
         _set_err_info_results_item(device_id, error_infos, False, incomplete_info)
-        incomplete_info.infoTimestamp = device_info[DEVICES_ITEM_NAME_DEVICE_INFO_TIME]
+        incomplete_info.info_timestamp = device_info[DEVICES_ITEM_NAME_DEVICE_INFO_TIME]
 
         # Returns failure to obtain some information
         result = True
         response = device_info
-        response.update(incomplete_info)
+        response.update(incomplete_info.model_dump(by_alias=True))
+
         return result, response
 
     # If the information acquisition result data is normal
@@ -647,7 +811,7 @@ def _set_err_info_results_item(
     Set error information data for the cause of acquisition failure.
 
     Args:
-            device_id (str): device id
+            device_id (str): Device ID
             error_info (list): error information data
             time_set_flag (bool): current date and time set flag
             incomplete_info (IncompleteList) : Incomplete List Device information data
@@ -657,8 +821,8 @@ def _set_err_info_results_item(
     """
 
     # the error information for information acquisition failure
-    incomplete_info.errorInfo = error_info
-    incomplete_info.deviceID = device_id
+    incomplete_info.error_info = error_info
+    incomplete_info.device_id = device_id
     # Set current date and time
     if time_set_flag:
-        incomplete_info.infoTimestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
+        incomplete_info.info_timestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)

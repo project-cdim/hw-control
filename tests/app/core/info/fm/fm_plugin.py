@@ -25,7 +25,7 @@ CPU_DATA = {
     "PCIeVendorId": None,
     "PCIeDeviceId": None,
     "PCIeDeviceSerialNumber": None,
-    "serialNumber": "0001"
+    "serialNumber": "0001",
 }
 
 STORAGE_DATA = {
@@ -38,7 +38,7 @@ STORAGE_DATA = {
     "PCIeVendorId": "xxxx",
     "PCIeDeviceId": "1001",
     "PCIeDeviceSerialNumber": "x1001",
-    "serialNumber": None
+    "serialNumber": None,
 }
 
 NIC_DATA = {
@@ -51,19 +51,18 @@ NIC_DATA = {
     "PCIeVendorId": "xxxx",
     "PCIeDeviceId": "2001",
     "PCIeDeviceSerialNumber": "x2001",
-    "serialNumber": None
+    "serialNumber": None,
 }
 
 
-class FmPlugin:
-    """FMPlugin
-    """
+class FMPlugin:
+    """FMPlugin"""
+
     def __init__(self, obj):
         self.info = obj
 
     def show(self, target=None):
-        """port acquisition
-        """
+        """port acquisition"""
         ret = None
 
         if not target:

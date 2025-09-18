@@ -18,16 +18,14 @@ from app.common.constants import DeviceType
 
 
 def test_device_type_enum_unique():
-    """Test that the number of types of ENUM values is correct (must be unique)
-    """
+    """Test that the number of types of ENUM values is correct (must be unique)"""
     # Verify that the number of ENUM values is correct (unique).
-    device_types = set(item.value for item in DeviceType)
+    device_types = {item.value for item in DeviceType}
     assert len(device_types) == 8
 
 
 def test_device_type_enum_member_value():
-    """Test the value of ENUM member
-    """
+    """Test the value of ENUM member"""
     assert DeviceType.CPU.value == "CPU"
     assert DeviceType.MEMORY.value == "memory"
     assert DeviceType.STORAGE.value == "storage"

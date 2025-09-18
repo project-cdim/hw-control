@@ -20,63 +20,28 @@ from pytest_mock import MockFixture
 
 from tests import test_util
 
-from app.common import constants  # type: ignore
-from app.common.messages import message  # type: ignore
-from app.core.control import control_base  # type: ignore
+from app.common import constants
+from app.common import request_id_utilities
+from app.core.control import control_base
 from app.core.control import agent_control
 from app.core.control import fm_control
 
 
 @pytest.fixture(scope="function")
-def set_custom_dummy_request_id(request):
-    """Sets a custom request ID in the context variable for testing purposes.
-
-    This fixture sets the provided request ID in the context variable to simulate
-    an actual request ID during tests.
-
-    Use this fixture in your test methods by decorating them with
-    `@pytest.mark.usefixtures("set_custom_request_id")`. Additionally, provide
-    the `request_id` value through the `pytest.mark.parametrize` decorator
-    or by using a test method parameter.
-
-    Args:
-        request:
-            A pytest built-in fixture that provides information about the
-            current test context. It is used here to get the parameter
-            value for `request_id`.
-
-    Example:
-        To use this fixture in your test cases, you can follow the example below:
-
-        >>> import pytest
-        >>>
-        >>> @pytest.mark.usefixtures("set_custom_dummy_request_id")
-        >>> @pytest.mark.parametrize("set_custom_dummy_request_id", ["foo"], indirect=True)
-        >>> def test_some_functionality():
-        >>>
-        >>> @pytest.mark.usefixtures("set_custom_dummy_request_id")
-        >>> @pytest.mark.parametrize("set_custom_dummy_request_id", ["bar"], indirect=True)
-        >>> def test_another_functionality():
+def dummy_request_id():
+    """Provides a dummy request ID set in the context variable for testing.
 
     Yields:
-        None: This fixture does not return any value.
+        str: The dummy request ID set in the context.
     """
-    request_id = request.param
-    message.set_request_id(request_id=request_id)
+    dummy_request_id = str(uuid.uuid4())
+    # Set up the dummy request ID in context.
+    token = request_id_utilities._request_id.set(dummy_request_id)  # pylint: disable=W0212
 
+    yield dummy_request_id
 
-@pytest.fixture(scope="function")
-def set_dummy_constant_request_id():
-    """Set a dummy constant request ID to the context variable."""
-    request_id = test_util.CONSTANT_REQUEST_ID
-    message.set_request_id(request_id=request_id)
-
-
-@pytest.fixture(scope="function")
-def set_dummy_request_id():
-    """Set dummy request ID to the context variable."""
-    request_id = str(uuid.uuid4())
-    message.set_request_id(request_id=request_id)
+    # Clean up the request ID in context.
+    request_id_utilities._request_id.reset(token)  # pylint: disable=W0212
 
 
 @pytest.fixture(scope="function")
@@ -118,26 +83,26 @@ def control_target_agent_fixture(mocker: MockFixture, request):
 
     params = request.param
     agent = agent_control.ControlTargetAgent(
-        host_cpu_device_id=params.get("host_cpu_device_id", test_util.DummyCpuInfo.DEVICE_ID.value),
-        ip_address=params.get("ip_address", test_util.DummyCpuInfo.IP_ADDRESS.value),
+        host_cpu_device_id=params.get("host_cpu_device_id", test_util.DummyCPUInfo.DEVICE_ID.value),
+        ip_address=params.get("ip_address", test_util.DummyCPUInfo.IP_ADDRESS.value),
     )
     return agent
 
 
 @pytest.fixture(scope="function")
 def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
-    """Fixture to create a test instance of FmControlTargetDevicePair.
+    """Fixture to create a test instance of FMControlTargetDevicePair.
 
-    This fixture generates a FmControlTargetDevicePair object for testing purposes. The
-    FmControlTargetDevicePair class has attributes `host_cpu` and `target_device`, each
-    of which is an instance of FmControlTargetDevice.
+    This fixture generates a FMControlTargetDevicePair object for testing purposes. The
+    FMControlTargetDevicePair class has attributes `upstream_device` and `downstream_device`, each
+    of which is an instance of FMControlTargetDevice.
 
-    The fixture mocks the `model_post_init` method of FmControlTargetDevice to bypass
+    The fixture mocks the `model_post_init` method of FMControlTargetDevice to bypass
     post-initialization logic, allowing the creation of instances with specified values.
-    These instances are then stored in the `host_cpu` and `target_device` attributes of
-    the FmControlTargetDevicePair object.
+    These instances are then stored in the `upstream_device` and `downstream_device` attributes of
+    the FMControlTargetDevicePair object.
 
-    The attributes of the `host_cpu` and `target_device` instances can be customized
+    The attributes of the `upstream_device` and `downstream_device` instances can be customized
     using the `request.param` dictionary.
 
     Args:
@@ -145,8 +110,8 @@ def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
         request: The request parameter used to pass parameters to the fixture.
 
     Returns:
-        FmControlTargetDevicePair: A test instance of FmControlTargetDevicePair containing
-        the mocked `host_cpu` and `target_device` instances.
+        FMControlTargetDevicePair: A test instance of FMControlTargetDevicePair containing
+        the mocked `upstream_device` and `downstream_device` instances.
 
     Example:
         Using this fixture in a test:
@@ -155,37 +120,39 @@ def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
             "fm_control_target_device_pair_fixture",
             [
                 {
-                    # host_cpu parameter
-                    "host_cpu_device_id": "451b0faf-b70d-4476-832a-4c93f0e6e1ce",
-                    "host_cpu_switch_port_type": constants.DeviceType.USP.value,
-                    "host_cpu_fm_manager_id": "test_fm_manager_id",
-                    # target_device parameter
-                    "target_device_device_id": "852f416b-a6e7-4d32-b9c4-238901544d48",
-                    "target_device_switch_port_type": constants.SwitchPortType.DSP.value,
-                    "target_device_fm_manager_id": "test_fm_manager_id",
+                    # upstream_device parameter
+                    "upstream_device_device_id": "451b0faf-b70d-4476-832a-4c93f0e6e1ce",
+                    "upstream_device_switch_port_type": constants.DeviceType.USP.value,
+                    "upstream_device_fm_manager_id": "test_fm_manager_id",
+                    # downstream_device parameter
+                    "downstream_device_device_id": "852f416b-a6e7-4d32-b9c4-238901544d48",
+                    "downstream_device_switch_port_type": constants.SwitchPortType.DSP.value,
+                    "downstream_device_fm_manager_id": "test_fm_manager_id",
                 },
             ],
             indirect=True,
         )
         def test_function(fm_control_target_device_pair_fixture)
     """
-    mocker.patch.object(fm_control.FmControlTargetDevice, "model_post_init", lambda self, __context: None)
+    mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", lambda self, __context: None)
 
     params = request.param
-    host_cpu = fm_control.FmControlTargetDevice(
-        device_id=params.get("host_cpu_device_id", test_util.DummyCpuInfo.DEVICE_ID.value),
-        switch_port_type=params.get("host_cpu_switch_port_type", test_util.DummyCpuInfo.DEVICE_TYPE.value),
-        fm_port_id=params.get("host_cpu_fm_port_id", test_util.DummyCpuInfo.OOB_MANAGER_ID.value),
-        fm_manager_id=params.get("host_cpu_fm_manager_id", test_util.DummyCpuInfo.OOB_DEVICE_ID.value),
+    upstream_device = fm_control.FMControlTargetDevice(
+        device_id=params.get("upstream_device_id", test_util.DummyCPUInfo.DEVICE_ID.value),
+        switch_port_type=params.get("upstream_device_switch_port_type", test_util.DummyCPUInfo.DEVICE_TYPE.value),
+        fm_port_id=params.get("upstream_device_fm_port_id", test_util.DummyCPUInfo.OOB_MANAGER_ID.value),
+        fm_manager_id=params.get("upstream_device_fm_manager_id", test_util.DummyCPUInfo.OOB_DEVICE_ID.value),
     )
-    target_device = fm_control.FmControlTargetDevice(
-        device_id=params.get("target_device_device_id", test_util.DummyDeviceInfo.DEVICE_ID.value),
-        switch_port_type=params.get("target_device_switch_port_type", test_util.DummyDeviceInfo.DEVICE_TYPE.value),
-        fm_port_id=params.get("target_device_fm_port_id", test_util.DummyDeviceInfo.OOB_MANAGER_ID.value),
-        fm_manager_id=params.get("target_device_fm_manager_id", test_util.DummyDeviceInfo.OOB_DEVICE_ID.value),
+    downstream_device = fm_control.FMControlTargetDevice(
+        device_id=params.get("downstream_device_device_id", test_util.DummyDeviceInfo.DEVICE_ID.value),
+        switch_port_type=params.get("downstream_device_switch_port_type", test_util.DummyDeviceInfo.DEVICE_TYPE.value),
+        fm_port_id=params.get("downstream_device_fm_port_id", test_util.DummyDeviceInfo.OOB_MANAGER_ID.value),
+        fm_manager_id=params.get("downstream_device_fm_manager_id", test_util.DummyDeviceInfo.OOB_DEVICE_ID.value),
     )
 
-    device_pair = fm_control.FmControlTargetDevicePair(host_cpu=host_cpu, target_device=target_device)
+    device_pair = fm_control.FMControlTargetDevicePair(
+        upstream_device=upstream_device, downstream_device=downstream_device
+    )
 
     return device_pair
 
@@ -237,10 +204,10 @@ def power_control_target_device_fixture(mocker: MockFixture, request):
 
     params = request.param
     device = control_base.PowerControlTargetDevice(
-        device_id=params.get("device_id", test_util.DummyCpuInfo.DEVICE_ID.value),
-        device_type=params.get("device_type", test_util.DummyCpuInfo.DEVICE_TYPE.value),
-        oob_manager_id=params.get("oob_manager_id", test_util.DummyCpuInfo.OOB_MANAGER_ID.value),
-        oob_device_id=params.get("oob_device_id", test_util.DummyCpuInfo.OOB_DEVICE_ID.value),
+        device_id=params.get("device_id", test_util.DummyCPUInfo.DEVICE_ID.value),
+        device_type=params.get("device_type", test_util.DummyCPUInfo.DEVICE_TYPE.value),
+        oob_manager_id=params.get("oob_manager_id", test_util.DummyCPUInfo.OOB_MANAGER_ID.value),
+        oob_device_id=params.get("oob_device_id", test_util.DummyCPUInfo.OOB_DEVICE_ID.value),
         power_state=params.get("power_state", constants.DevicePowerState.UNKNOWN),
     )
     return device

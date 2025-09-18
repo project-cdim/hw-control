@@ -23,25 +23,6 @@ These settings can be used to facilitate requests to the Authorization Server.
 from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.common.messages import message
-
-
-class AuthorizationServerSettingsLog(message.BaseLogMessage):
-    """Log Message Model class for setting environment variables for request to The Authorization Server."""
-
-    action: str = Field(
-        default="Get Authorization Server settings form environment variables.",
-    )
-
-    token_endpoint: HttpUrl | None = Field(
-        default=None,
-        description="The value of the obtained environment variable `HW_CONTROL_AUTHORIZATION_SERVER_TOKEN_ENDPOINT`.",
-    )
-
-    timeout: int | None = Field(
-        default=None, description="The value of the environment variable `HW_CONTROL_AUTHORIZATION_SERVER_TIMEOUT`."
-    )
-
 
 class AuthorizationServerSettings(BaseSettings):
     """

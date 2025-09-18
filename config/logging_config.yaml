@@ -1,0 +1,59 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  json_formatter:
+    "()": pythonjsonlogger.json.JsonFormatter
+    format: "%(asctime)s %(levelname)s %(pathname)s %(lineno)d %(request_id)s %(message)s"
+
+  uvicorn_default_formatter:
+    "()": uvicorn.logging.DefaultFormatter
+    fmt: "%(levelprefix)s %(message)s"
+    use_colors: null
+
+  uvicorn_access_formatter:
+    "()": uvicorn.logging.AccessFormatter
+    fmt: '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
+
+filters:
+  request_id_filter:
+    "()": app.common.log.filters.RequestIDFilter
+
+handlers:
+  app_log_handler:
+    class: logging.handlers.RotatingFileHandler
+    filename: /var/log/cdim/app_hw_control.log
+    formatter: json_formatter
+    filters: [request_id_filter]
+    level: INFO
+    maxBytes: 15000000
+    backupCount: 100
+    encoding: utf-8
+  uvicorn_default:
+    class: logging.StreamHandler
+    formatter: uvicorn_default_formatter
+    stream: ext://sys.stderr
+  uvicorn_access:
+    class: logging.StreamHandler
+    formatter: uvicorn_access_formatter
+    stream: ext://sys.stdout
+
+loggers:
+  app:
+    handlers: [app_log_handler]
+    level: INFO
+    propagate: true
+  plugins:
+    handlers: [app_log_handler]
+    level: INFO
+    propagate: true
+  uvicorn:
+    handlers: [uvicorn_default]
+    level: INFO
+    propagate: false
+  uvicorn.error:
+    level: INFO
+  uvicorn.access:
+    handlers: [uvicorn_access]
+    level: INFO
+    propagate: false

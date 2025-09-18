@@ -14,11 +14,11 @@
 
 """Unit test module for secret_management_client.py ."""
 
-import json
 import logging
 from http import HTTPStatus
 
 import pytest
+from pytest import MonkeyPatch, LogCaptureFixture
 from pytest_mock import MockFixture
 
 from pydantic import ValidationError
@@ -26,140 +26,17 @@ import requests
 
 from tests import test_util
 
-import app.common.basic_exceptions as exc  # type: ignore
-from app.common.messages import message  # type: ignore
+import app.common.basic_exceptions as exc
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.common.utils.secret_management_utilities import secret_management_client  # type: ignore
+from app.common.utils.secret_management_utilities import secret_management_client
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-class TestLogMessageModel:
-    """Unit test class for Log Message Model Class."""
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, expected_default_value",
-        [
-            (
-                secret_management_client.SecretAPIRequestLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Request to secret API",
-                    "secret_store_name": None,
-                    "secret_name": None,
-                    "ip_address": None,
-                    "port": None,
-                    "url": None,
-                    "http_method": None,
-                    "time_out": None,
-                },
-            ),
-            (
-                secret_management_client.SecretAPIResponseLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Receive secret API response",
-                    "status_code": None,
-                },
-            ),
-            (
-                secret_management_client.SecretAPIErrorResponseLog,
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": None,
-                    "action": "Receive secret API response",
-                    "status_code": None,
-                    "response_body": None,
-                },
-            ),
-        ],
-    )
-    def test_default_values(self, log_message_class: message.BaseLogMessage, expected_default_value):
-        """test create instance default values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_log_message = log_message_class().to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_log_message == expected_default_value
-
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
-    @pytest.mark.parametrize(
-        "log_message_class, logging_contents, expected_contents",
-        [
-            (
-                secret_management_client.SecretAPIRequestLog,
-                {
-                    "detail": "test_string",
-                    "secret_store_name": secret_management_client.SecretStore.AGENT.value,
-                    "secret_name": "test_manager_id",
-                    "ip_address": "example.com",
-                    "port": 80,
-                    "url": "http://example.com:80/v1.0/secrets/{test_secret_store/test_secret_name",
-                    "http_method": "POST",
-                    "time_out": 5,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Request to secret API",
-                    "secret_store_name": "cdim-hw-control-agent",
-                    "secret_name": "test_manager_id",
-                    "ip_address": "example.com",
-                    "port": 80,
-                    "url": "http://example.com:80/v1.0/secrets/{test_secret_store/test_secret_name",
-                    "http_method": "POST",
-                    "time_out": 5,
-                },
-            ),
-            (
-                secret_management_client.SecretAPIResponseLog,
-                {
-                    "detail": "test_string",
-                    "status_code": 200,
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Receive secret API response",
-                    "status_code": 200,
-                },
-            ),
-            (
-                secret_management_client.SecretAPIErrorResponseLog,
-                {
-                    "detail": "test_string",
-                    "status_code": 500,
-                    "response_body": {"Foo": "bar"},
-                },
-                {
-                    "request_id": test_util.CONSTANT_REQUEST_ID,
-                    "detail": "test_string",
-                    "action": "Receive secret API response",
-                    "status_code": 500,
-                    "response_body": {"Foo": "bar"},
-                },
-            ),
-        ],
-    )
-    def test_custom_values(
-        self, log_message_class: message.BaseLogMessage, logging_contents: dict, expected_contents: dict
-    ):
-        """test create instance custom values."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        log_message = log_message_class(**logging_contents).to_json_encodable()
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert log_message == expected_contents
 
 
 class TestGetSecret:
     """Unit test class for get_secret"""
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "input_secret_store, secret_api_response_body",
         [
@@ -186,10 +63,10 @@ class TestGetSecret:
             ),
         ],
     )
-    def test_success(
+    def test_success(  # pylint: disable=R0913, R0917
         self,
-        caplog,
-        monkeypatch,
+        caplog: LogCaptureFixture,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         secret_api_response_body,
@@ -217,53 +94,69 @@ class TestGetSecret:
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.INFO, logger="LOGGER"):
+        with caplog.at_level(logging.INFO, logger=secret_management_client.__name__):
             actual_secret = secret_management_client.get_secret(
                 secret_store=input_secret_store, secret_name=input_secret_name
             )
 
-        # SecretManagementSettingsLog
-        setting_log_message = json.loads(caplog.records[0].getMessage())
-
-        # SecretAPIRequestLog
-        request_log_message = json.loads(caplog.records[1].getMessage())
-
-        # SecretAPIResponseLog
-        response_log_message = json.loads(caplog.records[-1].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_secret == expected_secret
+
         assert len(caplog.records) == 3
 
-        assert caplog.records[0].levelname == "INFO"
-        assert setting_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert setting_log_message["message"]["detail"] is None
-        assert setting_log_message["message"]["action"] == "Get secret API settings form environment variables."
-        assert setting_log_message["message"]["host"] == "localhost"
-        assert setting_log_message["message"]["port"] == 3500
-        assert setting_log_message["message"]["path"] == "/v1.0/secrets/"
-        assert setting_log_message["message"]["timeout"] == 3
+        # Inspection: Check the Secret Management Settings log
+        setting_log = caplog.records[0]
+        assert setting_log.levelname == "INFO"
+        assert setting_log.getMessage() == "Get secret API settings form environment variables."
 
-        assert caplog.records[1].levelname == "INFO"
-        assert request_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert request_log_message["message"]["detail"] is None
-        assert request_log_message["message"]["action"] == "Request to secret API"
-        assert request_log_message["message"]["secret_store_name"] == input_secret_store.value
-        assert request_log_message["message"]["secret_name"] == input_secret_name
-        assert request_log_message["message"]["ip_address"] == "localhost"
-        assert request_log_message["message"]["port"] == 3500
+        assert hasattr(setting_log, "host"), "host should be present in the log record"
+        assert getattr(setting_log, "host") == "localhost"
+
+        assert hasattr(setting_log, "port"), "port should be present in the log record"
+        assert getattr(setting_log, "port") == 3500
+
+        assert hasattr(setting_log, "path"), "path should be present in the log record"
+        assert getattr(setting_log, "path") == "/v1.0/secrets/"
+
+        assert hasattr(setting_log, "timeout"), "timeout should be present in the log record"
+        assert getattr(setting_log, "timeout") == 3
+
+        # Inspection: Check the Secret API Request log
+        request_log = caplog.records[1]
+        assert request_log.levelname == "INFO"
+        assert request_log.getMessage() == "Request to secret API"
+
+        assert hasattr(request_log, "secret_store_name"), "secret_store_name should be present in the log record"
+        assert getattr(request_log, "secret_store_name") == input_secret_store.value
+
+        assert hasattr(request_log, "secret_name"), "secret_name should be present in the log record"
+        assert getattr(request_log, "secret_name") == input_secret_name
+
+        assert hasattr(request_log, "ip_address"), "ip_address should be present in the log record"
+        assert getattr(request_log, "ip_address") == "localhost"
+
+        assert hasattr(request_log, "port"), "port should be present in the log record"
+        assert getattr(request_log, "port") == 3500
+
+        assert hasattr(request_log, "url"), "url should be present in the log record"
         assert (
-            request_log_message["message"]["url"]
+            getattr(request_log, "url")
             == f"http://localhost:3500/v1.0/secrets/{input_secret_store.value}/{input_secret_name}"
         )
-        assert request_log_message["message"]["http_method"] == "GET"
-        assert request_log_message["message"]["time_out"] == 3
 
-        assert caplog.records[-1].levelname == "INFO"
-        assert response_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert response_log_message["message"]["detail"] is None
-        assert response_log_message["message"]["action"] == "Receive secret API response"
-        assert response_log_message["message"]["status_code"] == 200
+        assert hasattr(request_log, "http_method"), "http_method should be present in the log record"
+        assert getattr(request_log, "http_method") == "GET"
+
+        assert hasattr(request_log, "time_out"), "time_out should be present in the log record"
+        assert getattr(request_log, "time_out") == 3
+
+        # Inspection: Check the Secret API Response log
+        response_log = caplog.records[2]
+        assert response_log.levelname == "INFO"
+        assert response_log.getMessage() == "Get secret from the secret API."
+
+        assert hasattr(response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(response_log, "status_code") == HTTPStatus.OK.value
 
     @pytest.mark.parametrize(
         "input_secret_store, input_secret",
@@ -274,7 +167,7 @@ class TestGetSecret:
             (0, "dummy_fm_manager_id"),  # The type of 'secret_store' is invalid case.
         ],
     )
-    def test_invalid_request_parameter(self, monkeypatch, input_secret_store, input_secret):
+    def test_invalid_request_parameter(self, monkeypatch: MonkeyPatch, input_secret_store, input_secret):
         """test invalid request parameter case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -299,7 +192,7 @@ class TestGetSecret:
             secret_management_client.SecretStore.AGENT,
         ],
     )
-    def test_setting_invalid(self, monkeypatch, input_secret_store):
+    def test_setting_invalid(self, monkeypatch: MonkeyPatch, input_secret_store):
         """test invalid env setting case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -307,7 +200,7 @@ class TestGetSecret:
         input_secret_name = "dummy_manager_id"
 
         # Set up the expected value.
-        expected_exception = exc.ConfigurationHwControlError
+        expected_exception = exc.ConfigurationHWControlError
 
         # Clean up the environment variables in the current test environment.
         monkeypatch.delenv("HW_CONTROL_SECRET_API_HOST", raising=False)
@@ -334,15 +227,15 @@ class TestGetSecret:
     @pytest.mark.parametrize(
         "requests_raise_exception, expected_exception",
         [
-            (requests.exceptions.ReadTimeout, exc.InternalHwControlError),
-            (requests.exceptions.ConnectTimeout, exc.InternalHwControlError),
-            (requests.exceptions.ConnectionError, exc.InternalHwControlError),
-            (requests.exceptions.RequestException, exc.InternalHwControlError),
+            (requests.exceptions.ReadTimeout, exc.InternalHWControlError),
+            (requests.exceptions.ConnectTimeout, exc.InternalHWControlError),
+            (requests.exceptions.ConnectionError, exc.InternalHWControlError),
+            (requests.exceptions.RequestException, exc.InternalHWControlError),
         ],
     )
-    def test_requests_raised(
+    def test_requests_raised(  # pylint: disable=R0913, R0917
         self,
-        monkeypatch,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         requests_raise_exception,
@@ -377,7 +270,7 @@ class TestGetSecret:
     )
     def test_secret_manager_return_invalid_data(
         self,
-        monkeypatch,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
     ):
@@ -385,7 +278,7 @@ class TestGetSecret:
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
         # Set up the expected exception.
-        expected_exception = exc.DependencyServiceHwControlError
+        expected_exception = exc.DependencyServiceHWControlError
 
         # Set up the input value.
         input_secret_name = "dummy_manager_id"
@@ -408,7 +301,6 @@ class TestGetSecret:
         with pytest.raises(expected_exception):
             _ = secret_management_client.get_secret(secret_store=input_secret_store, secret_name=input_secret_name)
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "input_secret_store",
         [
@@ -420,17 +312,17 @@ class TestGetSecret:
     @pytest.mark.parametrize(
         "secret_api_response_status_code, expected_exception",
         [
-            (HTTPStatus.NO_CONTENT.value, exc.DependencyServiceHwControlError),
-            (HTTPStatus.BAD_REQUEST.value, exc.DependencyServiceHwControlError),
-            (HTTPStatus.FORBIDDEN.value, exc.DependencyServiceHwControlError),
-            (HTTPStatus.INTERNAL_SERVER_ERROR.value, exc.DependencyServiceHwControlError),
-            (HTTPStatus.NOT_FOUND.value, exc.DependencyServiceHwControlError),
+            (HTTPStatus.NO_CONTENT.value, exc.DependencyServiceHWControlError),
+            (HTTPStatus.BAD_REQUEST.value, exc.DependencyServiceHWControlError),
+            (HTTPStatus.FORBIDDEN.value, exc.DependencyServiceHWControlError),
+            (HTTPStatus.INTERNAL_SERVER_ERROR.value, exc.DependencyServiceHWControlError),
+            (HTTPStatus.NOT_FOUND.value, exc.DependencyServiceHWControlError),
         ],
     )
-    def test_secret_manager_return_error(  # pylint: disable=R0913
+    def test_secret_manager_return_error(  # pylint: disable=R0913, R0917
         self,
-        caplog,
-        monkeypatch,
+        caplog: LogCaptureFixture,
+        monkeypatch: MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         secret_api_response_status_code,
@@ -462,16 +354,20 @@ class TestGetSecret:
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
         with pytest.raises(expected_exception):
-            with caplog.at_level(logging.INFO, logger="LOGGER"):
+            with caplog.at_level(logging.INFO, logger=secret_management_client.__name__):
                 _ = secret_management_client.get_secret(secret_store=input_secret_store, secret_name=input_secret_name)
 
-        # SecretAPIErrorResponseLog
-        error_response_log_message = json.loads(caplog.records[-1].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert caplog.records[-1].levelname == "ERROR"
-        assert error_response_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert error_response_log_message["message"]["detail"] is None
-        assert error_response_log_message["message"]["action"] == "Receive secret API response"
-        assert error_response_log_message["message"]["status_code"] == secret_api_response_status_code
-        assert error_response_log_message["message"]["response_body"] == dummy_response_body
+
+        assert len(caplog.records) == 3
+
+        # Inspection: Check the Secret Management Settings log
+        error_response_log = caplog.records[-1]
+        assert error_response_log.levelname == "ERROR"
+        assert error_response_log.getMessage() == "Return error from the secret API."
+
+        assert hasattr(error_response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(error_response_log, "status_code") == secret_api_response_status_code
+
+        assert hasattr(error_response_log, "response_body"), "response_body should be present in the log record"
+        assert getattr(error_response_log, "response_body") == dummy_response_body

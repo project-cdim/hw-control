@@ -79,7 +79,7 @@ RESP_NIC_NETWORK_FABRIC_EXIST_OUT = {
 # RESP CPU input output
 RESP_CPU_IN_OUT = {"deviceID": "0001", "type": "CPU"}
 
-# RESP device type not exist
+# RESP Device Type not exist
 RESP_DEVICE_TYPE_NOT_EXIST_IN_OUT = {"deviceID": "0001"}
 
 
@@ -156,7 +156,7 @@ def test_network_fabric_exist():
 
 
 def test_other_device_type():
-    """Test other device type"""
+    """Test other Device Type"""
     get_information = InformationCore()
     resp = RESP_CPU_IN_OUT
     get_information._set_model_property(resp)  # pylint: disable=protected-access
@@ -164,7 +164,7 @@ def test_other_device_type():
 
 
 def test_device_type_not_exist():
-    """Test device type not exist"""
+    """Test Device Type not exist"""
     get_information = InformationCore()
     resp = RESP_DEVICE_TYPE_NOT_EXIST_IN_OUT
     get_information._set_model_property(resp)  # pylint: disable=protected-access
@@ -172,8 +172,8 @@ def test_device_type_not_exist():
 
 
 def test_resp_is_none():
-    """Test device type not exist"""
+    """Test when response is None"""
     get_information = InformationCore()
     resp = None
-    get_information._set_model_property(resp)  # pylint: disable=protected-access # type: ignore
-    assert resp is None  # NOSONAR
+    get_information._set_model_property(resp)  # pylint: disable=protected-access # type: ignore[protected-access]
+    assert resp is None

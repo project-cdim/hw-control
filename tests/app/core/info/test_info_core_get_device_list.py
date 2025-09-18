@@ -25,7 +25,7 @@ DEVICE_LIST_ITEM_NAME_DEVICE_LIST = "deviceList"
 # Device list information Item name Current date and time
 DEVICE_LIST_ITEM_NAME_TIME_STAMP = "infoTimestamp"
 
-# Device id list
+# Device ID list
 DEVICE_ID_LIST = ["0001", "0002", "1001", "1002", "1003", "2001", "2002", "3001", "3002", "9999"]
 
 # Dvice List
@@ -95,13 +95,11 @@ def _get_device_list(mocker, device_type, include_time_stamp) -> dict:
     def mock_create_device_attribute(_):
         return
 
-    # Replace obtaining the device type for device ID management.
+    # Replace obtaining the Device Type for Device ID management.
+    mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
+    # Replace the retrieval of the Device ID list for Device ID management.
     mocker.patch(
-        "app.common.deviceIdManager.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type
-    )
-    # Replace the retrieval of the device ID list for device ID management.
-    mocker.patch(
-        "app.common.deviceIdManager.device_id_base.get_controllable_device_id_list",  # NOSONAR
+        "app.common.dim.device_id_base.get_controllable_device_id_list",
         side_effect=mock_get_controllable_device_id_list,
     )
     # Replace create_device_attribute with mock
@@ -157,7 +155,7 @@ def test_get_device_list_network_interface(mocker):
 
 def test_get_device_list_no_device_list(mocker):
     """Test Get device list No Device List"""
-    # The device list information does not exist for the nonexistent device type device_type=test.
+    # The device list information does not exist for the nonexistent Device Type device_type=test.
     assert _get_device_list(mocker, "test", False).get(DEVICE_LIST_ITEM_NAME_DEVICE_LIST) is None
 
 
@@ -184,9 +182,9 @@ def test_get_device_list_road_device_data_not_dict(mocker):
     def mock_get_controllable_device_id_list():
         return []
 
-    # Replace the retrieval of the device ID list in device ID management.
+    # Replace the retrieval of the Device ID list in Device ID management.
     mocker.patch(
-        "app.common.deviceIdManager.device_id_base.get_controllable_device_id_list",
+        "app.common.dim.device_id_base.get_controllable_device_id_list",
         side_effect=mock_get_controllable_device_id_list,
     )
 

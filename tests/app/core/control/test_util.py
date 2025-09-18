@@ -15,19 +15,15 @@
 """This module define Utilities for app.core.control."""
 
 from enum import Enum
-import json
-from typing import Dict, Any
 
-from requests.models import Response as requests_Response
-
-from app.common import constants  # type: ignore
+from app.common import constants
+from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData, FMSwitchData
+from app.common.utils.oob_plugin_base import OOBPluginBase, OOBDeviceListItem
 
 # ++++ test data ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-CONSTANT_REQUEST_ID = "test_request_id"
 
-
-class DummyCpuInfo(Enum):
+class DummyCPUInfo(Enum):
     """Define a collection of name/plugin_type value pairs."""
 
     DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
@@ -58,76 +54,57 @@ class DummyDeviceInfo(Enum):
 
 
 # ++++ side effect of mock ++++++++++++++++++++++++++++++++++++++++++++#
-class DummyPlugin:
-    """
-    dummy plugin for UT
-    """
+class DummyFMPlugin(FMPluginBase):
+    """Dummy FM Plugin class for UT."""
 
-    def __init__(self) -> None:
-        """The constructor of dummy plugin for UT."""
+    def connect(self, cpu_id: str, device_id: str) -> None:
+        """Dummy connect method."""
+        return None
 
-    def connect(self, uid: str, did: str) -> None:
-        """dummy method of connect."""
+    def disconnect(self, cpu_id: str, device_id: str) -> None:
+        """Dummy disconnect method."""
+        return None
 
-    def disconnect(self, uid: str, did: str) -> None:
-        """dummy method of disconnect."""
+    def get_port_info(self, target_id: str | None = None) -> dict[str, list[FMPortData]]:
+        """Dummy get_port_info method ."""
+        return {}
 
-    def post_power_on(self, key_values: list) -> None:
-        """dummy method of post_power_on."""
-
-    def post_power_off(self, key_values: list) -> None:
-        """dummy method of post_power_off."""
-
-    def post_cpu_reset(self, key_values: list) -> None:
-        """dummy method of post_power_off."""
-
-    def post_os_shutdown(self, key_values: list) -> None:
-        """dummy method of post_os_shutdown."""
-
-    def get_spec_info(self, key_values: list) -> None:
-        """dummy method of get_spec_info."""
-
-    def get_power_state(self, key_values: list) -> None:
-        """dummy method of get_power_state."""
+    def get_switch_info(self, switch_id: str | None = None) -> dict[str, list[FMSwitchData]]:
+        """Dummy get_port_info method ."""
+        return {}
 
 
-def generate_dummy_agent_response(
-    status_code: int, content: str | dict | None = None, headers: Dict[str, Any] | None = None
-):
-    """Generates a dummy response object for testing purposes.
+class DummyOOBPlugin(OOBPluginBase):
+    """Dummy OOB Plugin class for UT."""
 
-    Args:
-        status_code (int):
-            The HTTP status code for the dummy response.
+    def get_spec_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy get_spec_info method."""
+        return {}
 
-        content (str | None):
-            The response body content. Can be a string or a dictionary which will be converted to JSON.
-            Defaults to None.
+    def get_metric_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy get_metric_info method."""
+        return {}
 
-        headers (Dict[str, Any] | None):
-            Optional HTTP headers to include in the response. Defaults to None.
+    def get_power_state(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy get_power_state method."""
+        return {}
 
-    Returns:
-        requests.models.Response: A dummy `Response` object with the specified attributes.
-    """
+    def get_device_info(self) -> list[OOBDeviceListItem]:
+        """Dummy get_device_info method."""
+        return []
 
-    dummy_response = requests_Response()
+    def post_power_on(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy post_power_on method."""
+        return {}
 
-    dummy_response.status_code = status_code
+    def post_power_off(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy post_power_off method."""
+        return {}
 
-    if headers is None:
-        headers = {}
+    def post_cpu_reset(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy post_cpu_reset method."""
+        return {}
 
-    # Setup the content of the response
-    if isinstance(content, dict):
-        dummy_response._content = json.dumps(content).encode("utf-8")  # pylint: disable=W0212
-        headers["Content-Type"] = "application/json"
-    elif isinstance(content, str):
-        dummy_response._content = content.encode("utf-8")  # pylint: disable=W0212
-    else:
-        dummy_response._content = b""  # pylint: disable=W0212
-
-    dummy_response.headers.update(headers)
-    dummy_response.encoding = "utf-8"
-
-    return dummy_response
+    def post_os_shutdown(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
+        """Dummy post_os_shutdown method."""
+        return {}

@@ -15,13 +15,13 @@
 """Tests Basic Exceptions module."""
 import pytest
 
-import app.common.basic_exceptions as exc  # type: ignore
+import app.common.basic_exceptions as exc
 
 
-class TestBaseHwControlError:
-    """Test BaseHwControlError class
+class TestBaseHWControlError:
+    """Test BaseHWControlError class
 
-    This class tests BaseHwControlError class
+    This class tests BaseHWControlError class
     """
 
     def test_set_error_values_methods(self):
@@ -33,8 +33,8 @@ class TestBaseHwControlError:
 
         # execution
         try:
-            raise exc.BaseHwControlError
-        except exc.BaseHwControlError as error_object:
+            raise exc.BaseHWControlError
+        except exc.BaseHWControlError as error_object:
             actual_status_code = error_object.http_code
             actual_error_code = error_object.error_code
             actual_error_message = error_object.message
@@ -44,7 +44,7 @@ class TestBaseHwControlError:
             assert actual_error_message == expected_error_message
 
     def test_append_error_message(self):
-        """test BaseHwControlError.append_error_message"""
+        """test BaseHWControlError.append_error_message"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         expected_error_message_01 = (
             "The server encountered an internal error and was unable to complete your request."
@@ -56,7 +56,7 @@ class TestBaseHwControlError:
         )
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        error_instance = exc.BaseHwControlError()
+        error_instance = exc.BaseHWControlError()
 
         error_instance.append_error_message(additional_message="test_additional_message_01")
         actual_error_message_01 = error_instance.message
@@ -69,14 +69,14 @@ class TestBaseHwControlError:
         assert expected_error_message_02 == actual_error_message_02
 
     def test_to_error_dict(self):
-        """test BaseHwControlError.to_error_dict"""
+        """test BaseHWControlError.to_error_dict"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         expected_error_message = "The server encountered an internal error and was unable to complete your request."
 
         expected_error_dict = {"errorCode": "CF000BAS000", "errorMessage": expected_error_message}
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_error_instance = exc.BaseHwControlError()
+        actual_error_instance = exc.BaseHWControlError()
         actual_error_dict = actual_error_instance.to_error_dict()
 
         # ++++ inspection ++++++++++++++++++++++++++++++++++++++++++++#
@@ -94,8 +94,8 @@ class TestBaseHwControlError:
         expected_response_body = f'{{"code":"CF000BAS000","message":"{expected_error_message}"}}'
         # execution
         try:
-            raise exc.BaseHwControlError
-        except exc.BaseHwControlError as error_object:
+            raise exc.BaseHWControlError
+        except exc.BaseHWControlError as error_object:
             actual = error_object.generate_api_response()
             # inspection
             assert actual.status_code == expected_status_code
@@ -128,7 +128,7 @@ class TestBaseHwControlError:
         expected_error_information = error_information
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        sut = exc.BaseHwControlError(*error_information)
+        sut = exc.BaseHWControlError(*error_information)
         actual_error_information = sut.args
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -139,7 +139,7 @@ class TestBaseHwControlError:
     "exception_class, expected_status_code, expected_error_code, expected_error_message",
     [
         (
-            exc.BaseHwControlError,
+            exc.BaseHWControlError,
             500,
             "CF000BAS000",
             (
@@ -148,7 +148,7 @@ class TestBaseHwControlError:
             ),
         ),
         (
-            exc.UnknownHwControlError,
+            exc.UnknownHWControlError,
             500,
             "CF001BAS000",
             (
@@ -157,31 +157,31 @@ class TestBaseHwControlError:
             ),
         ),
         (
-            exc.AuthenticationHwControlError,
+            exc.AuthenticationHWControlError,
             401,
             "EF002BAS000",
             ("Authentication failed. test_additional_message_01 test_additional_message_02"),
         ),
         (
-            exc.BadRequestHwControlError,
+            exc.BadRequestHWControlError,
             400,
             "EF003BAS000",
             ("Your request is invalid. test_additional_message_01 test_additional_message_02"),
         ),
         (
-            exc.ControlObjectHwControlError,
+            exc.ControlObjectHWControlError,
             500,
             "EF004BAS000",
             ("Failed to operate the specified device. test_additional_message_01 test_additional_message_02"),
         ),
         (
-            exc.ResourceBusyHwControlError,
+            exc.ResourceBusyHWControlError,
             503,
             "ER005BAS000",
             ("The specified resource is busy. test_additional_message_01 test_additional_message_02"),
         ),
         (
-            exc.ConfigurationHwControlError,
+            exc.ConfigurationHWControlError,
             500,
             "EF007BAS000",
             (
@@ -190,13 +190,13 @@ class TestBaseHwControlError:
             ),
         ),
         (
-            exc.InternalHwControlError,
+            exc.InternalHWControlError,
             500,
             "EF010BAS000",
             ("The server encountered an internal error. test_additional_message_01 test_additional_message_02"),
         ),
         (
-            exc.RequestConflictHwControlError,
+            exc.RequestConflictHWControlError,
             409,
             "EF011BAS000",
             (
@@ -205,7 +205,7 @@ class TestBaseHwControlError:
             ),
         ),
         (
-            exc.DependencyServiceHwControlError,
+            exc.DependencyServiceHWControlError,
             500,
             "EF012BAS000",
             (
@@ -214,7 +214,7 @@ class TestBaseHwControlError:
             ),
         ),
         (
-            exc.DeviceNotFoundHwControlError,
+            exc.DeviceNotFoundHWControlError,
             404,
             "EF013BAS000",
             "The specified target device is not found. test_additional_message_01 test_additional_message_02",
@@ -229,7 +229,7 @@ def test_initialize_instance_and_set_additional_message(
 ):
     """Test can initialize instance and generate response.
 
-    This test checks that the BaseHwControlError various derived
+    This test checks that the BaseHWControlError various derived
     exception classes are correctly initialized with the expected status code,
     error code, error message, and additional message.
     It also ensures that the generated API response
@@ -250,7 +250,7 @@ def test_initialize_instance_and_set_additional_message(
 
     try:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.BaseHwControlError as error_object:
+    except exc.BaseHWControlError as error_object:
         error_object.append_error_message(additional_message="test_additional_message_02")
 
         actual_response_object = error_object.generate_api_response()

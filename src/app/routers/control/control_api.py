@@ -18,15 +18,16 @@ This module defines Device Control API and its endpoints.
 
 """
 
-import uuid
+import logging
+import http
 from enum import Enum
 
 from pydantic import BaseModel, Field, UUID4
-from fastapi import APIRouter, Request, Query, Path
+from fastapi import APIRouter, Query, Path
 from fastapi.responses import JSONResponse
 
 from app.routers import api_metadata
-from app.routers.control import control_responses
+from app.routers.control import response_models
 
 from app.core.control import control_base
 from app.core.control import fm_control
@@ -34,14 +35,14 @@ from app.core.control import oob_control
 from app.core.control import agent_control
 
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
 from app.common import constants
 
 # The timeout value of the Is OS Ready endpoint.
 DEFAULT_IS_OS_READY_TIMEOUT = 30
 MIN_IS_OS_READY_TIMEOUT = 1
 MAX_IS_OS_READY_TIMEOUT = 600
+
+logger = logging.getLogger(__name__)
 
 
 class AggregationControlAction(Enum):
@@ -94,16 +95,11 @@ class PowerControlAction(Enum):
 router = APIRouter(
     prefix=f"{constants.BASE_URL}/v1",
     tags=[api_metadata.DEVICE_CONTROL_API],
-    responses={
-        422: {
-            "description": "HTTP status code 422 will not occur.",
-        }  # TODO:Remove the default response schema specification for 422 cases set in FastAPI.
-    },
 )
 
 
-class AggregationControlRequestBody(BaseModel):
-    """The HTTP Request Body schema of Aggregation Control."""
+class AggregationControlRequestModel(BaseModel):
+    """Request Model of Aggregation Control."""
 
     device_id: UUID4 = Field(
         alias="deviceID",
@@ -124,20 +120,52 @@ class AggregationControlRequestBody(BaseModel):
 # Aggregation Control endpoint
 @router.put(
     path="/cpu/{CPUDeviceID}/aggregations",
-    response_model=control_responses.AggregationControlResponseBody,
+    status_code=http.HTTPStatus.OK.value,
     description="Controls the aggregation state between the specified host CPU and target device.",
+    response_description=(
+        "Aggregation control successful."
+        " Returns this even if the specified host CPU and target device were already in the desired aggregation state."
+    ),
+    responses={
+        400: api_metadata.error_cases_spec_factory(
+            case_description="Bad request.",
+            sub_case_descriptions=["Your request is not supported for the specified device."],
+        ),
+        404: api_metadata.error_cases_spec_factory(
+            case_description="The specified resource not found.",
+            sub_case_descriptions=["The specified path not found.", "The specified device not found."],
+        ),
+        409: api_metadata.error_case_spec_factory(
+            case_description="Your request is conflict to the specified device state.",
+        ),
+        422: api_metadata.error_case_spec_factory(
+            case_description="The request parameter validation error.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "Encountered a Control Object error.",
+                "Encountered an application internal error.",
+                "Encountered a Dependency service error.",
+                "The configuration is invalid.",
+            ],
+        ),
+        503: api_metadata.error_case_spec_factory(
+            case_description="The specified device is busy.",
+        ),
+    },
+    deprecated=True,
     response_class=JSONResponse,
     name="Aggregation Control",
 )
 def aggregation_control_api(
-    request: Request,  # TODO: This code should be removed as you implement custom middleware.
-    request_body: AggregationControlRequestBody,
+    request_body: AggregationControlRequestModel,
     cpu_device_id: UUID4 = Path(
         alias="CPUDeviceID",
         description="The Device ID of aggregation control target host CPU.",
         examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
     ),
-) -> JSONResponse:
+) -> response_models.AggregationControlResponseModel:
     """
     Control the connection between a CPU and a target device.
 
@@ -145,15 +173,13 @@ def aggregation_control_api(
     The action performed is based on the `action` parameter provided in the `request_body`.
 
     Args:
-        request (Request): The request object that containing the requested content.
-
-        request_body (AggregationControlRequestBody):
+        request_body (AggregationControlRequestModel):
             The body of the request containing the action to perform and the target device 'Device ID'.
 
         cpu_device_id (UUID4): The 'Device ID' of the host CPU device.
 
     Returns:
-        JSONResponse: The response containing the result of the aggregation control operation.
+        AggregationControlResponseModel: The response model of the result of the aggregation control operation.
 
     Note:
         Actions:
@@ -165,41 +191,162 @@ def aggregation_control_api(
         defined in `src/app/routers/error_handlers.py`.
 
     """
-    message.set_request_id(
-        request_id=str(uuid.uuid4())
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
 
-    LOGGER.info(
-        message.HttpRequestLog.create_from_request(request=request, body_parameter=request_body).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    logger.info(
+        "Aggregation Control start.",
+        extra={
+            "CPUDeviceID": str(cpu_device_id),
+            "deviceID": str(request_body.device_id),
+            "action": request_body.action.value,
+        },
+    )
 
-    host_cpu = fm_control.FmControlTargetDevice(device_id=str(cpu_device_id))
-    target_device = fm_control.FmControlTargetDevice(device_id=str(request_body.device_id))
-    device_pair = fm_control.FmControlTargetDevicePair(host_cpu=host_cpu, target_device=target_device)
+    host_cpu = fm_control.FMControlTargetDevice(device_id=str(cpu_device_id))
+    target_device = fm_control.FMControlTargetDevice(device_id=str(request_body.device_id))
+    device_pair = fm_control.FMControlTargetDevicePair(upstream_device=host_cpu, downstream_device=target_device)
 
     device_pair.get_lock()
     try:
         if request_body.action.value == AggregationControlAction.CONNECT.value:
-            fm_control.FmController.connect(device_pair=device_pair)
+            fm_control.FMController.connect(device_pair=device_pair)
         else:  # The 'action' specified by the client is "disconnect".
-            fm_control.FmController.disconnect(device_pair=device_pair)
+            fm_control.FMController.disconnect(device_pair=device_pair)
     finally:
         device_pair.release_lock()
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.AggregationControlResponseBody(
-            cpu_device_id=device_pair.host_cpu.device_id, device_id=device_pair.target_device.device_id
-        )
+    return response_models.AggregationControlResponseModel(
+        cpu_device_id=device_pair.upstream_device.device_id, device_id=device_pair.downstream_device.device_id
     )
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-
-    return response
 
 
-class PowerControlRequestBody(BaseModel):
-    """The HTTP Request Body schema of Power Control."""
+class DeviceAggregationControlRequestModel(BaseModel):
+    """Request Model of Device Aggregation Control."""
+
+    downstream_device_id: UUID4 = Field(
+        alias="destinationDeviceID",
+        description="The Device ID of aggregation control target downstream side device.",
+        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+    )
+
+    action: AggregationControlAction = Field(
+        description=(
+            "Aggregation Control action for the specified upstream side device and downstream side device.  "
+            '\n "connect": '
+            "Connect the aggregation state of the specified upstream side device and downstream side device.  "
+            '\n "disconnect": '
+            "Disconnect the aggregation state of the specified upstream side device and downstream side device.  "
+        ),
+        examples=[AggregationControlAction.CONNECT.value, AggregationControlAction.DISCONNECT.value],
+    )
+
+
+# Device Aggregation Control endpoint
+@router.put(
+    path="/devices/{sourceDeviceID}/aggregations",
+    response_model=response_models.DeviceAggregationControlResponseModel,
+    status_code=http.HTTPStatus.OK.value,
+    description="Controls the aggregation state between the specified upstream side device and downstream side device.",
+    response_description=(
+        "Device aggregation control successful."
+        " Returns this even if the specified upstream side device and downstream side device"
+        " were already in the desired aggregation state."
+    ),
+    responses={
+        400: api_metadata.error_cases_spec_factory(
+            case_description="Bad request.",
+            sub_case_descriptions=["Your request is not supported for the specified device."],
+        ),
+        404: api_metadata.error_cases_spec_factory(
+            case_description="The specified resource not found.",
+            sub_case_descriptions=["The specified path not found.", "The specified device not found."],
+        ),
+        409: api_metadata.error_case_spec_factory(
+            case_description="Your request is conflict to the specified device state.",
+        ),
+        422: api_metadata.error_case_spec_factory(
+            case_description="The request parameter validation error.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "Encountered a Control Object error.",
+                "Encountered an application internal error.",
+                "Encountered a Dependency service error.",
+                "The configuration is invalid.",
+            ],
+        ),
+        503: api_metadata.error_case_spec_factory(
+            case_description="The specified device is busy.",
+        ),
+    },
+    response_class=JSONResponse,
+    name="Device Aggregation Control",
+)
+def device_aggregation_control_api(
+    request_body: DeviceAggregationControlRequestModel,
+    upstream_device_id: UUID4 = Path(
+        alias="sourceDeviceID",
+        description="The Device ID of aggregation control target upstream side device.",
+        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+    ),
+) -> response_models.DeviceAggregationControlResponseModel:
+    """
+    Control the connection between the upstream side device and the downstream side device.
+
+    This endpoint allows for connecting and disconnecting the upstream side device to/from the downstream side device.
+    The action performed is based on the `action` parameter provided in the `request_body`.
+
+    Args:
+        request_body (DeviceAggregationControlRequestModel):
+            The body of the request containing the action to perform and the target device 'destinationDeviceID'.
+
+        upstream_device_id (UUID4): The 'Device ID' of the upstream side device .
+
+    Returns:
+        DeviceAggregationControlResponseModel: The response model of the result of the aggregation control operation.
+
+    Note:
+        Actions:
+        - If `action="connect"`, the specified the downstream side device is connected to upstream side device.
+        - If `action="disconnect"`, the specified the downstream side device is disconnected from upstream side device.
+
+        Error Handling:
+        - Any exceptions raised by functions called within this endpoint will be handled by the error handler functions
+        defined in `src/app/routers/error_handlers.py`.
+
+    """
+
+    logger.info(
+        "Device Aggregation Control start.",
+        extra={
+            "sourceDeviceID": str(upstream_device_id),
+            "destinationDeviceID": str(request_body.downstream_device_id),
+            "action": request_body.action.value,
+        },
+    )
+
+    upstream_device = fm_control.FMControlTargetDevice(device_id=str(upstream_device_id))
+    downstream_device = fm_control.FMControlTargetDevice(device_id=str(request_body.downstream_device_id))
+    device_pair = fm_control.FMControlTargetDevicePair(
+        upstream_device=upstream_device, downstream_device=downstream_device
+    )
+
+    device_pair.get_lock()
+    try:
+        if request_body.action.value == AggregationControlAction.CONNECT.value:
+            fm_control.FMController.connect(device_pair=device_pair)
+        else:  # The 'action' specified by the client is "disconnect".
+            fm_control.FMController.disconnect(device_pair=device_pair)
+    finally:
+        device_pair.release_lock()
+
+    return response_models.DeviceAggregationControlResponseModel(
+        upstream_device_id=str(upstream_device_id), downstream_device_id=str(request_body.downstream_device_id)
+    )
+
+
+class PowerControlRequestModel(BaseModel):
+    """Request Model of Power Control."""
 
     action: PowerControlAction = Field(
         description=(
@@ -236,32 +383,63 @@ def _perform_power_off(target_device: control_base.PowerControlTargetDevice) -> 
     try:
         target_agent = agent_control.ControlTargetAgent(host_cpu_device_id=target_device.device_id)
         can_generate_agent = True
-    except exc.BaseHwControlError:
+    except exc.BaseHWControlError:
         can_generate_agent = False
 
     if can_generate_agent:
         agent_control.AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
     else:
-        oob_control.OobController.power_off(target_device=target_device)
+        oob_control.OOBController.power_off(target_device=target_device)
 
 
 # Power Control endpoint
 @router.put(
     path="/devices/{deviceID}/power",
-    response_model=control_responses.PowerControlResponseBody,
+    status_code=http.HTTPStatus.OK.value,
     description="Controls the power state of the specified target device.",
+    response_description=(
+        "Power control successful."
+        " Returns this even if the specified target device was already in the desired power state."
+    ),
+    responses={
+        400: api_metadata.error_cases_spec_factory(
+            case_description="Bad request.",
+            sub_case_descriptions=["Your request is not supported for the specified device."],
+        ),
+        404: api_metadata.error_cases_spec_factory(
+            case_description="The specified resource not found.",
+            sub_case_descriptions=["The specified path not found.", "The specified device not found."],
+        ),
+        409: api_metadata.error_case_spec_factory(
+            case_description="Your request is conflict to the specified device state.",
+        ),
+        422: api_metadata.error_case_spec_factory(
+            case_description="The request parameter validation error.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "Encountered an Control Object error.",
+                "Encountered an application internal error.",
+                "Encountered a Dependency service error.",
+                "The configuration is invalid.",
+            ],
+        ),
+        503: api_metadata.error_case_spec_factory(
+            case_description="The specified device is busy.",
+        ),
+    },
     response_class=JSONResponse,
     name="Power Control",
 )
 def power_control_api(
-    request: Request,  # TODO: This code should be removed as you implement custom middleware.
-    request_body: PowerControlRequestBody,
+    request_body: PowerControlRequestModel,
     device_id: UUID4 = Path(
         alias="deviceID",
         description="The Device ID of power control target device.",
         examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
     ),
-) -> JSONResponse:
+) -> response_models.PowerControlResponseModel:
     """
     Control the power state of the specified device.
 
@@ -269,12 +447,11 @@ def power_control_api(
     The action performed is based on the `action` parameter provided in the `request_body`.
 
     Args:
-        request (Request): The request object that containing the requested content.
-        request_body (PowerControlRequestBody): The body of the request containing the action to perform.
+        request_body (PowerControlRequestModel): The body of the request containing the action to perform.
         device_id (UUID4): The 'Device ID' of power control target device.
 
     Returns:
-        JSONResponse: The response containing the result of the power control.
+        PowerControlResponseModel: The response model of the result of the power control.
 
     Note:
         Actions:
@@ -287,26 +464,24 @@ def power_control_api(
         defined in `src/app/routers/error_handlers.py`.
 
     """
-    message.set_request_id(
-        request_id=str(uuid.uuid4())
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
 
-    LOGGER.info(
-        message.HttpRequestLog.create_from_request(request=request, body_parameter=request_body).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+    logger.info(
+        "Power Control start.",
+        extra={"deviceID": str(device_id), "action": request_body.action.value},
+    )
 
     target_device = control_base.PowerControlTargetDevice(device_id=str(device_id))
 
     target_device.get_lock()
     try:
         if request_body.action.value == PowerControlAction.ON.value:
-            oob_control.OobController.power_on(target_device=target_device)
+            oob_control.OOBController.power_on(target_device=target_device)
 
         elif request_body.action.value == PowerControlAction.FORCE_OFF.value:
-            oob_control.OobController.force_off(target_device=target_device)
+            oob_control.OOBController.force_off(target_device=target_device)
 
         elif request_body.action.value == PowerControlAction.RESET.value:
-            oob_control.OobController.reset(target_device=target_device)
+            oob_control.OOBController.reset(target_device=target_device)
 
         else:  # The 'action' specified by the client is "off".
             _perform_power_off(target_device=target_device)
@@ -314,26 +489,43 @@ def power_control_api(
     finally:
         target_device.release_lock()
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.PowerControlResponseBody(device_id=target_device.device_id)
-    )
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-
-    return response
+    return response_models.PowerControlResponseModel(device_id=target_device.device_id)
 
 
 # Is OS Ready endpoint
 @router.get(
     path="/cpu/{CPUDeviceID}/is-os-ready",
-    response_model=control_responses.IsOsReadyResponseBody,
+    status_code=http.HTTPStatus.OK.value,
     description="Check if the host OS is running on the specified host CPU.",
+    responses={
+        400: api_metadata.error_cases_spec_factory(
+            case_description="Bad request.",
+            sub_case_descriptions=[
+                "Your request is not supported for the specified host CPU.",
+                "The specified host CPU power state is OFF.",
+            ],
+        ),
+        404: api_metadata.error_cases_spec_factory(
+            case_description="The specified resource not found.",
+            sub_case_descriptions=["The specified path not found.", "The specified device not found."],
+        ),
+        422: api_metadata.error_case_spec_factory(
+            case_description="The request parameter validation error.",
+        ),
+        500: api_metadata.error_cases_spec_factory(
+            case_description="Internal server error.",
+            sub_case_descriptions=[
+                "Encountered an Control object error.",
+                "Encountered an application internal error.",
+                "Encountered a Dependency service error.",
+                "The configuration is invalid.",
+            ],
+        ),
+    },
     response_class=JSONResponse,
     name="Is OS Ready",
 )
 def is_os_ready_api(
-    request: Request,  # TODO: This code should be removed as you implement custom middleware.
     cpu_device_id: UUID4 = Path(
         alias="CPUDeviceID",
         description="The Device ID of the host CPU that checks if the host OS is running.",
@@ -351,7 +543,7 @@ def is_os_ready_api(
         ge=MIN_IS_OS_READY_TIMEOUT,
         le=MAX_IS_OS_READY_TIMEOUT,
     ),
-) -> JSONResponse:
+) -> response_models.IsOSReadyResponseModel:
     """
     Check if the OS is ready on the specified CPU device.
 
@@ -359,8 +551,6 @@ def is_os_ready_api(
     an agent.
 
     Args:
-        request (Request): The request object that containing the requested content.
-
         cpu_device_id (UUID4):
             The 'Device ID' of the host CPU you want to check.
 
@@ -370,20 +560,15 @@ def is_os_ready_api(
             Defaults to 30.
 
     Returns:
-        JSONResponse:
-            HTTP Status and Response Body.
+        IsOSReadyResponseModel: The response model of the result of is OS ready check.
 
     Error Handling:
         - Any exceptions raised by functions called within this endpoint will be handled by the error handler functions
         defined in `src/app/routers/error_handlers.py`.
 
     """
-    message.set_request_id(
-        request_id=str(uuid.uuid4())
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-    LOGGER.info(
-        message.HttpRequestLog.create_from_request(request=request).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
+
+    logger.info("Is OS Ready start.", extra={"CPUDeviceID": str(cpu_device_id), "timeOut": time_out})
 
     target_device = control_base.PowerControlTargetDevice(device_id=str(cpu_device_id))
     target_agent = agent_control.ControlTargetAgent(host_cpu_device_id=str(cpu_device_id))
@@ -392,13 +577,4 @@ def is_os_ready_api(
         target_device=target_device, target_agent=target_agent, timeout=time_out
     )
 
-    response = control_responses.generate_api_response(
-        response_body=control_responses.IsOsReadyResponseBody(
-            status=os_ready_status, ip_address=target_agent.ip_address
-        )
-    )
-    LOGGER.info(
-        message.HttpResponseLog.create_from_json_response(response=response).to_json_encodable()
-    )  # TODO: This code should be moved to custom middleware as part of the custom middleware implementation.
-
-    return response
+    return response_models.IsOSReadyResponseModel(status=os_ready_status, ip_address=target_agent.ip_address)

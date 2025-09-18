@@ -19,68 +19,60 @@ the hw-control application.
 
 To start the application using uvicorn, run the following command:
 
-    uvicorn app.hw_control_main:app --host 0.0.0.0 --reload --port 8000
+    uvicorn app.hw_control_main:app --host 0.0.0.0 --reload --port 8000 --log-config <log config file path>
 
 """
-import sys
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app import app_life_span
 from app.routers import api_metadata
+from app.routers import error_handlers
+from app.routers import middlewares
+from app.routers.control import control_api
+from app.routers.info import devices, load_mappings
+import app.common.basic_exceptions as custom_exceptions
 
+# Generate ASGI application instance.
+app = FastAPI(
+    title="hw-control",
+    description=api_metadata.HW_CONTROL_API_DESCRIPTION,
+    version="0.1.0",
+    openapi_tags=[
+        api_metadata.DEVICE_CONTROL_API_TAG,
+        api_metadata.DEVICE_INFO_API_TAG,
+    ],
+    lifespan=app_life_span.lifespan,
+    responses={
+        405: api_metadata.error_case_spec_factory(case_description="The specified HTTP method is not supported.")
+    },
+)
 
-def start_hw_control() -> FastAPI:
-    """Process startup functions
+# Add custom error handler to the application.
+app.add_exception_handler(
+    exc_class_or_status_code=StarletteHTTPException,
+    handler=error_handlers.custom_http_exception_handler,
+)
+app.add_exception_handler(
+    exc_class_or_status_code=RequestValidationError,
+    handler=error_handlers.custom_validation_exception_handler,
+)
+app.add_exception_handler(
+    exc_class_or_status_code=Exception,
+    handler=error_handlers.custom_exception_handler,
+)
+app.add_exception_handler(
+    exc_class_or_status_code=custom_exceptions.BaseHWControlError,
+    handler=error_handlers.hw_control_error_handler,
+)
 
-    TODO:This is a temporary process to capture exceptions
-        at system startup and output them to standard output,
-        and needs to be reviewed.
-    """
-    # Fast API start
-    api = FastAPI(
-        title="hw-control",
-        description="The API specifications of hw-control module.",
-        version="0.1.0",
-        openapi_tags=[
-            api_metadata.DEVICE_CONTROL_API_TAG,
-        ],
-    )
+# Add custom middleware to the application.
+app.add_middleware(middleware_class=middlewares.LoggingMiddleware)
+app.add_middleware(middleware_class=middlewares.RequestIDMiddleware)
 
-    try:
-        from app.routers.control import control_api  # pylint: disable=C0415
-        from app.routers.info import devices, load_mappings  # pylint: disable=C0415
-        from app.routers import error_handlers
-        import app.common.basic_exceptions as custom_exceptions
-
-        api.add_exception_handler(
-            exc_class_or_status_code=StarletteHTTPException, handler=error_handlers.custom_http_exception_handler
-        )
-        api.add_exception_handler(
-            exc_class_or_status_code=RequestValidationError, handler=error_handlers.custom_validation_exception_handler
-        )
-        api.add_exception_handler(
-            exc_class_or_status_code=Exception,
-            handler=error_handlers.custom_exception_handler,
-        )
-        api.add_exception_handler(
-            exc_class_or_status_code=custom_exceptions.BaseHwControlError,
-            handler=error_handlers.hw_control_error_handler,
-        )
-
-        api.include_router(control_api.router)
-        api.include_router(devices.router)
-        api.include_router(load_mappings.router)
-
-    except ImportError as error:
-        print(f"Error: The required library '{error.name}' is not installed.", file=sys.stderr)
-        sys.exit(1)
-    except Exception as error:  # pylint: disable=W0718
-        print(f"Error:{str(error)}", file=sys.stderr)
-        sys.exit(1)
-
-    return api
-
-
-app = start_hw_control()
+# Include routers in the application.
+app.include_router(control_api.router)
+app.include_router(devices.router)
+app.include_router(load_mappings.router)

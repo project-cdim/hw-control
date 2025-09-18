@@ -19,7 +19,7 @@ Upon receiving a request from the control API,
 Makes a control request to Agent for the device
 specified by the 'Device ID'.
 """
-import traceback
+import logging
 from enum import Enum
 from http import HTTPStatus
 from http import HTTPMethod
@@ -34,8 +34,6 @@ from app.core.control import oob_control
 from app.common.utils import os_ipaddress
 from app.common import constants
 import app.common.basic_exceptions as exc
-from app.common.utils.log import LOGGER
-from app.common.messages import message
 from app.common.utils.authorization_utilities import authorization_server_client
 
 # build for REST API URL
@@ -47,8 +45,10 @@ AGENT_REST_API_TIMEOUT = 3.0
 # The default value for the retry backoff time of requests to the Agent.
 BACKOFF_TIME = 1.0
 
+logger = logging.getLogger(__name__)
 
-class AgentApiPath(Enum):
+
+class AgentAPIPath(Enum):
     """An enumeration of agent REST API path.
 
     This Enum class is used to represent different types of
@@ -86,20 +86,20 @@ class ControlTargetAgent(BaseModel):
     ip_address: str = Field(default="")
     port: int = Field(default=AGENT_REST_API_PORT)
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context, /):
         """Post-initialization method for ControlTargetAgent.
 
         This method is called after the initialization of an instance of ControlTargetAgent.
         It sets the 'IP Address' and 'Port' for the target Agent service.
-        If any of these settings fail, a RequestNotSupportedHwControlError is raised.
+        If any of these settings fail, a RequestNotSupportedHWControlError is raised.
 
         Raises:
-            exc.RequestNotSupportedHwControlError: If setting the ip_address fails.
+            exc.RequestNotSupportedHWControlError: If setting the ip_address fails.
         """
         try:
             self.set_ip_address()
         except ValueError as e:
-            raise exc.RequestNotSupportedHwControlError from e
+            raise exc.RequestNotSupportedHWControlError from e
 
     def set_ip_address(self) -> None:
         """Set the ip address of the OS running on the target device.
@@ -155,13 +155,13 @@ class AgentController:
                 which is responsible for executing the target host OS.
 
         Raises:
-            AuthenticationHwControlError:
+            AuthenticationHWControlError:
                 If failed to authenticate to the HW Control Agent.
 
-            InternalHwControlError:
+            InternalHWControlError:
                 If the request to the Agent failed due to an unexpected error.
 
-            ControlObjectHwControlError
+            ControlObjectHWControlError
                 If the HW Control Agent failed to shutdown Host OS state due to an unexpected error.
 
         Returns:
@@ -175,17 +175,18 @@ class AgentController:
             scheme=AGENT_REST_API_SCHEME,
             host=target_agent.ip_address,
             port=target_agent.port,
-            path=AgentApiPath.OS_SHUTDOWN_API.value,
+            path=AgentAPIPath.OS_SHUTDOWN_API.value,
         )
 
-        LOGGER.info(
-            message=message.AgentRequestLog(
-                ip_address=target_agent.ip_address,
-                port=AGENT_REST_API_PORT,
-                url=str(target_url),
-                http_method=HTTPMethod.PUT,
-                time_out=AGENT_REST_API_TIMEOUT,
-            ).to_json_encodable()
+        logger.info(
+            "Send OS shutdown request to Agent.",
+            extra={
+                "ip_address": target_agent.ip_address,
+                "port": target_agent.port,
+                "url": str(target_url),
+                "http_method": HTTPMethod.PUT,
+                "time_out": AGENT_REST_API_TIMEOUT,
+            },
         )
 
         # request OS shutdown to Agent using REST-API
@@ -196,17 +197,23 @@ class AgentController:
                 headers=requests_header,
             )
         except requests.exceptions.RequestException as e:
-            raise exc.InternalHwControlError(
+            raise exc.InternalHWControlError(
                 additional_message="The request to the Agent failed due to an unexpected error."
             ) from e
 
-        LOGGER.info(message=message.AgentResponseLog.create_from_response(response=agent_response).to_json_encodable())
+        logger.info(
+            "Received OS shutdown response from Agent.",
+            extra={
+                "status_code": agent_response.status_code,
+                "response_body": agent_response.text,
+            },
+        )
 
         if agent_response.status_code == HTTPStatus.UNAUTHORIZED.value:
-            raise exc.AuthenticationHwControlError(additional_message="Failed to authenticate to the HW Control Agent.")
+            raise exc.AuthenticationHWControlError(additional_message="Failed to authenticate to the HW Control Agent.")
 
         if agent_response.status_code != HTTPStatus.OK.value:
-            raise exc.ControlObjectHwControlError(
+            raise exc.ControlObjectHWControlError(
                 additional_message="The HW Control Agent failed to shutdown Host OS."
             )  # Handling cases where an error other than 401 Unauthorized is returned.
 
@@ -228,25 +235,31 @@ class AgentController:
             None
 
         Raises:
-            RequestNotSupportedHwControlError:
+            RequestNotSupportedHWControlError:
                 If the specified device is not a CPU.
 
-            InternalHwControlError:
+            InternalHWControlError:
                 If the specified device power state is unexpected.
         """
 
         if target_device.device_type != constants.DeviceType.CPU.value:
-            raise exc.RequestNotSupportedHwControlError()
+            raise exc.RequestNotSupportedHWControlError()
 
         try:
             target_device.set_power_state()
         except ValueError as e:
             # TODO: add more reason
-            raise exc.RequestNotSupportedHwControlError from e
+            raise exc.RequestNotSupportedHWControlError from e
 
         if target_device.power_state in (constants.DevicePowerState.PAUSED, constants.DevicePowerState.UNKNOWN):
-            # TODO: logging target_device.power_state
-            raise exc.InternalHwControlError(additional_message="The specified device power state is unexpected.")
+            logger.warning(
+                "The device power state is unexpected.",
+                extra={
+                    "device_id": target_device.device_id,
+                    "power_state": target_device.power_state,
+                },
+            )
+            raise exc.InternalHWControlError(additional_message="The specified device power state is unexpected.")
 
         if target_device.power_state in (
             constants.DevicePowerState.OFF,
@@ -256,15 +269,11 @@ class AgentController:
 
         try:
             AgentController._execute_os_shutdown(target_agent=target_agent)
-        except exc.BaseHwControlError:
+        except exc.BaseHWControlError:
             # The shutdown of host OS via the Agent failed.
-            LOGGER.warning(
-                message.ExceptionLog(
-                    detail="Retry with ACPI shutdown", trace_back=traceback.format_exc()
-                ).to_json_encodable()
-            )
+            logger.warning("Failed to shutdown the host OS via Agent. Retry ACPI shutdown via OOB.", exc_info=True)
             # Retry with ACPI shutdown via OOB.
-            oob_control.OobController.power_off(target_device=target_device)
+            oob_control.OOBController.power_off(target_device=target_device)
 
     @staticmethod
     def is_os_ready(target_device: PowerControlTargetDevice, target_agent: ControlTargetAgent, timeout: int) -> bool:
@@ -286,19 +295,19 @@ class AgentController:
                 Timeout value for checking the OS state in seconds.
 
         Raises:
-            RequestNotSupportedHwControlError:
+            RequestNotSupportedHWControlError:
                 If the specified device is not a CPU.
 
-            HostCpuPowerOffBadRequestHwControlError:
+            HostCPUPowerOffBadRequestHWControlError:
                 If the host CPU is powered off.
 
-            InternalHwControlError:
+            InternalHWControlError:
                 If the request to the Agent failed due to an unexpected error.
 
-            AuthenticationHwControlError:
+            AuthenticationHWControlError:
                 If failed to authenticate to the HW Control Agent.
 
-            ControlObjectHwControlError
+            ControlObjectHWControlError
                 If the HW Control Agent failed to check Host OS state due to an unexpected error.
 
         Returns:
@@ -308,23 +317,29 @@ class AgentController:
         os_state = False
 
         if target_device.device_type != constants.DeviceType.CPU.value:
-            raise exc.RequestNotSupportedHwControlError()
+            raise exc.RequestNotSupportedHWControlError()
 
         try:
             target_device.set_power_state()
         except ValueError as e:
             # TODO: add more reason
-            raise exc.RequestNotSupportedHwControlError from e
+            raise exc.RequestNotSupportedHWControlError from e
 
         if target_device.power_state in (
             constants.DevicePowerState.OFF,
             constants.DevicePowerState.POWERING_OFF,
         ):
-            raise exc.HostCpuPowerOffBadRequestHwControlError
+            raise exc.HostCPUPowerOffBadRequestHWControlError
 
         if target_device.power_state in (constants.DevicePowerState.PAUSED, constants.DevicePowerState.UNKNOWN):
-            # TODO: logging target_device.power_state
-            raise exc.InternalHwControlError(additional_message="The specified device power state is unexpected.")
+            logger.warning(
+                "The device power state is unexpected.",
+                extra={
+                    "device_id": target_device.device_id,
+                    "power_state": target_device.power_state,
+                },
+            )
+            raise exc.InternalHWControlError(additional_message="The specified device power state is unexpected.")
 
         retry_times: int = int(timeout // (BACKOFF_TIME + AGENT_REST_API_TIMEOUT))
 
@@ -342,17 +357,16 @@ class AgentController:
                 scheme=AGENT_REST_API_SCHEME,
                 host=target_agent.ip_address,
                 port=target_agent.port,
-                path=AgentApiPath.IS_OS_READY_API.value,
+                path=AgentAPIPath.IS_OS_READY_API.value,
             )
 
-            LOGGER.info(
-                message=message.AgentRequestLog(
-                    ip_address=target_agent.ip_address,
-                    port=target_agent.port,
-                    url=str(target_url),
-                    http_method=HTTPMethod.GET,
-                    time_out=timeout,
-                ).to_json_encodable()
+            logger.info(
+                "Send OS ready check request to Agent.",
+                extra={
+                    "url": str(target_url),
+                    "http_method": HTTPMethod.GET,
+                    "time_out": timeout,
+                },
             )
 
             try:
@@ -367,24 +381,28 @@ class AgentController:
                 return os_state
 
             except requests.exceptions.RequestException as e:
-                raise exc.InternalHwControlError(
+                raise exc.InternalHWControlError(
                     additional_message="The request to the Agent failed due to an unexpected error."
                 ) from e
 
-            LOGGER.info(
-                message=message.AgentResponseLog.create_from_response(response=agent_response).to_json_encodable()
+            logger.info(
+                "Received OS ready check response from Agent.",
+                extra={
+                    "status_code": agent_response.status_code,
+                    "response_body": agent_response.text,
+                },
             )
 
             if agent_response.status_code == HTTPStatus.OK.value:
                 os_state = True
 
             elif agent_response.status_code == HTTPStatus.UNAUTHORIZED.value:
-                raise exc.AuthenticationHwControlError(
+                raise exc.AuthenticationHWControlError(
                     additional_message="Failed to authenticate to the HW Control Agent."
                 )
 
             else:
-                raise exc.ControlObjectHwControlError(
+                raise exc.ControlObjectHWControlError(
                     additional_message="The HW Control Agent failed to check Host OS state."
                 )  # Handling cases where an error other than 401 Unauthorized is returned.
 

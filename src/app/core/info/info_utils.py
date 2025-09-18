@@ -15,36 +15,38 @@
 """HW independent section - Get Information process (Response generation)
 
 Upon receiving a request from the information acquisition API,
-make an information acquisition request for the specified device ID to FM and OOB.
+make an information acquisition request for the specified Device ID to FM and OOB.
 Merge the device information returned from FM and OOB for each device
 type and return it to the information acquisition API.
 
 """
 
+import logging
 import json
-from typing import List, Dict, Optional, Union, Any
+from typing import Any
 from pathlib import Path
-from app.common.utils.log import LOGGER
 from app.common.messages import message
-from app.common.basic_exceptions import InternalHwControlError
+from app.common.basic_exceptions import InternalHWControlError
 from app.common.settings import settings
 from app.core.info import info_const, info_conv_funcs
 
+logger = logging.getLogger(__name__)
 
-def get_mapping_table(device_type: str, data_type: str, data_source_type: str) -> dict:
+
+def get_mapping_table(device_type: str, data_type: str, data_source_type: str) -> dict | None:
     """Get mapping table
 
-    Return the mapping table that corresponds to the device type and data source and data type.
+    Return the mapping table that corresponds to the Device Type and data source and data type.
 
     Args:
-        device_type (str): device type
+        device_type (str): Device Type
         data_type (str): data type
         data_source_type (str): data source type
 
     Returns:
-        dict: mapping table
+        dict | None: mapping table
     """
-    # Extract the mapping table corresponding to the device type.
+    # Extract the mapping table corresponding to the Device Type.
     mapping_table = info_const.MAPPING_TABLE[data_type][data_source_type].get(device_type, None)
 
     return mapping_table
@@ -53,7 +55,7 @@ def get_mapping_table(device_type: str, data_type: str, data_source_type: str) -
 def remove_empty_item(resp: Any) -> Any:
     """Remove empty item
 
-    Remove empty items from response data and ret
+    Remove empty items from response data.
 
     Args:
         resp (Any): response data
@@ -149,7 +151,7 @@ def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict:
     return response_data
 
 
-def _check_required_item(mapping_data, key, item_value):
+def _check_required_item(mapping_data: dict, key: str, item_value: Any) -> None:
     """Check required item
 
     Check for the presence of values in required item based on the mapping data.
@@ -167,11 +169,11 @@ def _check_required_item(mapping_data, key, item_value):
         and item_value is None
         or (isinstance(item_value, str) and item_value.strip() == "")
     ):
-        LOGGER.warning(message.get_log_message(message.W00008, [f"key:{key}"]))
-        raise InternalHwControlError(additional_message="The received data is missing required item.")
+        logger.warning(message.get_log_message(message.W00008, [f"key:{key}"]))
+        raise InternalHWControlError(additional_message="The received data is missing required item.")
 
 
-def _check_list_item_types(mapping_data, key, item_value):
+def _check_list_item_types(mapping_data: dict, key: str, item_value: Any) -> None:
     """Check list item type
 
     Check the data type of items in the list based on the mapping data.
@@ -193,16 +195,16 @@ def _check_list_item_types(mapping_data, key, item_value):
                     if isinstance(target_type, tuple)
                     else target_type.__name__
                 )
-                LOGGER.warning(
+                logger.warning(
                     message.get_log_message(
                         message.W00009,
                         [f"Key:{key}, Value:{item}, Value type:{type(item).__name__}, Target type:{target_type_name}"],
                     )
                 )
-                raise InternalHwControlError(additional_message="The data type of the received item is invalid.")
+                raise InternalHWControlError(additional_message="The data type of the received item is invalid.")
 
 
-def _check_item_type(mapping_data, key, item_value):
+def _check_item_type(mapping_data: dict, key: str, item_value: Any) -> None:
     """Check item type
 
     Check the data type of item based on the mapping data.
@@ -225,7 +227,7 @@ def _check_item_type(mapping_data, key, item_value):
                 if isinstance(target_type, tuple)
                 else target_type.__name__
             )
-            LOGGER.warning(
+            logger.warning(
                 message.get_log_message(
                     message.W00009,
                     [
@@ -236,10 +238,10 @@ def _check_item_type(mapping_data, key, item_value):
                     ],
                 )
             )
-            raise InternalHwControlError(additional_message="The data type of the received item is invalid.")
+            raise InternalHWControlError(additional_message="The data type of the received item is invalid.")
 
 
-def _execute_if_callable(mapping_data, key, item_value) -> Any:
+def _execute_if_callable(mapping_data: dict, key: str, item_value: Any) -> Any:
     """Execute function if callable
 
     Check if the conversion function is callable and return the execution result.
@@ -252,9 +254,24 @@ def _execute_if_callable(mapping_data, key, item_value) -> Any:
     Returns:
         Any: item value
     """
-    if info_const.MAPPING_ITEM_CONVERT_FUNC in mapping_data:
-        if callable(mapping_data[info_const.MAPPING_ITEM_CONVERT_FUNC]):
-            return mapping_data[info_const.MAPPING_ITEM_CONVERT_FUNC](mapping_data, key, item_value)
+    # If item_value is None or an empty string, return it as is.
+    if item_value is None or (isinstance(item_value, str) and item_value.strip() == ""):
+        return item_value
+
+    if info_const.MAPPING_ITEM_CONVERT_FUNC in mapping_data and callable(
+        mapping_data[info_const.MAPPING_ITEM_CONVERT_FUNC]
+    ):
+        result = mapping_data[info_const.MAPPING_ITEM_CONVERT_FUNC](mapping_data, key, item_value)
+        if result is None:
+            msg = (
+                f"Key:{key}, Value:{item_value}, Value type:{type(item_value).__name__}, "
+                f"Convert function:{(mapping_data[info_const.MAPPING_ITEM_CONVERT_FUNC]).__name__} returned None."
+            )
+            logger.warning(message.get_log_message(message.W00009, [msg]))
+            raise InternalHWControlError(
+                additional_message="The conversion failed because an unexpected value was provided."
+            )
+        return result
     return item_value
 
 
@@ -297,29 +314,29 @@ def load_mapping_table() -> None:
             )
             # File does not exist.
             if not Path.exists(file_path):
-                LOGGER.warning(message.get_log_message(message.W00007, [file_path]))
-                raise InternalHwControlError(
+                logger.warning(message.get_log_message(message.W00007, [file_path]))
+                raise InternalHWControlError(
                     additional_message="The definition file corresponding to the received data is not found."
                 )
 
             # Read file.
-            with open(file_path, "r", encoding="utf-8") as mapping_file:
+            with open(file_path, encoding="utf-8") as mapping_file:
                 mapping_table = json.load(mapping_file)
                 # Convert string data type in JSON to python data type.
                 mapping_table = parse_json_value(mapping_table)
                 info_const.MAPPING_TABLE[data_type][source_type] = mapping_table
 
 
-def parse_json_value(mapping_data: Union[Dict, List]) -> Union[Dict, List]:
+def parse_json_value(mapping_data: dict | list) -> dict | list:
     """Convert json data
 
     Convert json data to python data.
 
     Args:
-        mapping_data (Union[Dict, List]): mapping data
+        mapping_data (dict | list: mapping data
 
     Returns:
-        Union[Dict, List]: Source data after conversion
+        dict | list: Source data after conversion
     """
     # Dictionary type.
     if not isinstance(mapping_data, dict):
@@ -350,7 +367,7 @@ def parse_json_value(mapping_data: Union[Dict, List]) -> Union[Dict, List]:
     return mapping_data
 
 
-def get_valid_string(val: Any) -> Optional[str]:
+def get_valid_string(val: Any) -> str | None:
     """Get valid string value
 
     Check if the argument is a valid string value, and if it is, return the string value.
@@ -359,7 +376,7 @@ def get_valid_string(val: Any) -> Optional[str]:
         val (Any): item value
 
     Returns:
-        Optional[str]: valid string value or None
+        str | None: valid string value or None
     """
     # Check if 'val' is an instance of str; return False if 'val' is None
     if isinstance(val, str) and val.strip() != "":

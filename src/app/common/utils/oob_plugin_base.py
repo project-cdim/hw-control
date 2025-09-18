@@ -48,42 +48,42 @@ class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     def get_spec_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Get device information.
 
-        Get the specification information of the devices identified by the OOB deviceIDs.
+        Get the specification information of the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
-            dict[str, list[dict]]: the device information obtained from the manager
+            dict[str, list[dict]]: the device information obtained from the Manager
         """
 
     @abc.abstractmethod
     def get_metric_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Get metric information.
 
-        Get the metric information of the devices identified by the OOB deviceIDs.
+        Get the metric information of the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
-            dict[str, list[dict]]: the metric information obtained from the manager
+            dict[str, list[dict]]: the metric information obtained from the Manager
         """
 
     @abc.abstractmethod
     def get_power_state(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Get power state.
 
-        Get the power state of the devices identified by the OOB deviceIDs.
+        Get the power state of the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
-            dict[str, list[dict]]: the power state obtained from the manager
+            dict[str, list[dict]]: the power state obtained from the Manager
         """
 
     @abc.abstractmethod
@@ -96,18 +96,18 @@ class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
             None
 
         Returns:
-            list[OOBDeviceListItem]: the identifying information obtained from the manager
+            list[OOBDeviceListItem]: the identifying information obtained from the Manager
         """
 
     @abc.abstractmethod
     def post_power_on(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Power on.
 
-        Power on the devices identified by the OOB deviceIDs.
+        Power on the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
             dict[str, list[dict]]: execution status
@@ -117,11 +117,11 @@ class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     def post_power_off(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Power off.
 
-        Power off the devices identified by the OOB deviceIDs.
+        Power off the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
             dict[str, list[dict]]: execution status
@@ -131,11 +131,11 @@ class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     def post_cpu_reset(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Reset CPU.
 
-        Reset the CPUs identified by the OOB deviceIDs.
+        Reset the CPUs identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
             dict[str, list[dict]]: execution status
@@ -145,11 +145,11 @@ class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     def post_os_shutdown(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
         """Shutdown OS.
 
-        Shutdown the OS running on the devices identified by the OOB deviceIDs.
+        Shutdown the OS running on the devices identified by the OOB Device IDs.
 
         Args:
-            key_values (list[dict[str, str]]): a list of dictionaries containing OOB deviceIDs (oob_device_id)
-                                               and device types (device_type)
+            key_values (list[dict[str, str]]): a list of dictionaries containing OOB Device IDs (oob_device_id)
+                                               and Device Types (device_type)
 
         Returns:
             dict[str, list[dict]]: execution status

@@ -22,41 +22,41 @@ from http import HTTPMethod
 import pytest
 import requests
 from pytest_mock import MockFixture
-from pytest import approx
+from pytest import approx, LogCaptureFixture
+from requests.models import Response
 
 from tests.app.core.control import test_util
 
-from app.common import constants  # type: ignore
-import app.common.basic_exceptions as exc  # type: ignore
-from app.common.utils.authorization_utilities import authorization_server_client  # type: ignore
-from app.core.control.control_base import PowerControlTargetDevice  # type: ignore
-from app.core.control.agent_control import ControlTargetAgent  # type: ignore
-from app.core.control.oob_control import OobController  # type: ignore
-from app.routers.control import control_api  # type: ignore
-from app.core.control import agent_control  # type: ignore
+from app.common import constants
+import app.common.basic_exceptions as exc
+from app.common.utils.authorization_utilities import authorization_server_client
+from app.core.control.control_base import PowerControlTargetDevice
+from app.core.control.agent_control import ControlTargetAgent
+from app.core.control.oob_control import OOBController
+from app.routers.control import control_api
+from app.core.control import agent_control
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.core.control.agent_control import AgentController  # type: ignore
+from app.core.control.agent_control import AgentController
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
-class TestOsShutdown:
+class TestOSShutdown:
     """Unit test class for AgentController.os_shutdown."""
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -64,7 +64,7 @@ class TestOsShutdown:
     )
     def test_successful_case(
         self,
-        caplog,
+        caplog: LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
@@ -86,39 +86,47 @@ class TestOsShutdown:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_agent_response = test_util.generate_dummy_agent_response(status_code=HTTPStatus.OK.value)
+        dummy_agent_response = Response()
+        dummy_agent_response.status_code = HTTPStatus.OK.value
+        dummy_agent_response._content = b""  # pylint: disable=W0212
         mocker.patch.object(requests, "put", return_value=dummy_agent_response)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.INFO, logger="LOGGER"):
+        with caplog.at_level(logging.INFO, logger=agent_control.__name__):
             AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
 
-        # AgentRequestLog
-        agent_request_log_message = json.loads(caplog.records[0].getMessage())
-        # AgentResponseLog
-        agent_response_log_message = json.loads(caplog.records[-1].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert len(caplog.records) == 2
+        assert len(caplog.records) == 2, "Agent Response log and Agent Response log should be recorded."
 
-        assert caplog.records[0].levelname == "INFO"
-        assert agent_request_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert agent_request_log_message["message"]["ip_address"] == target_agent.ip_address
-        assert agent_request_log_message["message"]["port"] == 8000
+        # Inspection: Check the Agent RequestLog log
+        agent_request_log = caplog.records[0]
+        assert agent_request_log.levelname == "INFO"
+        assert agent_request_log.getMessage() == "Send OS shutdown request to Agent."
+
+        assert hasattr(agent_request_log, "url"), "url should be present in the log record"
         assert (
-            agent_request_log_message["message"]["url"]
-            == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/os-shutdown"
+            getattr(agent_request_log, "url") == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/os-shutdown"
         )
-        assert agent_request_log_message["message"]["http_method"] == HTTPMethod.PUT
-        assert agent_request_log_message["message"]["time_out"] == approx(3.0)
 
-        assert caplog.records[-1].levelname == "INFO"
-        assert agent_response_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert agent_response_log_message["message"]["status_code"] == HTTPStatus.OK.value
-        assert agent_response_log_message["message"]["response_body"] is None
+        assert hasattr(agent_request_log, "http_method"), "http_method should be present in the log record"
+        assert getattr(agent_request_log, "http_method") == HTTPMethod.PUT
+
+        assert hasattr(agent_request_log, "time_out"), "time_out should be present in the log record"
+        assert getattr(agent_request_log, "time_out") == approx(3.0)
+
+        # Inspection: Check the Agent Response log
+        agent_response_log = caplog.records[1]
+        assert agent_response_log.levelname == "INFO"
+        assert agent_response_log.getMessage() == "Received OS shutdown response from Agent."
+
+        assert hasattr(agent_response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(agent_response_log, "status_code") == HTTPStatus.OK.value
+
+        assert hasattr(agent_response_log, "response_body"), "response_body should be present in the log record"
+        assert getattr(agent_response_log, "response_body") == ""
 
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture, expected_exception",
@@ -130,10 +138,10 @@ class TestOsShutdown:
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
-                exc.RequestNotSupportedHwControlError,
+                exc.RequestNotSupportedHWControlError,
             ),
         ],
         indirect=["power_control_target_device_fixture", "control_target_agent_fixture"],
@@ -142,7 +150,7 @@ class TestOsShutdown:
         self,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        expected_exception,
+        expected_exception: type[exc.BaseHWControlError],
     ):
         """test device raise raise exception."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -159,24 +167,24 @@ class TestOsShutdown:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.PAUSED,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.UNKNOWN,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -185,6 +193,7 @@ class TestOsShutdown:
     def test_invalid_power_state(
         self,
         mocker: MockFixture,
+        caplog: LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
     ):
@@ -198,32 +207,48 @@ class TestOsShutdown:
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.InternalHwControlError):
-            AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
+        with pytest.raises(exc.InternalHWControlError):
+            caplog.clear()
+            with caplog.at_level(logging.INFO, logger=agent_control.__name__):
+                AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert len(caplog.records) == 1, "log should be recorded."
+
+        # Inspection: Check the unexpected power log
+        unexpected_power_log = caplog.records[0]
+        assert unexpected_power_log.levelname == "WARNING"
+        assert unexpected_power_log.getMessage() == "The device power state is unexpected."
+
+        assert hasattr(unexpected_power_log, "device_id"), "device_id should be present in the log record"
+        assert getattr(unexpected_power_log, "device_id") == target_device.device_id
+
+        assert hasattr(unexpected_power_log, "power_state"), "power_state should be present in the log record"
+        assert getattr(unexpected_power_log, "power_state") == target_device.power_state
 
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (  # target device already power_off
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.OFF,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
             (  # target device powering off
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.POWERING_OFF,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -249,16 +274,16 @@ class TestOsShutdown:
     @pytest.mark.parametrize(
         "auth_client_raise_exception, expected_exception",
         [
-            (exc.InternalHwControlError, exc.InternalHwControlError),
-            (exc.ConfigurationHwControlError, exc.ConfigurationHwControlError),
+            (exc.InternalHWControlError, exc.InternalHWControlError),
+            (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
         ],
     )
     @pytest.mark.parametrize(
         "control_target_agent_fixture",
         [
             {  # input agent object
-                "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
             },
         ],
         indirect=["control_target_agent_fixture"],
@@ -266,8 +291,8 @@ class TestOsShutdown:
     def test_execute_os_shutdown_auth_client_raise(
         self,
         mocker: MockFixture,
-        auth_client_raise_exception,
-        expected_exception,
+        auth_client_raise_exception: type[Exception],
+        expected_exception: type[exc.BaseHWControlError],
         control_target_agent_fixture: ControlTargetAgent,
     ):
         """
@@ -285,14 +310,13 @@ class TestOsShutdown:
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception):
-            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=protected-access
+            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=W0212
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "auth_client_raise_exception",
         [
-            exc.InternalHwControlError,
-            exc.ConfigurationHwControlError,
+            exc.InternalHWControlError(),
+            exc.ConfigurationHWControlError(),
         ],
     )
     @pytest.mark.parametrize(
@@ -300,23 +324,23 @@ class TestOsShutdown:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
         indirect=["power_control_target_device_fixture", "control_target_agent_fixture"],
     )
-    def test_auth_client_raise(  # pylint: disable=too-many-arguments
+    def test_auth_client_raise(  # pylint: disable=R0913 R0917
         self,
-        caplog,
+        caplog: LogCaptureFixture,
         mocker: MockFixture,
-        auth_client_raise_exception,
+        auth_client_raise_exception: type[Exception],
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
     ):
@@ -333,32 +357,31 @@ class TestOsShutdown:
             authorization_server_client, "get_agent_access_token", side_effect=auth_client_raise_exception
         )
 
-        mock_power_off = mocker.patch.object(OobController, "power_off")
+        mock_power_off = mocker.patch.object(OOBController, "power_off")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="LOGGER"):
+        with caplog.at_level(logging.WARNING, logger=agent_control.__name__):
             AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
 
-        # ExceptionLog
-        log_message = json.loads(caplog.records[0].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        mock_power_off.assert_called_once()
+
         assert len(caplog.records) == 1
 
-        assert caplog.records[0].levelname == "WARNING"
-        assert log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert log_message["message"]["detail"] == "Retry with ACPI shutdown"
-        assert log_message["message"]["action"] == "exception raised"
-        assert log_message["message"].get("trace_back") is not None
-        mock_power_off.assert_called_once()
+        # Inspection: Check the Exception log
+        exception_log = caplog.records[0]
+        assert exception_log.levelname == "WARNING"
+        assert exception_log.getMessage() == "Failed to shutdown the host OS via Agent. Retry ACPI shutdown via OOB."
+        assert exception_log.exc_info is not None, "exc_info should be present in the log record"
+        assert exception_log.exc_info[1] == auth_client_raise_exception
 
     @pytest.mark.parametrize(
         "control_target_agent_fixture",
         [
             {  # input agent object
-                "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
             },
         ],
         indirect=["control_target_agent_fixture"],
@@ -373,7 +396,7 @@ class TestOsShutdown:
     def test_execute_os_shutdown_requests_raise(
         self,
         mocker: MockFixture,
-        requests_raise_exception,
+        requests_raise_exception: type[Exception],
         control_target_agent_fixture: ControlTargetAgent,
     ):
         """
@@ -390,22 +413,21 @@ class TestOsShutdown:
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.InternalHwControlError):
-            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=protected-access
+        with pytest.raises(exc.InternalHWControlError):
+            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=W0212
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -414,16 +436,16 @@ class TestOsShutdown:
     @pytest.mark.parametrize(
         "requests_raise_exception",
         [
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ReadTimeout(),
+            requests.exceptions.ConnectionError(),
+            requests.exceptions.ConnectTimeout(),
         ],
     )
-    def test_requests_raise(  # pylint: disable=too-many-arguments
+    def test_requests_raise(  # pylint: disable=R0913, R0917
         self,
-        caplog,
+        caplog: LogCaptureFixture,
         mocker: MockFixture,
-        requests_raise_exception,
+        requests_raise_exception: type[Exception],
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
     ):
@@ -439,32 +461,33 @@ class TestOsShutdown:
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
-        mock_power_off = mocker.patch.object(OobController, "power_off")
+        mock_power_off = mocker.patch.object(OOBController, "power_off")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="LOGGER"):
+        with caplog.at_level(logging.WARNING, logger=agent_control.__name__):
             AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
 
-        # ExceptionLog
-        log_message = json.loads(caplog.records[0].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        mock_power_off.assert_called_once()
+
         assert len(caplog.records) == 1
 
-        assert caplog.records[0].levelname == "WARNING"
-        assert log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert log_message["message"]["detail"] == "Retry with ACPI shutdown"
-        assert log_message["message"]["action"] == "exception raised"
-        assert log_message["message"].get("trace_back") is not None
-        mock_power_off.assert_called_once()
+        # Inspection: Check the Exception log
+        exception_log = caplog.records[0]
+        assert exception_log.levelname == "WARNING"
+        assert exception_log.getMessage() == "Failed to shutdown the host OS via Agent. Retry ACPI shutdown via OOB."
+        assert exception_log.exc_info is not None, "exc_info should be present in the log record"
+        assert isinstance(
+            exception_log.exc_info[1], exc.BaseHWControlError
+        ), "raised exception should be BaseHWControlError sub class."
 
     @pytest.mark.parametrize(
         "control_target_agent_fixture",
         [
             {  # input agent object
-                "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
             },
         ],
         indirect=["control_target_agent_fixture"],
@@ -473,7 +496,7 @@ class TestOsShutdown:
         "expected_exception, agent_return_status_code, agent_return_body",
         [
             (
-                exc.AuthenticationHwControlError,
+                exc.AuthenticationHWControlError,
                 401,
                 {
                     "code": "EFA02BAS000",
@@ -481,7 +504,7 @@ class TestOsShutdown:
                 },
             ),  # valid_access_token function handle case.
             (
-                exc.ControlObjectHwControlError,
+                exc.ControlObjectHWControlError,
                 500,
                 {
                     "code": "CFA10BAS001",
@@ -494,12 +517,12 @@ class TestOsShutdown:
             ),  # The cases of misconfiguration in the Agent settings.
         ],
     )
-    def test_execute_os_shutdown_agent_return_error(  # pylint: disable=too-many-arguments
+    def test_execute_os_shutdown_agent_return_error(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
-        expected_exception,
-        agent_return_status_code,
-        agent_return_body,
+        expected_exception: type[Exception],
+        agent_return_status_code: int,
+        agent_return_body: dict[str, str],
         control_target_agent_fixture: ControlTargetAgent,
     ):
         """
@@ -512,30 +535,29 @@ class TestOsShutdown:
         target_agent = control_target_agent_fixture
 
         # Set up the mock.
-        dummy_response = test_util.generate_dummy_agent_response(
-            status_code=agent_return_status_code, content=agent_return_body
-        )
-        mocker.patch.object(requests, "put", return_value=dummy_response)
+        dummy_agent_response = Response()
+        dummy_agent_response.status_code = agent_return_status_code
+        dummy_agent_response._content = json.dumps(agent_return_body).encode("utf-8")  # pylint: disable=W0212
+        mocker.patch.object(requests, "put", return_value=dummy_agent_response)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception):
-            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=protected-access
+            AgentController._execute_os_shutdown(target_agent=target_agent)  # pylint: disable=W0212
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -548,11 +570,11 @@ class TestOsShutdown:
             500,  # The cases of misconfiguration in the Agent settings.
         ],
     )
-    def test_agent_return_error(  # pylint: disable=too-many-arguments
+    def test_agent_return_error(  # pylint: disable=R0913, R0917
         self,
-        caplog,
+        caplog: LogCaptureFixture,
         mocker: MockFixture,
-        agent_return_status_code,
+        agent_return_status_code: int,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
     ):
@@ -566,43 +588,60 @@ class TestOsShutdown:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_response = test_util.generate_dummy_agent_response(status_code=agent_return_status_code)
-        mocker.patch.object(requests, "put", return_value=dummy_response)
+        agent_return_response_body = {"Foo": "bar"}
+        dummy_agent_response = Response()
+        dummy_agent_response.status_code = agent_return_status_code
+        dummy_agent_response._content = json.dumps(agent_return_response_body).encode("utf-8")  # pylint: disable=W0212
+        dummy_agent_response.headers["Content-Type"] = "application/json"
+        dummy_agent_response.encoding = "utf-8"
+        mocker.patch.object(requests, "put", return_value=dummy_agent_response)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
-        mock_power_off = mocker.patch.object(OobController, "power_off")
+        mock_power_off = mocker.patch.object(OOBController, "power_off")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.WARNING, logger="LOGGER"):
+        with caplog.at_level(logging.INFO, logger=agent_control.__name__):
             AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
 
-        # ExceptionLog
-        log_message = json.loads(caplog.records[0].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert len(caplog.records) == 1
-
-        assert caplog.records[0].levelname == "WARNING"
-        assert log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert log_message["message"]["detail"] == "Retry with ACPI shutdown"
-        assert log_message["message"]["action"] == "exception raised"
-        assert log_message["message"].get("trace_back") is not None
         mock_power_off.assert_called_once()
+
+        assert len(caplog.records) == 3, "Agent Response log, Agent Response log and Exception log should be recorded."
+
+        # Inspection: Check the Agent Response log
+        agent_response_log = caplog.records[1]
+        assert agent_response_log.levelname == "INFO"
+        assert agent_response_log.getMessage() == "Received OS shutdown response from Agent."
+
+        assert hasattr(agent_response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(agent_response_log, "status_code") == agent_return_status_code
+
+        assert hasattr(agent_response_log, "response_body"), "response_body should be present in the log record"
+        assert getattr(agent_response_log, "response_body") == '{"Foo": "bar"}'
+
+        # Inspection: Check the Exception log
+        exception_log = caplog.records[2]
+        assert exception_log.levelname == "WARNING"
+        assert exception_log.getMessage() == "Failed to shutdown the host OS via Agent. Retry ACPI shutdown via OOB."
+        assert exception_log.exc_info is not None, "exc_info should be present in the log record"
+        assert isinstance(
+            exception_log.exc_info[1], exc.BaseHWControlError
+        ), "raised exception should be BaseHWControlError sub class."
 
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.UNKNOWN,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -611,15 +650,15 @@ class TestOsShutdown:
     @pytest.mark.parametrize(
         "device_raise_exception",
         [
-            exc.BaseHwControlError,
-            exc.InternalHwControlError,
-            exc.RequestNotSupportedHwControlError,
+            exc.BaseHWControlError,
+            exc.InternalHWControlError,
+            exc.RequestNotSupportedHWControlError,
         ],
     )
     def test_device_raise(
         self,
         mocker: MockFixture,
-        device_raise_exception,
+        device_raise_exception: type[Exception],
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
     ):
@@ -640,13 +679,13 @@ class TestOsShutdown:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.UNKNOWN,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -667,26 +706,25 @@ class TestOsShutdown:
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", side_effect=ValueError)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.RequestNotSupportedHwControlError):
+        with pytest.raises(exc.RequestNotSupportedHWControlError):
             AgentController.os_shutdown(target_device=target_device, target_agent=target_agent)
 
 
-class TestIsOsReady:
+class TestIsOSReady:
     """Unit test class for AgentController.is_os_ready."""
 
-    @pytest.mark.usefixtures("set_dummy_constant_request_id")
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture, expected_os_state",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
                 True,
             ),
@@ -701,14 +739,14 @@ class TestIsOsReady:
             agent_control.AGENT_REST_API_TIMEOUT,
         ],
     )
-    def test_successful_case(  # pylint: disable=too-many-arguments
+    def test_successful_case(  # pylint: disable=R0913, R0917
         self,
-        caplog,
+        caplog: LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        expected_os_state,
-        timeout,
+        expected_os_state: bool,
+        timeout: int,
     ):
         """test successful case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -719,43 +757,50 @@ class TestIsOsReady:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_agent_response = test_util.generate_dummy_agent_response(status_code=HTTPStatus.OK.value)
+        dummy_agent_response = Response()
+        dummy_agent_response.status_code = HTTPStatus.OK.value
+        dummy_agent_response._content = b""  # pylint: disable=W0212
         mocker.patch.object(requests.Session, "get", return_value=dummy_agent_response)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
-        with caplog.at_level(logging.INFO, logger="LOGGER"):
+        with caplog.at_level(logging.INFO, logger=agent_control.__name__):
             actual = AgentController.is_os_ready(
                 target_device=target_device, target_agent=target_agent, timeout=timeout
             )
 
-        # AgentRequestLog
-        agent_request_log_message = json.loads(caplog.records[0].getMessage())
-
-        # AgentResponseLog
-        agent_response_log_message = json.loads(caplog.records[-1].getMessage())
-
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual == expected_os_state
 
-        assert len(caplog.records) == 2
+        assert len(caplog.records) == 2, "Agent Response log and Agent Response log should be recorded."
 
-        assert caplog.records[0].levelname == "INFO"
-        assert agent_request_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert agent_request_log_message["message"]["ip_address"] == target_agent.ip_address
-        assert agent_request_log_message["message"]["port"] == 8000
+        # Inspection: Check the Agent RequestLog log
+        agent_request_log = caplog.records[0]
+        assert agent_request_log.levelname == "INFO"
+        assert agent_request_log.getMessage() == "Send OS ready check request to Agent."
+
+        assert hasattr(agent_request_log, "url"), "url should be present in the log record"
         assert (
-            agent_request_log_message["message"]["url"]
-            == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/is-os-ready"
+            getattr(agent_request_log, "url") == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/is-os-ready"
         )
-        assert agent_request_log_message["message"]["http_method"] == HTTPMethod.GET
-        assert agent_request_log_message["message"]["time_out"] == timeout
 
-        assert caplog.records[-1].levelname == "INFO"
-        assert agent_response_log_message["message"]["request_id"] == test_util.CONSTANT_REQUEST_ID
-        assert agent_response_log_message["message"]["status_code"] == HTTPStatus.OK.value
-        assert agent_response_log_message["message"]["response_body"] is None
+        assert hasattr(agent_request_log, "http_method"), "http_method should be present in the log record"
+        assert getattr(agent_request_log, "http_method") == HTTPMethod.GET
+
+        assert hasattr(agent_request_log, "time_out"), "time_out should be present in the log record"
+        assert getattr(agent_request_log, "time_out") == timeout
+
+        # Inspection: Check the Agent Response log
+        agent_response_log = caplog.records[1]
+        assert agent_response_log.levelname == "INFO"
+        assert agent_response_log.getMessage() == "Received OS ready check response from Agent."
+
+        assert hasattr(agent_response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(agent_response_log, "status_code") == HTTPStatus.OK.value
+
+        assert hasattr(agent_response_log, "response_body"), "response_body should be present in the log record"
+        assert getattr(agent_response_log, "response_body") == ""
 
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture, expected_exception",
@@ -767,10 +812,10 @@ class TestIsOsReady:
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
-                exc.RequestNotSupportedHwControlError,
+                exc.RequestNotSupportedHWControlError,
             ),
         ],
         indirect=["power_control_target_device_fixture", "control_target_agent_fixture"],
@@ -787,8 +832,8 @@ class TestIsOsReady:
         self,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        expected_exception,
-        timeout,
+        expected_exception: type[Exception],
+        timeout: int,
     ):
         """test device raise raise exception."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -805,24 +850,24 @@ class TestIsOsReady:
         [
             (  # target device already power_off
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.OFF,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
             (  # target device powering off
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.POWERING_OFF,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -841,7 +886,7 @@ class TestIsOsReady:
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
+        timeout: int,
     ):
         """Test for plugin return invalid power state case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -852,7 +897,7 @@ class TestIsOsReady:
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.HostCpuPowerOffBadRequestHwControlError):
+        with pytest.raises(exc.HostCPUPowerOffBadRequestHWControlError):
             _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
 
     @pytest.mark.parametrize(
@@ -860,13 +905,13 @@ class TestIsOsReady:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
                 False,
             ),
@@ -892,14 +937,14 @@ class TestIsOsReady:
             requests.exceptions.SSLError,
         ],
     )
-    def test_request_timeout(  # pylint: disable=too-many-arguments
+    def test_request_timeout(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        expected_os_state,
-        timeout,
-        requests_raise_exception,
+        expected_os_state: bool,
+        timeout: int,
+        requests_raise_exception: type[Exception],
     ):
         """test request timeout case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -926,24 +971,24 @@ class TestIsOsReady:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.PAUSED,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.UNKNOWN,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -957,12 +1002,13 @@ class TestIsOsReady:
             agent_control.AGENT_REST_API_TIMEOUT,
         ],
     )
-    def test_invalid_power_state(
+    def test_invalid_power_state(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
+        caplog: LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
+        timeout: int,
     ):
         """Test request raise unexpected exception case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -974,21 +1020,37 @@ class TestIsOsReady:
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.InternalHwControlError):
-            _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
+        with pytest.raises(exc.InternalHWControlError):
+            caplog.clear()
+            with caplog.at_level(logging.INFO, logger=agent_control.__name__):
+                _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert len(caplog.records) == 1, "log should be recorded."
+
+        # Inspection: Check the unexpected power log
+        unexpected_power_log = caplog.records[0]
+        assert unexpected_power_log.levelname == "WARNING"
+        assert unexpected_power_log.getMessage() == "The device power state is unexpected."
+
+        assert hasattr(unexpected_power_log, "device_id"), "device_id should be present in the log record"
+        assert getattr(unexpected_power_log, "device_id") == target_device.device_id
+
+        assert hasattr(unexpected_power_log, "power_state"), "power_state should be present in the log record"
+        assert getattr(unexpected_power_log, "power_state") == target_device.power_state
 
     @pytest.mark.parametrize(
         "power_control_target_device_fixture, control_target_agent_fixture",
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -1002,12 +1064,13 @@ class TestIsOsReady:
             agent_control.AGENT_REST_API_TIMEOUT,
         ],
     )
-    def test_set_power_state_raise_value_error(
+    def test_set_power_state_raise_value_error(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
+        caplog: LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
+        timeout: int,
     ):
         """Test request raise unexpected exception case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -1019,14 +1082,16 @@ class TestIsOsReady:
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", side_effect=ValueError)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.RequestNotSupportedHwControlError):
-            _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
+        with pytest.raises(exc.RequestNotSupportedHWControlError):
+            caplog.clear()
+            with caplog.at_level(logging.INFO, logger=agent_control.__name__):
+                _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
 
     @pytest.mark.parametrize(
         "auth_client_raise_exception, expected_exception",
         [
-            (exc.InternalHwControlError, exc.InternalHwControlError),
-            (exc.ConfigurationHwControlError, exc.ConfigurationHwControlError),
+            (exc.InternalHWControlError, exc.InternalHWControlError),
+            (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
         ],
     )
     @pytest.mark.parametrize(
@@ -1034,13 +1099,13 @@ class TestIsOsReady:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -1054,14 +1119,14 @@ class TestIsOsReady:
             agent_control.AGENT_REST_API_TIMEOUT,
         ],
     )
-    def test_auth_client_raise(  # pylint: disable=too-many-arguments
+    def test_auth_client_raise(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
-        auth_client_raise_exception,
-        expected_exception,
+        auth_client_raise_exception: type[Exception],
+        expected_exception: type[Exception],
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
+        timeout: int,
     ):
         """Test authorization_server_client raise case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -1085,13 +1150,13 @@ class TestIsOsReady:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -1117,13 +1182,13 @@ class TestIsOsReady:
             requests.exceptions.InvalidSchema,
         ],
     )
-    def test_requests_raise_unexpected_exception(  # pylint: disable=too-many-arguments
+    def test_requests_raise_unexpected_exception(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
-        requests_raise_exception,
+        timeout: int,
+        requests_raise_exception: type[Exception],
     ):
         """Test request raise unexpected exception case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -1138,7 +1203,7 @@ class TestIsOsReady:
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        with pytest.raises(exc.InternalHwControlError):
+        with pytest.raises(exc.InternalHWControlError):
             _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
 
     @pytest.mark.parametrize(
@@ -1146,13 +1211,13 @@ class TestIsOsReady:
         [
             (
                 {  # input device object
-                    "device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "device_type": test_util.DummyCpuInfo.DEVICE_TYPE.value,
+                    "device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "device_type": test_util.DummyCPUInfo.DEVICE_TYPE.value,
                     "power_state": constants.DevicePowerState.ON,
                 },
                 {  # input agent object
-                    "host_cpu_device_id": test_util.DummyCpuInfo.DEVICE_ID.value,
-                    "ip_address": test_util.DummyCpuInfo.IP_ADDRESS.value,
+                    "host_cpu_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                    "ip_address": test_util.DummyCPUInfo.IP_ADDRESS.value,
                 },
             ),
         ],
@@ -1170,41 +1235,42 @@ class TestIsOsReady:
         "expected_exception, agent_return_status_code, agent_return_body",
         [
             (
-                exc.AuthenticationHwControlError,
+                exc.AuthenticationHWControlError,
                 401,
                 {"code": "EF003BAS011", "message": "Failed to authenticate to the HW Control Agent."},
             ),  # valid_access_token function handle case.
             (
-                exc.AuthenticationHwControlError,
+                exc.AuthenticationHWControlError,
                 401,
                 {"code": "EF003BAS011", "message": "Not authenticated"},
             ),  # OAuth2AuthorizationCodeBearer handle case.
             (
-                exc.ControlObjectHwControlError,
+                exc.ControlObjectHWControlError,
                 500,
                 {"foo": "bar"},
             ),
             (
-                exc.ControlObjectHwControlError,
+                exc.ControlObjectHWControlError,
                 400,
                 {"foo": "bar"},
             ),
             (
-                exc.ControlObjectHwControlError,
+                exc.ControlObjectHWControlError,
                 204,
                 {"foo": "bar"},
             ),
         ],
     )
-    def test_agent_return_error(  # pylint: disable=too-many-arguments
+    def test_agent_return_error(  # pylint: disable=R0913, R0917
         self,
         mocker: MockFixture,
+        caplog: LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
-        timeout,
-        expected_exception,
-        agent_return_status_code,
-        agent_return_body,
+        timeout: int,
+        expected_exception: type[Exception],
+        agent_return_status_code: int,
+        agent_return_body: dict,
     ):
         """Test agent return error response case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -1215,13 +1281,32 @@ class TestIsOsReady:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_response = test_util.generate_dummy_agent_response(
-            status_code=agent_return_status_code, content=agent_return_body
-        )
-        mocker.patch.object(requests.Session, "get", return_value=dummy_response)
+        dummy_agent_response = Response()
+        dummy_agent_response.status_code = agent_return_status_code
+        dummy_agent_response._content = json.dumps(agent_return_body).encode("utf-8")  # pylint: disable=W0212
+        dummy_agent_response.headers["Content-Type"] = "application/json"
+        dummy_agent_response.encoding = "utf-8"
+        mocker.patch.object(requests.Session, "get", return_value=dummy_agent_response)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception):
-            _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
+            caplog.clear()
+            with caplog.at_level(logging.INFO, logger=agent_control.__name__):
+                _ = AgentController.is_os_ready(target_device=target_device, target_agent=target_agent, timeout=timeout)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+
+        assert len(caplog.records) == 2, "Agent Response log and Agent Response log should be recorded."
+
+        # Inspection: Check the Agent Response log
+        agent_response_log = caplog.records[1]
+        assert agent_response_log.levelname == "INFO"
+        assert agent_response_log.getMessage() == "Received OS ready check response from Agent."
+
+        assert hasattr(agent_response_log, "status_code"), "status_code should be present in the log record"
+        assert getattr(agent_response_log, "status_code") == agent_return_status_code
+
+        assert hasattr(agent_response_log, "response_body"), "response_body should be present in the log record"
+        assert getattr(agent_response_log, "response_body") == json.dumps(agent_return_body)

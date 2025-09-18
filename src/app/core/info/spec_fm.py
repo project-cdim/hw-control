@@ -14,77 +14,55 @@
 
 """HW independent section - Get FM Information
 
-Get device information for the specified device ID device type
+Get device information for the specified Device ID Device Type
 
 """
-from typing import cast
 import traceback
+import logging
 import app.common.messages.message as msg
 import app.common.constants as const
-from app.common.utils.log import LOGGER
-from app.common.utils.plugin_manager import get_plugin
-from app.common.utils.fm_plugin_base import FmPortData
+from app.common.utils.plugin_manager import get_fm_plugin
+from app.common.utils.fm_plugin_base import FMPortData
 from app.common.utils.fm_plugin_base import FMPluginBase
-from app.common.basic_exceptions import InternalHwControlError
-from app.common.deviceIdManager import device_id_base as dim
+from app.common.basic_exceptions import InternalHWControlError
+from app.common.dim import device_id_base as dim
 
 # INDEX where device information is stored in FMPlugin.get_port_info
 PLUGIN_DEVICE_DATA_KEY = "data"
 
+# Get a logger object.
+logger = logging.getLogger(__name__)
 
-class GetSpecFMInfo:
+
+class GetSpecFMInfo:  # pylint: disable=R0903
     """Get FM Information
 
     class for get Device information from Fabric Manager.
 
     """
 
-    def __init__(self):
-        self.plugin = None
-        self.manager_id = ""
+    def _transport_fm_plugin_result_to_port_data(self, manager_id: str, fm_port_data: FMPortData) -> dict:
+        """Transport Plugin result to port data
 
-    def _import_plugin(self, device_id: str) -> bool:
-        """import Plugin
-
-        Import the plugin corresponding to the device
+        Convert 'FMPortData' to port information
 
         Args:
-            device_id (str): DeviceID
+            manager_id (str): Plugin manager ID
+            fm_port_data (FMPortData): FM port data
 
         Returns:
-            bool: True(Import Successful) or False(Import Failed)
+            dict: FMPortData
         """
-        LOGGER.debug(f"[_import_plugin] begin device_id={device_id}")
-        # Import FMPlugin
-        manager_ids = dim.device_id_to_manager_id(device_id)
-        if not manager_ids[const.ManagerType.FM.value.lower()]:
-            return False
+        logger.debug("[_transport_fm_plugin_result_to_port_data] begin fm_port_data=%s", fm_port_data)
 
-        self.manager_id = manager_ids[const.ManagerType.FM.value.lower()]
-        self.plugin = get_plugin(const.ManagerType.FM.value.lower(), self.manager_id)
-        return True
+        result: dict[str, object] = {}
 
-    def _transport_fm_plugin_result_to_port_data(self, fm_port_data: FmPortData) -> dict:
-        """Transport plugin result to port data
-
-        Convert 'FmPortData' to port information
-
-        Args:
-            fm_port_data (FmPortData): FM Port Data
-
-        Returns:
-            dict: FmPortData
-        """
-        LOGGER.debug(f"[_transport_fm_plugin_result_to_port_data] begin fm_port_data={fm_port_data}")
-
-        result = {}
-
-        device_id = dim.fm_port_id_to_device_id(fm_port_data.id, self.manager_id)
+        device_id = dim.fm_port_id_to_device_id(fm_port_data.id, manager_id)
         device_type = dim.device_id_to_device_type(str(device_id))
         result["deviceID"] = device_id
         result["type"] = device_type
         result["fmPortId"] = fm_port_data.id
-        result["deviceSwitchInfo"] = dim.fm_switch_id_to_device_id(str(fm_port_data.switch_id), self.manager_id)
+        result["deviceSwitchInfo"] = dim.fm_switch_id_to_device_id(str(fm_port_data.switch_id), manager_id)
         result["switchId"] = fm_port_data.switch_id
         result["switchPortNumber"] = fm_port_data.switch_port_number
         result["switchPortType"] = fm_port_data.switch_port_type
@@ -92,7 +70,7 @@ class GetSpecFMInfo:
         if fm_port_data.link is not None and len(fm_port_data.link) > 0:
             link = []
             for link_fm_port_id in fm_port_data.link:
-                device_id = dim.fm_port_id_to_device_id(link_fm_port_id, self.manager_id)
+                device_id = dim.fm_port_id_to_device_id(link_fm_port_id, manager_id)
                 device_type = dim.device_id_to_device_type(str(device_id))
                 link_item = {}
                 link_item["deviceID"] = device_id
@@ -115,42 +93,44 @@ class GetSpecFMInfo:
 
         return result
 
-    def _get_spec(self, device_id: str) -> list:
+    def _get_spec(self, device_id: str, manager_id: str, plugin: FMPluginBase) -> list:
         """Get device information
 
         Get device information by specifying ID
 
         Args:
-            device_id (str): DeviceID
+            device_id (str): Device ID
+            manager_id (str): Plugin manager ID
+            plugin (FMPluginBase): FM Plugin
 
         Returns:
             list: specs
         """
-        LOGGER.debug(f"[_get_spec] begin device_id={device_id}")
-
-        fm_port_id = dim.device_id_to_fm_port_id(device_id)
-
-        # Call FMPlugin to get device information
-        call_info = f"manager_id: {self.manager_id}, device_id: {device_id}, fm_port_id: {fm_port_id}"
-        LOGGER.info(msg.get_log_message(msg.I00003, [call_info]))
-        plugin_result = cast(FMPluginBase, self.plugin).get_port_info(fm_port_id)
-        LOGGER.info(msg.get_log_message(msg.I00004, [call_info]))
+        logger.debug("[_get_spec] begin device_id=%s", device_id)
 
         specs = []
-        plugin_port_data = plugin_result[PLUGIN_DEVICE_DATA_KEY]
-        fm_port_data = plugin_port_data[0]
-        converted = self._transport_fm_plugin_result_to_port_data(fm_port_data)
-        specs.append(converted)
+        for fm_port_id in dim.device_id_to_fm_port_id_multi_hostport(device_id, manager_id):
+            # Call FMPlugin to get device information
+            call_info = f"manager_id: {manager_id}, device_id: {device_id}, fm_port_id: {fm_port_id}"
+            logger.info(msg.get_log_message(msg.I00003, [call_info]))
+            plugin_result: dict[str, list[FMPortData]] = plugin.get_port_info(fm_port_id)
+            logger.info(msg.get_log_message(msg.I00004, [call_info]))
+
+            plugin_port_data = plugin_result[PLUGIN_DEVICE_DATA_KEY]
+            fm_port_data = plugin_port_data[0]
+            converted = self._transport_fm_plugin_result_to_port_data(manager_id, fm_port_data)
+            specs.append(converted)
+
         return specs
 
     def get_spec_fm(self, device_id: str, device_type: str) -> dict:
         """Get FM device information
 
-        Get device information for the specified device ID and device type
+        Get device information for the specified Device ID and Device Type
 
         Args:
-            device_id (str): DeviceID
-            device_type (str): DeviceType
+            device_id (str): Device ID
+            device_type (str): Device Type
 
         Returns:
             dict: {"data": ListOfDeviceInfo}
@@ -161,35 +141,36 @@ class GetSpecFMInfo:
                 spec_fm_info = get_fm_info.get_spec_fm("12345", "CPU")
         """
         try:
-            LOGGER.debug(f"[get_spec_fm] begin device_id={device_id} device_type={device_type}")
+            logger.debug("[get_spec_fm] begin device_id=%s device_type=%s", device_id, device_type)
 
-            specs: list
+            if device_type not in [const_device_type.value for const_device_type in const.DeviceType]:
+                logger.warning(msg.get_log_message(msg.W00002, [device_type]))
+                raise InternalHWControlError(additional_message=f"The device_type({device_type}) was abnormal.")
 
-            dummy_specs = [{"deviceID": device_id, "type": device_type}]
+            dummy_data = {PLUGIN_DEVICE_DATA_KEY: [{"deviceID": device_id, "type": device_type}]}
 
-            if device_type == const.DeviceType.GC.value or device_type == const.DeviceType.VM.value:
-                specs = dummy_specs
+            if device_type in (const.DeviceType.GC.value, const.DeviceType.VM.value):
+                logger.debug("[get_spec_fm] end. return dummy data.")
+                return dummy_data
 
-            elif not self._import_plugin(device_id):
-                specs = dummy_specs
+            # Get Plugin manager IDs
+            manager_ids: dict[str, list[str]] = dim.device_id_to_manager_id_multi_hostport(device_id)
+            if not manager_ids[const.ManagerType.FM.value.lower()]:
+                logger.debug("[get_spec_fm] end. manager not found.")
+                return dummy_data
 
-            elif device_type in [const_device_type.value for const_device_type in const.DeviceType]:
-                specs = self._get_spec(device_id)
+            # Get device information
+            specs = []
+            for manager_id in manager_ids[const.ManagerType.FM.value.lower()]:
+                specs.extend(self._get_spec(device_id, manager_id, get_fm_plugin(manager_id)))
 
-            else:
-                LOGGER.warning(msg.get_log_message(msg.W00002, [device_type]))
-                raise InternalHwControlError(additional_message=f"The device_type({device_type}) was abnormal.")
+            if not specs:
+                logger.debug("[get_spec_fm] end. no data.")
+                return dummy_data
 
-            result = {"data": specs}
-            LOGGER.debug("[get_spec_fm] end")
-            return result
+            logger.debug("[get_spec_fm] end")
+            return {PLUGIN_DEVICE_DATA_KEY: specs}
 
         except Exception:
-            LOGGER.warning(msg.get_log_message(msg.W00001, [traceback.format_exc()]))
+            logger.warning(msg.get_log_message(msg.W00001, [traceback.format_exc()]))
             raise
-
-        finally:
-            if self.plugin:
-                del self.plugin
-            else:  # empty else for C1 coverage
-                pass

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -21,11 +21,12 @@ import traceback
 import logging
 import app.common.messages.message as msg
 import app.common.constants as const
-from app.common.utils.plugin_manager import get_fm_plugin
-from app.common.utils.fm_plugin_base import FMPortData
-from app.common.utils.fm_plugin_base import FMPluginBase
 from app.common.basic_exceptions import InternalHWControlError
 from app.common.dim import device_id_base as dim
+import app.common.plugin.svc.loader as plugin_loader
+from app.common.utils.fm_plugin_base import FMPortData
+from app.common.utils.fm_plugin_base import FMPluginBase
+from app.core.info import info_const, info_utils
 
 # INDEX where device information is stored in FMPlugin.get_port_info
 PLUGIN_DEVICE_DATA_KEY = "data"
@@ -61,12 +62,17 @@ class GetSpecFMInfo:  # pylint: disable=R0903
         device_type = dim.device_id_to_device_type(str(device_id))
         result["deviceID"] = device_id
         result["type"] = device_type
-        result["fmPortId"] = fm_port_data.id
-        result["deviceSwitchInfo"] = dim.fm_switch_id_to_device_id(str(fm_port_data.switch_id), manager_id)
-        result["switchId"] = fm_port_data.switch_id
-        result["switchPortNumber"] = fm_port_data.switch_port_number
-        result["switchPortType"] = fm_port_data.switch_port_type
-        result["fabricId"] = fm_port_data.fabric_id
+
+        fm_port = {}
+        fm_port["deviceSwitchInfo"] = dim.fm_switch_id_to_device_id(str(fm_port_data.switch_id), manager_id)
+        fm_port["fabricId"] = fm_port_data.fabric_id
+        fm_port["fmPortId"] = fm_port_data.id
+        fm_port["LTSSMState"] = fm_port_data.ltssm_state
+        fm_port["switchId"] = fm_port_data.switch_id
+        fm_port["switchPortNumber"] = fm_port_data.switch_port_number
+        fm_port["switchPortType"] = fm_port_data.switch_port_type
+        result["devicePortList"] = [fm_port]
+
         if fm_port_data.link is not None and len(fm_port_data.link) > 0:
             link = []
             for link_fm_port_id in fm_port_data.link:
@@ -86,7 +92,6 @@ class GetSpecFMInfo:  # pylint: disable=R0903
         result["CPUManufacturer"] = fm_port_data.cpu_manufacturer
         result["CPUModel"] = fm_port_data.cpu_model
         result["CPUSerialNumber"] = fm_port_data.cpu_serial_number
-        result["LTSSMState"] = fm_port_data.ltssm_state
         result["deviceKeys"] = fm_port_data.device_keys
         result["portKeys"] = fm_port_data.port_keys
         result["capacity"] = fm_port_data.capacity
@@ -162,7 +167,19 @@ class GetSpecFMInfo:  # pylint: disable=R0903
             # Get device information
             specs = []
             for manager_id in manager_ids[const.ManagerType.FM.value.lower()]:
-                specs.extend(self._get_spec(device_id, manager_id, get_fm_plugin(manager_id)))
+                specs.extend(self._get_spec(device_id, manager_id, plugin_loader.get_fm(manager_id)))
+
+            # Get combination device information.
+            target_id, target_type = info_utils.get_combination_match_device(device_id)
+            if target_id and target_type:
+                manager_ids = dim.device_id_to_manager_id_multi_hostport(target_id)
+                if manager_ids[const.ManagerType.FM.value.lower()]:
+                    for manager_id in manager_ids[const.ManagerType.FM.value.lower()]:
+                        specs.extend(self._get_spec(target_id, manager_id, plugin_loader.get_fm(manager_id)))
+
+            # Convert links devices.
+            for device_info in specs:
+                device_info = self._convert_links_device(device_info)
 
             if not specs:
                 logger.debug("[get_spec_fm] end. no data.")
@@ -174,3 +191,37 @@ class GetSpecFMInfo:  # pylint: disable=R0903
         except Exception:
             logger.warning(msg.get_log_message(msg.W00001, [traceback.format_exc()]))
             raise
+
+    def _convert_links_device(self, device_info: dict) -> dict:
+        """Converts link information in a device info dictionary.
+
+        This method processes the link information contained within the device_info dictionary,
+        transforming link data as needed.
+        - Resolving Device ID and Device Type combinations.
+        - Handling special cases for CPU devices linked to fabric adapter.
+        - Extending links with additional fabric device information when applicable.
+
+        Args:
+            device_info : dict
+                A dictionary containing information about a device, including its links to other devices.
+
+        Returns:
+            dict:
+                Device information after link data converted.
+        """
+        # Convert links.
+        links = []
+        for link in device_info.get(info_const.DATA_ITEM_FM_LINK, []):
+            fm_link_id = link[info_const.DATA_ITEM_DEVICE_ID]
+            fm_link_type = link[info_const.DATA_ITEM_TYPE]
+            # Resolving Device ID and Device Type combinations.
+            target_id, target_type = info_utils.get_combination_match_device(fm_link_id)
+            if target_id and target_type == info_utils.get_high_priority_device_type(fm_link_type, target_type):
+                links.append({info_const.DATA_ITEM_DEVICE_ID: target_id, info_const.DATA_ITEM_TYPE: target_type})
+            else:
+                links.append({info_const.DATA_ITEM_DEVICE_ID: fm_link_id, info_const.DATA_ITEM_TYPE: fm_link_type})
+
+        if links:
+            device_info[info_const.DATA_ITEM_FM_LINK] = links
+
+        return device_info

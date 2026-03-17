@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -21,7 +21,7 @@ def test_device_type_enum_unique():
     """Test that the number of types of ENUM values is correct (must be unique)"""
     # Verify that the number of ENUM values is correct (unique).
     device_types = {item.value for item in DeviceType}
-    assert len(device_types) == 8
+    assert len(device_types) == 10
 
 
 def test_device_type_enum_member_value():
@@ -30,6 +30,8 @@ def test_device_type_enum_member_value():
     assert DeviceType.MEMORY.value == "memory"
     assert DeviceType.STORAGE.value == "storage"
     assert DeviceType.NIC.value == "networkInterface"
+    assert DeviceType.SFA.value == "sourceFabricAdapter"
+    assert DeviceType.DFA.value == "destinationFabricAdapter"
     assert DeviceType.GPU.value == "GPU"
     assert DeviceType.GC.value == "graphicController"
     assert DeviceType.SWITCH.value == "switch"

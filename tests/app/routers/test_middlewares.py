@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,19 +14,21 @@
 
 """Unit test module for middlewares.py"""
 
-import uuid
 import logging
+import uuid
 
 import pytest
 from pytest_mock import MockFixture
 from pytest import LogCaptureFixture
+from fastapi.testclient import TestClient
 from starlette import requests
 from starlette import responses
 from starlette.types import Receive, Scope, Send
 
-from app.common import request_id_utilities
+from app import hw_control_main
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+
 from app.routers import middlewares
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -40,86 +42,6 @@ async def dummy_app(scope: Scope, receive: Receive, send: Send):  # pylint: disa
     https://asgi.readthedocs.io/en/latest/specs/main.html#applications
     """
     pass  # pylint: disable=W0107
-
-
-class TestRequestIDMiddleware:  # pylint: disable=R0903
-    """Test class for RequestIDMiddleware."""
-
-    @pytest.fixture(scope="function")
-    def _cleanup_request_id(self):
-        """Fixture to set and reset the request ID context variable for test isolation.
-
-        This fixture sets a dummy request ID before the test and resets it after the test.
-        It is only available within this test class.
-        """
-        # Set a dummy request ID and keep the returned token.
-        # The token represents the state of the context variable before set().
-        # By calling reset(token), the context variable will be restored to the state before set().
-        token = request_id_utilities._request_id.set("cleanup key")  # pylint: disable=W0212
-
-        yield
-
-        # Restore the context variable to the state before set() using the token.
-        request_id_utilities._request_id.reset(token)  # pylint: disable=W0212
-
-    @pytest.mark.usefixtures("_cleanup_request_id")
-    @pytest.mark.asyncio
-    async def test_request_id_middleware_sets_context_variable(
-        self,
-        mocker: MockFixture,
-    ):
-        """Test that RequestIDMiddleware sets a unique request ID in the context variable.
-
-        This test directly calls the middleware's dispatch method and checks that
-        the request ID is set in the context variable during request processing.
-        """
-
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        # Prepare a dummy request
-        scope = {
-            "type": "http",
-            "http_version": "1.1",
-            "method": "GET",
-            "scheme": "http",
-            "path": "/",
-            "headers": [],
-            "query_string": b"",
-            "client": ("testclient", 12345),
-            "server": ("testserver", 80),
-            "path_params": {},
-        }
-        request = requests.Request(scope)
-
-        # Set up expected value
-        expected_request_id = "request ID set by RequestIDMiddleware"
-
-        # Set up a mock for uuid.uuid4 to return a fixed value
-
-        # This is necessary because RequestIDMiddleware uses uuid.uuid4() to generate the request ID,
-        # and we want to ensure that the test is consistent by replacing its return value with a fixed one.
-        # This allows us to predict the request ID that will be set in the context variable.
-        mocker.patch.object(uuid, "uuid4", return_value="request ID set by RequestIDMiddleware")
-
-        # Prepare a dummy call_next that checks the context variable
-        async def check_request_id(_):
-            """
-            This function simulates the next step in the middleware chain.
-            It is a placeholder and does not perform any actual processing.
-            Assert that the request ID is set in the context variable by RequestIDMiddleware.dispatch
-            """
-
-            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
-            # Check that the request ID is set in the context
-            actual_request_id = request_id_utilities.get_request_id()
-            assert actual_request_id == expected_request_id
-
-            return responses.Response("ok")
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        middleware = middlewares.RequestIDMiddleware(dummy_app)
-
-        # Call the middleware's dispatch method
-        await middleware.dispatch(request, call_next=check_request_id)
 
 
 class TestLoggingMiddleware:
@@ -296,3 +218,95 @@ class TestLoggingMiddleware:
         response_log = caplog.records[1]
         assert hasattr(response_log, "app_process_time")
         assert getattr(response_log, "app_process_time") == expected_app_process_time
+
+
+client = TestClient(hw_control_main.app)
+
+
+class TestCorrelationIdMiddlewareSetting:
+    """Test class for CorrelationIdMiddleware setting."""
+
+    def test_correlation_id_from_header(self):
+        """Test that Correlation ID from header is correctly set in context.
+
+        This test verifies that when a valid Correlation ID is provided in the
+        request header, it is correctly set in the context variable and can be
+        retrieved during request processing.
+
+        """
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        test_correlation_id = str(uuid.uuid4())
+        headers = {"x-correlation-id": test_correlation_id}
+
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
+        # Send request with Correlation ID header.
+        # Send request to non-existent endpoint to avoid auth dependencies in this test.
+        response = client.get("/cdim/api/v1/foo", headers=headers)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        # 404 is expected for non-existent endpoint
+        assert response.status_code == 404
+
+        # Check that extra response header is present
+        assert "x-correlation-id" in response.headers, "`x-correlation-id` should be present in the response headers"
+        assert response.headers["x-correlation-id"] == test_correlation_id, "correlation-id should match request header"
+
+    def test_correlation_id_generated_when_no_header(self):
+        """Test that Correlation ID is generated when no header is provided.
+
+        This test verifies that when no Correlation ID is provided in the
+        request header, the generator function creates a new UUID4 and sets
+        it in the context variable.
+        """
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
+        # Send request without Correlation ID header.
+        # Send request to non-existent endpoint to avoid auth dependencies in this test.
+        response = client.get("/cdim/api/v1/foo")
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        # 404 is expected for non-existent endpoint
+        assert response.status_code == 404
+
+        # Check the correlation-id set by generator
+        # UUID4 format validation
+        correlation_id = response.headers["x-correlation-id"]
+        assert len(correlation_id) == 36, "correlation-id should be standard UUID4 format"
+        parsed_uuid = uuid.UUID(correlation_id)
+        assert parsed_uuid.version == 4, "correlation-id set by middleware should be UUID4"
+
+    @pytest.mark.parametrize(
+        "invalid_correlation_id",
+        [
+            "invalid-uuid",  # Invalid format
+            "12345678-1234-1234-1234-12345678901g",  # Invalid character
+            "short-id",  # Too short
+            "",  # Empty string
+            "12345678-1234-5234-1234-123456789012",  # Invalid version (should be 4)
+        ],
+    )
+    def test_correlation_id_validation_with_invalid_values(self, invalid_correlation_id: str):
+        """Test that invalid Correlation IDs are rejected and new ones are generated.
+
+        This test verifies that when an invalid Correlation ID is provided in the
+        request header, the validator rejects it and the generator creates a new
+        valid UUID4 instead.
+
+        Args:
+            invalid_correlation_id (str): An invalid Correlation ID to test.
+        """
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        headers = {"x-correlation-id": invalid_correlation_id}
+
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
+        # Send request with invalid Correlation ID header.
+        # Send request to non-existent endpoint to avoid auth dependencies in this test.
+        response = client.get("/cdim/api/v1/foo", headers=headers)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        # 404 is expected for non-existent endpoint
+        assert response.status_code == 404
+
+        # Check the correlation-id set by generator (rejected invalid one)
+        assert (
+            response.headers["x-correlation-id"] != invalid_correlation_id
+        ), "Invalid Correlation ID should be rejected and replaced with a valid one by middleware."

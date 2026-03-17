@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -177,12 +177,10 @@ class TestGetLock:
     @pytest.mark.parametrize(
         "fm_control_target_device_pair_fixture",
         [
-            (
-                {  # input device object
-                    "upstream_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
-                    "downstream_device_id": test_util.DummyDeviceInfo.DEVICE_ID.value,
-                }
-            )
+            {  # input device object
+                "upstream_device_id": test_util.DummyCPUInfo.DEVICE_ID.value,
+                "downstream_device_id": test_util.DummyDeviceInfo.DEVICE_ID.value,
+            }
         ],
         indirect=["fm_control_target_device_pair_fixture"],
     )

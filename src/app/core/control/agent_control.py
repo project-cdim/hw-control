@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -28,6 +28,7 @@ import requests
 from urllib3.util import Url
 from urllib3.util.retry import Retry
 from pydantic import BaseModel, Field
+from asgi_correlation_id import correlation_id
 
 from app.core.control.control_base import PowerControlTargetDevice
 from app.core.control import oob_control
@@ -169,7 +170,10 @@ class AgentController:
         """
 
         access_token = authorization_server_client.get_agent_access_token()
-        requests_header = {"Authorization": f"Bearer {access_token}"}
+        requests_header = {
+            "Authorization": f"Bearer {access_token}",
+            constants.CORRELATION_ID_HEADER: correlation_id.get() or constants.CORRELATION_ID_DEFAULT_VALUE,
+        }
 
         target_url = Url(
             scheme=AGENT_REST_API_SCHEME,
@@ -351,7 +355,10 @@ class AgentController:
             )
 
             access_token = authorization_server_client.get_agent_access_token()
-            requests_header = {"Authorization": f"Bearer {access_token}"}
+            requests_header = {
+                "Authorization": f"Bearer {access_token}",
+                constants.CORRELATION_ID_HEADER: correlation_id.get() or constants.CORRELATION_ID_DEFAULT_VALUE,
+            }
 
             target_url = Url(
                 scheme=AGENT_REST_API_SCHEME,

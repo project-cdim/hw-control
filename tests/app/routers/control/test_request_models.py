@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -27,53 +27,6 @@ from app.routers.control import control_api
 
 
 DUMMY_DEVICE_ID = uuid.UUID("d62e98bf-6c50-4b88-95f9-49c609d2fdc9")
-
-
-class TestAggregationControlRequestModel:
-    """Unit test class for AggregationControlRequestModel."""
-
-    @pytest.mark.parametrize(
-        "action", [control_api.AggregationControlAction.CONNECT, control_api.AggregationControlAction.DISCONNECT]
-    )
-    def test_valid_value_input_case(self, action):
-        """Test valid AggregationControlRequestModel creation."""
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        device_id = DUMMY_DEVICE_ID
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_instance = control_api.AggregationControlRequestModel(deviceID=device_id, action=action)
-        dumped_actual_instance = actual_instance.model_dump(by_alias=True)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_instance.device_id == device_id
-        assert actual_instance.action == action
-
-        # test for key name alias
-        assert dumped_actual_instance == {
-            "deviceID": device_id,
-            "action": action,
-        }
-
-    @pytest.mark.parametrize(
-        "input_data",
-        [
-            # deviceID is None (type error)
-            {"deviceID": None, "action": control_api.AggregationControlAction.CONNECT},
-            # action is None (type error)
-            {"deviceID": DUMMY_DEVICE_ID, "action": None},
-            # deviceID is missing
-            {"action": control_api.AggregationControlAction.CONNECT},
-            # action is missing
-            {"deviceID": DUMMY_DEVICE_ID},
-            # both are missing
-            {},
-        ],
-    )
-    def test_invalid_value_input_case(self, input_data: dict):
-        """Test invalid value input and validation errors."""
-        # ++++ execution and inspection +++++++++++++++++++++++++++++++#
-        with pytest.raises(ValidationError):
-            _ = control_api.AggregationControlRequestModel(**input_data)
 
 
 class TestDeviceAggregationControlRequestModel:

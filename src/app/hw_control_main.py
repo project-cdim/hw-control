@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -23,23 +23,28 @@ To start the application using uvicorn, run the following command:
 
 """
 
+import uuid
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from asgi_correlation_id import CorrelationIdMiddleware
+from asgi_correlation_id.middleware import is_valid_uuid4
 
 from app import app_life_span
 from app.routers import api_metadata
 from app.routers import error_handlers
 from app.routers import middlewares
 from app.routers.control import control_api
-from app.routers.info import devices, load_mappings
+from app.routers.info import devices
+from app.common import constants
 import app.common.basic_exceptions as custom_exceptions
 
 # Generate ASGI application instance.
 app = FastAPI(
     title="hw-control",
     description=api_metadata.HW_CONTROL_API_DESCRIPTION,
-    version="0.1.0",
+    version="0.2.0",
     openapi_tags=[
         api_metadata.DEVICE_CONTROL_API_TAG,
         api_metadata.DEVICE_INFO_API_TAG,
@@ -70,9 +75,14 @@ app.add_exception_handler(
 
 # Add custom middleware to the application.
 app.add_middleware(middleware_class=middlewares.LoggingMiddleware)
-app.add_middleware(middleware_class=middlewares.RequestIDMiddleware)
+app.add_middleware(
+    CorrelationIdMiddleware,
+    header_name=constants.CORRELATION_ID_HEADER,
+    update_request_header=False,
+    generator=lambda: str(uuid.uuid4()),
+    validator=is_valid_uuid4,
+)
 
 # Include routers in the application.
 app.include_router(control_api.router)
 app.include_router(devices.router)
-app.include_router(load_mappings.router)

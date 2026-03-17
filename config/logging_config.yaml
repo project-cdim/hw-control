@@ -1,10 +1,11 @@
+---
 version: 1
 disable_existing_loggers: false
 
 formatters:
   json_formatter:
     "()": pythonjsonlogger.json.JsonFormatter
-    format: "%(asctime)s %(levelname)s %(pathname)s %(lineno)d %(request_id)s %(message)s"
+    format: "%(asctime)s %(levelname)s %(pathname)s %(lineno)d [%(correlation_id)s] %(message)s"
 
   uvicorn_default_formatter:
     "()": uvicorn.logging.DefaultFormatter
@@ -16,15 +17,17 @@ formatters:
     fmt: '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
 
 filters:
-  request_id_filter:
-    "()": app.common.log.filters.RequestIDFilter
+  correlation_id_filter:
+    "()": asgi_correlation_id.CorrelationIdFilter
+    uuid_length: 36
+    default_value: '-'  # Should match constants.CORRELATION_ID_DEFAULT_VALUE
 
 handlers:
   app_log_handler:
     class: logging.handlers.RotatingFileHandler
     filename: /var/log/cdim/app_hw_control.log
     formatter: json_formatter
-    filters: [request_id_filter]
+    filters: ['correlation_id_filter']
     level: INFO
     maxBytes: 15000000
     backupCount: 100

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -32,6 +32,7 @@ from app.core.control import control_base
 from app.hw_control_main import app
 
 # ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+
 from app.routers.control import control_api
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -40,358 +41,6 @@ DUMMY_UPSTREAM_DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
 DUMMY_DOWNSTREAM_DEVICE_ID = "b9f9b678-bce8-49a1-bca3-dbbc32259abf"
 
 client = TestClient(app, raise_server_exceptions=False)
-
-
-class TestAggregationControlAPI:
-    """Unit test class for aggregation_control_api."""
-
-    @pytest.mark.parametrize(
-        "action, controller_method",
-        [
-            (control_api.AggregationControlAction.CONNECT.value, "connect"),
-            (control_api.AggregationControlAction.DISCONNECT.value, "disconnect"),
-        ],
-    )
-    def test_success(self, caplog: LogCaptureFixture, mocker: MockFixture, action: str, controller_method: str):
-        """
-        Test the successful case for aggregation control API.
-
-        Args:
-            caplog (LogCaptureFixture):
-                Pytest fixture for capturing log records.
-            mocker (MockFixture):
-                Pytest fixture for mocking objects and functions.
-            action (str):
-                Aggregation action parameter.
-            controller_method (str):
-                The FMController method name to be called ("connect" or "disconnect").
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        host_cpu_id = test_util.DummyCPUInfo.DEVICE_ID.value
-        target_device_id = test_util.DummyDeviceInfo.DEVICE_ID.value
-
-        expected_http_status = HTTPStatus.OK.value
-        expected_response = {"CPUDeviceID": host_cpu_id, "deviceID": target_device_id}
-
-        # Set up the mock.
-        mocker.patch.object(
-            fm_control.FMControlTargetDevice,
-            "model_post_init",
-            return_value=None,
-        )
-        mocker.patch.object(fm_control.FMController, controller_method, return_value=None)
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=control_api.__name__):
-            response = client.put(
-                url=f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations",
-                json={"deviceID": target_device_id, "action": action},
-            )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
-
-        # Inspection: Check the request parameter log
-        request_parameter_log = caplog.records[1]
-        assert request_parameter_log.levelname == "INFO"
-        assert request_parameter_log.getMessage() == "Aggregation Control start."
-
-        assert hasattr(request_parameter_log, "CPUDeviceID"), "cpu_device_id should be present in the log record"
-        assert getattr(request_parameter_log, "CPUDeviceID") == host_cpu_id
-
-        assert hasattr(request_parameter_log, "deviceID"), "deviceID should be present in the log record"
-        assert getattr(request_parameter_log, "deviceID") == target_device_id
-
-        assert hasattr(request_parameter_log, "action"), "action should be present in the log record"
-        assert getattr(request_parameter_log, "action") == action
-
-    @pytest.mark.parametrize(
-        "action",
-        [control_api.AggregationControlAction.CONNECT.value, control_api.AggregationControlAction.DISCONNECT.value],
-    )
-    @pytest.mark.parametrize(
-        "http_method",
-        [
-            "GET",
-            "DELETE",
-            "POST",
-            "PATCH",
-        ],
-    )
-    def test_method_not_allow(self, action: str, http_method: str):
-        """
-        Test that unsupported HTTP methods return METHOD_NOT_ALLOWED.
-
-        Args:
-            action (str):
-                Aggregation action parameter to be tested.
-            http_method (str):
-                HTTP method to be tested.
-        """
-
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        host_cpu_id = test_util.DummyCPUInfo.DEVICE_ID.value
-        target_device_id = test_util.DummyDeviceInfo.DEVICE_ID.value
-
-        url = f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations"
-        request_body = {"deviceID": target_device_id, "action": action}
-
-        expected_http_status = HTTPStatus.METHOD_NOT_ALLOWED.value
-        expected_response_body = {
-            "code": "EF003BAS011",
-            "message": "Method Not Allowed",
-        }
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.request(
-            method=http_method,
-            url=url,
-            json=request_body,
-        )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response_body
-
-    @pytest.mark.parametrize(
-        "path_parameter, body_parameter",
-        [
-            (  # path_parameter invalid
-                "Foo",
-                {
-                    "deviceID": test_util.DummyDeviceInfo.DEVICE_ID.value,
-                    "action": control_api.AggregationControlAction.CONNECT.value,
-                },
-            ),
-            (  # body_parameter deviceID invalid
-                test_util.DummyCPUInfo.DEVICE_ID.value,
-                {
-                    "deviceID": "Foo",
-                    "action": control_api.AggregationControlAction.CONNECT.value,
-                },
-            ),
-            (  # body_parameter deviceID unset
-                test_util.DummyCPUInfo.DEVICE_ID.value,
-                {
-                    "action": control_api.AggregationControlAction.CONNECT.value,
-                },
-            ),
-            (  # body_parameter action invalid
-                test_util.DummyCPUInfo.DEVICE_ID.value,
-                {
-                    "deviceID": test_util.DummyDeviceInfo.DEVICE_ID.value,
-                    "action": "Foo",
-                },
-            ),
-            (  # body_parameter action unset
-                test_util.DummyCPUInfo.DEVICE_ID.value,
-                {
-                    "deviceID": test_util.DummyDeviceInfo.DEVICE_ID.value,
-                },
-            ),
-        ],
-    )
-    def test_invalid_request_parameter(self, path_parameter, body_parameter):
-        """
-        Test invalid request parameter cases for aggregation control API.
-
-        Args:
-            path_parameter:
-                The input path parameter to be tested.
-            body_parameter (str):
-                The input body parameters to be tested.
-        """
-
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        expected_http_status = 422
-        expected_error_code = "EF003BAS012"
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.put(
-            url=f"/cdim/api/v1/cpu/{path_parameter}/aggregations",
-            json=body_parameter,
-        )
-
-        actual_status_code = response.status_code
-        actual_error_code = response.json().get("code")
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_status_code == expected_http_status
-        assert actual_error_code == expected_error_code
-
-    @pytest.mark.parametrize(
-        "action",
-        [control_api.AggregationControlAction.CONNECT.value, control_api.AggregationControlAction.DISCONNECT.value],
-    )
-    def test_device_can_not_create(self, mocker: MockFixture, action):
-        """
-        Test case where device object cannot be created.
-
-        Args:
-            mocker (MockFixture):
-                Pytest fixture for mocking objects and functions.
-            action (str):
-                Aggregation action parameter to be tested.
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        host_cpu_id = test_util.DummyCPUInfo.DEVICE_ID.value
-        target_device_id = test_util.DummyDeviceInfo.DEVICE_ID.value
-
-        expected_http_status = HTTPStatus.BAD_REQUEST.value
-        expected_response = {
-            "code": "EF003BAS010",
-            "message": "Your request is not supported for the specified target device.",
-        }
-
-        # Set up the mock.
-        mocker.patch.object(
-            fm_control.FMControlTargetDevice, "model_post_init", side_effect=exc.RequestNotSupportedHWControlError
-        )
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-        response = client.put(
-            url=f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations",
-            json={"deviceID": target_device_id, "action": action},
-        )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
-
-    @pytest.mark.parametrize(
-        "action",
-        [control_api.AggregationControlAction.CONNECT.value, control_api.AggregationControlAction.DISCONNECT.value],
-    )
-    def test_device_pair_can_not_create(self, mocker: MockFixture, action):
-        """
-        Test case where device pair object cannot be created.
-
-        Args:
-            mocker (MockFixture):
-                Pytest fixture for mocking objects and functions.
-            action (str):
-                Aggregation action parameter to be tested.
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        # device_id of host_cpu and target_device are the same case.
-        host_cpu_id = "ec020a7c-5014-4c2d-8682-45f69c936e3a"
-        target_device_id = "ec020a7c-5014-4c2d-8682-45f69c936e3a"
-
-        expected_http_status = HTTPStatus.BAD_REQUEST.value
-        expected_response = {
-            "code": "EF003BAS010",
-            "message": "Your request is not supported for the specified target device.",
-        }
-
-        # Set up the mock.
-        mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", return_value=None)
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.put(
-            url=f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations",
-            json={"deviceID": target_device_id, "action": action},
-        )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
-
-    @pytest.mark.parametrize(
-        "action",
-        [control_api.AggregationControlAction.CONNECT.value, control_api.AggregationControlAction.DISCONNECT.value],
-    )
-    def test_device_pair_busy(self, mocker: MockFixture, action: str):
-        """
-        Test case where the device pair is busy.
-
-        Args:
-            mocker (MockFixture):
-                Pytest fixture for mocking objects and functions.
-            action (str):
-                Aggregation action parameter to be tested.
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        host_cpu_id = test_util.DummyCPUInfo.DEVICE_ID.value
-        target_device_id = test_util.DummyDeviceInfo.DEVICE_ID.value
-
-        expected_http_status = HTTPStatus.SERVICE_UNAVAILABLE.value
-        expected_response = {
-            "code": "ER005BAS002",
-            "message": f"The specified device is busy. The following Device ID is relevant: {target_device_id}",
-        }
-
-        # Set up the mock.
-        mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", return_value=None)
-        mocker.patch.object(
-            fm_control.FMControlTargetDevicePair,
-            "get_lock",
-            side_effect=exc.DeviceBusyHWControlError(
-                additional_message=f"The following Device ID is relevant: {target_device_id}"
-            ),
-        )
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.put(
-            url=f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations",
-            json={"deviceID": target_device_id, "action": action},
-        )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
-
-    @pytest.mark.parametrize(
-        "action, controller_method",
-        [
-            (control_api.AggregationControlAction.CONNECT.value, "connect"),
-            (control_api.AggregationControlAction.DISCONNECT.value, "disconnect"),
-        ],
-    )
-    def test_controller_raise(self, mocker: MockFixture, action: str, controller_method: str):
-        """
-        Test case where FMController raises an exception.
-
-        Args:
-            mocker (MockFixture):
-                Pytest fixture for mocking objects and functions.
-            action (str):
-                Aggregation action parameter to be tested.
-            controller_method (str):
-                The FMController method name to be called ("connect" or "disconnect").
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        host_cpu_id = test_util.DummyCPUInfo.DEVICE_ID.value
-        target_device_id = test_util.DummyDeviceInfo.DEVICE_ID.value
-
-        expected_http_status = HTTPStatus.BAD_REQUEST.value
-        expected_response = {
-            "code": "EF003BAS010",
-            "message": "Your request is not supported for the specified target device.",
-        }
-
-        # Set up the mock.
-        mocker.patch.object(
-            fm_control.FMControlTargetDevice,
-            "model_post_init",
-            return_value=None,
-        )
-
-        mocker.patch.object(
-            fm_control.FMController, controller_method, side_effect=exc.RequestNotSupportedHWControlError
-        )
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.put(
-            url=f"/cdim/api/v1/cpu/{host_cpu_id}/aggregations",
-            json={"deviceID": target_device_id, "action": action},
-        )
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
 
 
 class TestPerformPowerOff:
@@ -1142,6 +791,13 @@ class TestIsOSReadyAPI:
         assert response.json() == expected_response
 
 
+def dummy_get_true_device_ids(
+    upstream_device_id: str, downstream_device_id: str  # pylint: disable=W0613
+) -> tuple[str, str]:
+    """Dummy_get_true_device_ids"""
+    return "d62e98bf-6c50-4b88-95f9-49c609d2fdc9", "852f416b-a6e7-4d32-b9c4-238901544d48"
+
+
 class TestDeviceAggregationControlAPI:
     """Unit test class for device_aggregation_control_api."""
 
@@ -1177,6 +833,7 @@ class TestDeviceAggregationControlAPI:
         expected_response = {"sourceDeviceID": upstream_device_id, "destinationDeviceID": downstream_device_id}
 
         # Set up the mock.
+        mocker.patch.object(control_api, "_get_true_device_ids", side_effect=dummy_get_true_device_ids)
         mocker.patch.object(
             fm_control.FMControlTargetDevice,
             "model_post_init",
@@ -1324,6 +981,49 @@ class TestDeviceAggregationControlAPI:
         assert actual_error_code == expected_error_code
 
     @pytest.mark.parametrize(
+        "action, controller_method",
+        [
+            (control_api.AggregationControlAction.CONNECT.value, "connect"),
+            (control_api.AggregationControlAction.DISCONNECT.value, "disconnect"),
+        ],
+    )
+    def test_true_device_id_can_not_get(self, mocker: MockFixture, action: str, controller_method: str):
+        """
+        Test case where device object cannot be created.
+
+        Args:
+            mocker (MockFixture):
+                Pytest fixture for mocking objects and functions.
+            action (str):
+                Aggregation action parameter to be tested.
+            controller_method (str):
+                The FMController method name to be called ("connect" or "disconnect").
+        """
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++++++++++#
+        upstream_device_id = DUMMY_UPSTREAM_DEVICE_ID
+        downstream_device_id = DUMMY_DOWNSTREAM_DEVICE_ID
+
+        expected_http_status = HTTPStatus.OK.value
+        expected_response = {"sourceDeviceID": upstream_device_id, "destinationDeviceID": downstream_device_id}
+
+        # Set up the mock.
+        mocker.patch.object(
+            control_api, "_get_true_device_ids", return_value=(upstream_device_id, downstream_device_id)
+        )
+        mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", return_value=None)
+        mocker.patch.object(fm_control.FMController, controller_method, return_value=None)
+
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+        response = client.put(
+            url=f"/cdim/api/v1/devices/{upstream_device_id}/aggregations",
+            json={"destinationDeviceID": downstream_device_id, "action": action},
+        )
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert response.status_code == expected_http_status
+        assert response.json() == expected_response
+
+    @pytest.mark.parametrize(
         "action",
         [control_api.AggregationControlAction.CONNECT.value, control_api.AggregationControlAction.DISCONNECT.value],
     )
@@ -1348,6 +1048,7 @@ class TestDeviceAggregationControlAPI:
         }
 
         # Set up the mock.
+        mocker.patch.object(control_api, "_get_true_device_ids", side_effect=dummy_get_true_device_ids)
         mocker.patch.object(
             fm_control.FMControlTargetDevice, "model_post_init", side_effect=exc.RequestNotSupportedHWControlError
         )
@@ -1388,6 +1089,11 @@ class TestDeviceAggregationControlAPI:
         }
 
         # Set up the mock.
+        def dummy_get_true_device_ids(upstream_device_id: str, downstream_device_id: str) -> tuple[str, str]:
+            """Dummy_get_true_device_ids"""
+            return upstream_device_id, downstream_device_id
+
+        mocker.patch.object(control_api, "_get_true_device_ids", side_effect=dummy_get_true_device_ids)
         mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", return_value=None)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
@@ -1425,6 +1131,7 @@ class TestDeviceAggregationControlAPI:
         }
 
         # Set up the mock.
+        mocker.patch.object(control_api, "_get_true_device_ids", side_effect=dummy_get_true_device_ids)
         mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", return_value=None)
         mocker.patch.object(
             fm_control.FMControlTargetDevicePair,
@@ -1474,6 +1181,7 @@ class TestDeviceAggregationControlAPI:
         }
 
         # Set up the mock.
+        mocker.patch.object(control_api, "_get_true_device_ids", side_effect=dummy_get_true_device_ids)
         mocker.patch.object(
             fm_control.FMControlTargetDevice,
             "model_post_init",

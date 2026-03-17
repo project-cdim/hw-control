@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -124,7 +124,30 @@ OOB_DATA_CPU_FLOAT = {
 }
 
 # FM_DATA CPU
-FM_DATA_CPU = {"data": [{"deviceID": "0001", "type": "CPU", "LTSSMState": "L0"}]}
+FM_DATA_CPU = {
+    "data": [
+        {
+            "deviceID": "0001",
+            "type": "CPU",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
 
 # RESP CPU
 RESP_CPU = {
@@ -165,7 +188,22 @@ RESP_CPU = {
         "readingTime": "2023-11-20T05:15:00Z",
         "reading": 25,
     },
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP CPU int value
@@ -236,7 +274,7 @@ OOB_DATA_MEMORY_INT = {
     "devices": [
         {
             "type": "memory",
-            "deviceID": "0001",
+            "deviceID": "1001",
             "metric": {
                 "BandwidthPercent": 10,
                 "HealthData": {"PredictedMediaLifeLeftPercent": 20},
@@ -251,7 +289,7 @@ OOB_DATA_MEMORY_FLOAT = {
     "devices": [
         {
             "type": "memory",
-            "deviceID": "0001",
+            "deviceID": "1001",
             "metric": {
                 "BandwidthPercent": 10.01,
                 "HealthData": {"PredictedMediaLifeLeftPercent": 20.02},
@@ -267,8 +305,23 @@ FM_DATA_MEMORY = {
         {
             "deviceID": "1001",
             "type": "memory",
-            "LTSSMState": "L0",
             "capacity": {"volatile": 1073741824, "persistent": 0, "total": 1073741824},
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -298,7 +351,22 @@ RESP_MEMORY = {
         "reading": 25,
     },
     "CXLCapacity": {"total": 1073741824, "volatile": 1073741824, "persistent": 0},
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP MEMORY int value
@@ -399,7 +467,30 @@ OOB_DATA_STORAGE_FLOAT = {
 }
 
 # FM_DATA storage
-FM_DATA_STORAGE = {"data": [{"deviceID": "2001", "type": "storage", "LTSSMState": "L0"}]}
+FM_DATA_STORAGE = {
+    "data": [
+        {
+            "deviceID": "2001",
+            "type": "storage",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
 
 # RESP STORAGE
 RESP_STORAGE = {
@@ -435,7 +526,22 @@ RESP_STORAGE = {
         "readingTime": "2023-11-20T05:15:00Z",
         "reading": 25,
     },
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP STORAGE int value
@@ -538,7 +644,30 @@ OOB_DATA_NIC_FLOAT = {
 }
 
 # FM_DATA networkInterface
-FM_DATA_NIC = {"data": [{"deviceID": "3001", "type": "networkInterface", "LTSSMState": "L0"}]}
+FM_DATA_NIC = {
+    "data": [
+        {
+            "deviceID": "3001",
+            "type": "networkInterface",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
 
 # RESP NIC
 RESP_NIC = {
@@ -578,7 +707,22 @@ RESP_NIC = {
         "readingTime": "2023-11-20T05:15:00Z",
         "reading": 25,
     },
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP NIC int value
@@ -597,6 +741,326 @@ RESP_NIC_INT = {
 RESP_NIC_FLOAT = {
     "deviceID": "3001",
     "type": "networkInterface",
+    "metricsCPUCorePercent": 10.01,
+    "metricsHostBusRXPercent": 20.02,
+    "metricsHostBusTXPercent": 30.03,
+    "metricsRXAvgQueueDepthPercent": 40.04,
+    "metricsTXAvgQueueDepthPercent": 50.05,
+    "metricEnergyJoules": {"reading": 60.06},
+}
+
+# OOB_DATA SFA
+OOB_DATA_SFA = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "schema": {
+                "NetworkDeviceFunctions": {"DeviceEnabled": True},
+                "Network": {
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerState": "On",
+                    "PowerCapability": False,
+                },
+            },
+            "metric": {
+                "Network": {"CPUCorePercent": 8.35, "HostBusRXPercent": 35.53, "HostBusTXPercent": 14.17},
+                "NetworkDeviceFunctions": {
+                    "RXAvgQueueDepthPercent": 21.2,
+                    "TXAvgQueueDepthPercent": 13.7,
+                    "RXBytes": 1,
+                    "RXFrames": 2,
+                    "TXBytes": 3,
+                    "TXFrames": 4,
+                },
+            },
+            "environment": {
+                "Sensor": {
+                    "SensorResetTime": "2023-11-20T04:14:00Z",
+                    "SensingInterval": "PT5S",
+                    "ReadingTime": "2023-11-20T05:15:00Z",
+                },
+                "EnergyJoules": {
+                    "Reading": 25,
+                },
+            },
+        }
+    ]
+}
+
+# OOB_DATA SFA int value
+OOB_DATA_SFA_INT = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "metric": {
+                "Network": {"CPUCorePercent": 10, "HostBusRXPercent": 20, "HostBusTXPercent": 30},
+                "NetworkDeviceFunctions": {"RXAvgQueueDepthPercent": 40, "TXAvgQueueDepthPercent": 50},
+            },
+            "environment": {"EnergyJoules": {"Reading": 60}},
+        }
+    ]
+}
+
+# OOB_DATA SFA float value
+OOB_DATA_SFA_FLOAT = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "metric": {
+                "Network": {"CPUCorePercent": 10.01, "HostBusRXPercent": 20.02, "HostBusTXPercent": 30.03},
+                "NetworkDeviceFunctions": {"RXAvgQueueDepthPercent": 40.04, "TXAvgQueueDepthPercent": 50.05},
+            },
+            "environment": {"EnergyJoules": {"Reading": 60.06}},
+        }
+    ]
+}
+
+# FM_DATA sourceFabricAdapter
+FM_DATA_SFA = {
+    "data": [
+        {
+            "deviceID": "3101",
+            "type": "sourceFabricAdapter",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP SFA
+RESP_SFA = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "deviceEnabled": True,
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "metricsCPUCorePercent": 8.35,
+    "metricsHostBusRXPercent": 35.53,
+    "metricsHostBusTXPercent": 14.17,
+    "metricsRXAvgQueueDepthPercent": 21.2,
+    "metricsTXAvgQueueDepthPercent": 13.7,
+    "metricsRXBytes": 1,
+    "metricsRXFrames": 2,
+    "metricsTXBytes": 3,
+    "metricsTXFrames": 4,
+    "metricEnergyJoules": {
+        "sensorResetTime": "2023-11-20T04:14:00Z",
+        "sensingInterval": 5,
+        "readingTime": "2023-11-20T05:15:00Z",
+        "reading": 25,
+    },
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP SFA int value
+RESP_SFA_INT = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "metricsCPUCorePercent": 10,
+    "metricsHostBusRXPercent": 20,
+    "metricsHostBusTXPercent": 30,
+    "metricsRXAvgQueueDepthPercent": 40,
+    "metricsTXAvgQueueDepthPercent": 50,
+    "metricEnergyJoules": {"reading": 60},
+}
+
+# RESP SFA float value
+RESP_SFA_FLOAT = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "metricsCPUCorePercent": 10.01,
+    "metricsHostBusRXPercent": 20.02,
+    "metricsHostBusTXPercent": 30.03,
+    "metricsRXAvgQueueDepthPercent": 40.04,
+    "metricsTXAvgQueueDepthPercent": 50.05,
+    "metricEnergyJoules": {"reading": 60.06},
+}
+
+# OOB_DATA DFA
+OOB_DATA_DFA = {
+    "devices": [
+        {
+            "type": "destinationFabricAdapter",
+            "deviceID": "3201",
+            "schema": {
+                "NetworkDeviceFunctions": {"DeviceEnabled": True},
+                "Network": {
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerState": "On",
+                    "PowerCapability": False,
+                },
+            },
+            "metric": {
+                "Network": {"CPUCorePercent": 8.35, "HostBusRXPercent": 35.53, "HostBusTXPercent": 14.17},
+                "NetworkDeviceFunctions": {
+                    "RXAvgQueueDepthPercent": 21.2,
+                    "TXAvgQueueDepthPercent": 13.7,
+                    "RXBytes": 1,
+                    "RXFrames": 2,
+                    "TXBytes": 3,
+                    "TXFrames": 4,
+                },
+            },
+            "environment": {
+                "Sensor": {
+                    "SensorResetTime": "2023-11-20T04:14:00Z",
+                    "SensingInterval": "PT5S",
+                    "ReadingTime": "2023-11-20T05:15:00Z",
+                },
+                "EnergyJoules": {
+                    "Reading": 25,
+                },
+            },
+        }
+    ]
+}
+
+# OOB_DATA DFA int value
+OOB_DATA_DFA_INT = {
+    "devices": [
+        {
+            "type": "destinationFabricAdapter",
+            "deviceID": "3201",
+            "metric": {
+                "Network": {"CPUCorePercent": 10, "HostBusRXPercent": 20, "HostBusTXPercent": 30},
+                "NetworkDeviceFunctions": {"RXAvgQueueDepthPercent": 40, "TXAvgQueueDepthPercent": 50},
+            },
+            "environment": {"EnergyJoules": {"Reading": 60}},
+        }
+    ]
+}
+
+# OOB_DATA DFA float value
+OOB_DATA_DFA_FLOAT = {
+    "devices": [
+        {
+            "type": "destinationFabricAdapter",
+            "deviceID": "3201",
+            "metric": {
+                "Network": {"CPUCorePercent": 10.01, "HostBusRXPercent": 20.02, "HostBusTXPercent": 30.03},
+                "NetworkDeviceFunctions": {"RXAvgQueueDepthPercent": 40.04, "TXAvgQueueDepthPercent": 50.05},
+            },
+            "environment": {"EnergyJoules": {"Reading": 60.06}},
+        }
+    ]
+}
+
+# FM_DATA destinationFabricAdapter
+FM_DATA_DFA = {
+    "data": [
+        {
+            "deviceID": "3201",
+            "type": "destinationFabricAdapter",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP DFA
+RESP_DFA = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "deviceEnabled": True,
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "metricsCPUCorePercent": 8.35,
+    "metricsHostBusRXPercent": 35.53,
+    "metricsHostBusTXPercent": 14.17,
+    "metricsRXAvgQueueDepthPercent": 21.2,
+    "metricsTXAvgQueueDepthPercent": 13.7,
+    "metricsRXBytes": 1,
+    "metricsRXFrames": 2,
+    "metricsTXBytes": 3,
+    "metricsTXFrames": 4,
+    "metricEnergyJoules": {
+        "sensorResetTime": "2023-11-20T04:14:00Z",
+        "sensingInterval": 5,
+        "readingTime": "2023-11-20T05:15:00Z",
+        "reading": 25,
+    },
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP DFA int value
+RESP_DFA_INT = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "metricsCPUCorePercent": 10,
+    "metricsHostBusRXPercent": 20,
+    "metricsHostBusTXPercent": 30,
+    "metricsRXAvgQueueDepthPercent": 40,
+    "metricsTXAvgQueueDepthPercent": 50,
+    "metricEnergyJoules": {"reading": 60},
+}
+
+# RESP DFA float value
+RESP_DFA_FLOAT = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
     "metricsCPUCorePercent": 10.01,
     "metricsHostBusRXPercent": 20.02,
     "metricsHostBusTXPercent": 30.03,
@@ -683,7 +1147,30 @@ OOB_DATA_GPU_FLOAT = {
 }
 
 # FM_DATA GPU
-FM_DATA_GPU = {"data": [{"deviceID": "4001", "type": "GPU", "LTSSMState": "L0"}]}
+FM_DATA_GPU = {
+    "data": [
+        {
+            "deviceID": "4001",
+            "type": "GPU",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
 
 # RESP GPU
 RESP_GPU = {
@@ -718,7 +1205,22 @@ RESP_GPU = {
         "readingTime": "2023-11-20T05:15:00Z",
         "reading": 25,
     },
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP GPU int value
@@ -925,6 +1427,54 @@ def test_get_metric_info_nic_float(mocker):
     assert (RESP_NIC_FLOAT, []) == (metric_data, errors)
 
 
+def test_get_metric_info_fa(mocker):
+    """Test Get metric SFA"""
+    metric_data, errors = _get_metric_info(mocker, "3101", "sourceFabricAdapter", None, OOB_DATA_SFA, FM_DATA_SFA, True)
+    # Return value verification.
+    assert (RESP_SFA, []) == (metric_data, errors)
+
+
+def test_get_metric_info_fa_int(mocker):
+    """Test Get metric SFA int value"""
+    metric_data, errors = _get_metric_info(mocker, "3101", "sourceFabricAdapter", None, OOB_DATA_SFA_INT, None, True)
+    # Return value verification.
+    assert (RESP_SFA_INT, []) == (metric_data, errors)
+
+
+def test_get_metric_info_fa_float(mocker):
+    """Test Get metric SFA float value"""
+    metric_data, errors = _get_metric_info(mocker, "3101", "sourceFabricAdapter", None, OOB_DATA_SFA_FLOAT, None, True)
+    # Return value verification.
+    assert (RESP_SFA_FLOAT, []) == (metric_data, errors)
+
+
+def test_get_metric_info_na(mocker):
+    """Test Get metric DFA"""
+    metric_data, errors = _get_metric_info(
+        mocker, "3201", "destinationFabricAdapter", None, OOB_DATA_DFA, FM_DATA_DFA, True
+    )
+    # Return value verification.
+    assert (RESP_DFA, []) == (metric_data, errors)
+
+
+def test_get_metric_info_na_int(mocker):
+    """Test Get metric DFA int value"""
+    metric_data, errors = _get_metric_info(
+        mocker, "3201", "destinationFabricAdapter", None, OOB_DATA_DFA_INT, None, True
+    )
+    # Return value verification.
+    assert (RESP_DFA_INT, []) == (metric_data, errors)
+
+
+def test_get_metric_info_na_float(mocker):
+    """Test Get metric DFA float value"""
+    metric_data, errors = _get_metric_info(
+        mocker, "3201", "destinationFabricAdapter", None, OOB_DATA_DFA_FLOAT, None, True
+    )
+    # Return value verification.
+    assert (RESP_DFA_FLOAT, []) == (metric_data, errors)
+
+
 def test_get_metric_info_gpu(mocker):
     """Test Get metric GPU"""
     metric_data, errors = _get_metric_info(mocker, "4001", "GPU", None, OOB_DATA_GPU, FM_DATA_GPU, True)
@@ -1107,6 +1657,34 @@ def test_get_metric_info_create_metric_info_device_type_none():
     assert {"deviceID": "0001", "type": None} == resp
 
 
+def test_get_metric_info_create_metric_info_remove_empty_item_none(mocker):
+    """create_metric_info remove_empty_item return none"""
+
+    def get_mapping_table(_, __, ___):
+        return {}
+
+    # Replace get mapping table.
+    mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=get_mapping_table)
+
+    def create_resp_from_mapping(_, __):
+        return {}
+
+    # Replace create resp from mapping.
+    mocker.patch("app.core.info.info_utils.create_resp_from_mapping", side_effect=create_resp_from_mapping)
+
+    def remove_empty_item(_):
+        return None
+
+    # Replace remove empty items.
+    mocker.patch("app.core.info.info_utils.remove_empty_item", side_effect=remove_empty_item)
+
+    get_information = InformationCore()
+    resp = get_information._create_metric_info(  # pylint: disable=protected-access
+        "0001", "CPU", AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU
+    )
+    assert {"deviceID": "0001", "type": "CPU"} == resp
+
+
 def test_get_metric_info_create_metric_info_get_mapping_table_none(mocker):
     """create_metric_info get_mapping_table none"""
 
@@ -1120,7 +1698,7 @@ def test_get_metric_info_create_metric_info_get_mapping_table_none(mocker):
     mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=mock_get_mapping_table)
 
     get_information = InformationCore()
-    resp = get_information._create_metric_info(
+    resp = get_information._create_metric_info(  # pylint: disable=protected-access
         "0001", "CPU", agent_data, fm_data, oob_data
-    )  # pylint: disable=protected-access
+    )
     assert {"deviceID": "0001", "type": "CPU"} == resp

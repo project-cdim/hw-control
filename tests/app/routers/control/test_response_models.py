@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -25,55 +25,6 @@ from app.routers.control import response_models
 
 DUMMY_UPSTREAM_DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
 DUMMY_DOWNSTREAM_DEVICE_ID = "b9f9b678-bce8-49a1-bca3-dbbc32259abf"
-
-
-class TestAggregationControlResponseModel:
-    """Unit test class for AggregationControlResponseModel."""
-
-    def test_valid_value_input_case(self):
-        """Test valid AggregationControlResponseModel creation."""
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-
-        # Set up the input value.
-        cpu_device_id = DUMMY_UPSTREAM_DEVICE_ID
-        target_device_id = DUMMY_DOWNSTREAM_DEVICE_ID
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        actual_instance = response_models.AggregationControlResponseModel(
-            cpu_device_id=cpu_device_id, device_id=target_device_id
-        )
-        dumped_actual_instance = actual_instance.model_dump(by_alias=True)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert actual_instance.cpu_device_id == cpu_device_id
-        assert actual_instance.device_id == target_device_id
-
-        # test for key name alias
-        assert dumped_actual_instance == {
-            "CPUDeviceID": cpu_device_id,
-            "deviceID": target_device_id,
-        }
-
-    @pytest.mark.parametrize(
-        "input_data",
-        [
-            # cpu_device_id is None (type error)
-            {"cpu_device_id": None, "device_id": DUMMY_DOWNSTREAM_DEVICE_ID},
-            # device_id is None (type error)
-            {"cpu_device_id": DUMMY_UPSTREAM_DEVICE_ID, "device_id": None},
-            # cpu_device_id is missing  (missing required field)
-            {"device_id": DUMMY_DOWNSTREAM_DEVICE_ID},
-            # device_id is missing  (missing required field)
-            {"cpu_device_id": DUMMY_UPSTREAM_DEVICE_ID},
-            # both are missing  (missing required field)
-            {},
-        ],
-    )
-    def test_invalid_value_input_case(self, input_data: dict):
-        """Test invalid value input and validation errors."""
-        # ++++ execution and inspection +++++++++++++++++++++++++++++++#
-        with pytest.raises(ValidationError):
-            _ = response_models.AggregationControlResponseModel(**input_data)
 
 
 class TestDeviceAggregationControlResponseModel:

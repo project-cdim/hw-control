@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,22 +15,6 @@
 """Define Response models for Device Control API."""
 
 from pydantic import BaseModel, Field
-
-
-class AggregationControlResponseModel(BaseModel):
-    """The Response Model of Aggregation Control."""
-
-    cpu_device_id: str = Field(
-        serialization_alias="CPUDeviceID",
-        description="The Device ID of aggregation control target host CPU.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    )
-
-    device_id: str = Field(
-        serialization_alias="deviceID",
-        description="The Device ID of aggregation control target device.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    )
 
 
 class DeviceAggregationControlResponseModel(BaseModel):

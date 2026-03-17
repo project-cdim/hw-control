@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -19,6 +19,7 @@ it is possible to operate according to the environment.
 
 """
 
+import ast
 import logging
 import os
 import threading
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 _DEVICE_ID_MANAGER_FILE_NAME = "device_id_info.json"
 _INVALID_SERIAL_NUMBER_FILE_NAME = "invalid_serial_number.json"
 
+logger = logging.getLogger(__name__)
 device_id_info_lock = threading.Lock()
 id_to_info_lock = threading.Lock()
 id_to_info: dict = {}
@@ -374,7 +376,12 @@ def _get_devices_info() -> dict[str, dict[str, str | list | dict]]:
         devices info(dict): devices info. If no data exists, an empty dict ({}) is returned.
 
     Raises:
-        None
+        DeviceIDFileIncorrectHWControlError:
+            If the device_id_info.json file contains invalid syntax
+            or is in an incorrect format.
+        DeviceIDFileNotFoundHWControlError:
+            If there is a permission error with the
+            device_id_info.json file.
     """
     global id_to_info  # pylint: disable=W0603
 
@@ -1261,3 +1268,68 @@ def assign_device_id() -> None:
             raise Err.DeviceIDFileIncorrectHWControlError from exc
         _update_json_file(devices_info_json, device_id_manager_file_path)
         _update_id_to_info(devices_info_json)
+
+
+def _get_unique_key_within_device_keys(device: dict) -> str | None:
+    """Get unique_key within deviceKeys in device info.
+
+    Args:
+        device (dict): device info.
+
+    Returns:
+        str/None: The unique_key's value if it exists, otherwise None.
+
+    Raises:
+        None
+    """
+    device_keys = device.get("deviceKeys")
+    if device_keys is None:
+        return None
+    try:
+        device_keys_dict = ast.literal_eval(device_keys)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        logger.warning("invalid format deviceKeys=%s saved", device_keys, exc_info=True)
+        return None
+    return device_keys_dict.get("unique_key", None)
+
+
+def get_device_id_of_switch_port_type(device_id: str, switch_port_type: con.SwitchPortType | None) -> str | None:
+    """API to get the device ID that matches the switch port type.
+
+    Args:
+        device_id (str):
+            Identifier that uniquely identifies the device.
+        switch_port_type (con.SwitchPortType | None):
+            The switch port type of the device to be get.
+
+    Returns:
+        str/None: The found device ID. Returns None if not found.
+
+    Raises:
+        DeviceIDFileIncorrectHWControlError:
+            If the device_id_info.json file contains invalid syntax
+            or is in an incorrect format.
+        DeviceIDFileNotFoundHWControlError:
+            If there is a permission error with the
+            device_id_info.json file.
+    """
+    _switch_port_type = switch_port_type.value if switch_port_type else None
+    id_to_info_copy = _get_devices_info()
+    device = id_to_info_copy.get(device_id)
+    if device is None:
+        logger.info("device_id=%s not found", device_id)
+        return None
+    if device.get("switchPortType") == _switch_port_type:
+        return device_id
+    key_compare = _get_unique_key_within_device_keys(device)
+    if key_compare is None:
+        logger.info("%s device_id=%s does not have unique_key", _switch_port_type, device_id)
+        return None
+    for _id, device in id_to_info_copy.items():
+        if not device.get("valid"):
+            continue
+        key = _get_unique_key_within_device_keys(device)
+        if key == key_compare and device.get("switchPortType") == _switch_port_type:
+            return _id
+    logger.info("%s device_id=%s the unique_key=%s not found", _switch_port_type, device_id, key_compare)
+    return None

@@ -491,6 +491,226 @@
             }
         }
     },
+    "sourceFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "deviceEnabled": {
+            "key": "DeviceEnabled",
+            "vtype": "bool",
+            "path": "schema.NetworkDeviceFunctions.DeviceEnabled"
+        },
+        "status": {
+            "path": "schema.Network.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Network.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Network.PowerCapability"
+        },
+        "metricsCPUCorePercent": {
+            "key": "CPUCorePercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.CPUCorePercent"
+        },
+        "metricsHostBusRXPercent": {
+            "key": "HostBusRXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusRXPercent"
+        },
+        "metricsHostBusTXPercent": {
+            "key": "HostBusTXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusTXPercent"
+        },
+        "metricsRXAvgQueueDepthPercent": {
+            "key": "RXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.RXAvgQueueDepthPercent"
+        },
+        "metricsTXAvgQueueDepthPercent": {
+            "key": "TXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.TXAvgQueueDepthPercent"
+        },
+        "metricsRXBytes": {
+            "key": "RXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXBytes"
+        },
+        "metricsRXFrames": {
+            "key": "RXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXFrames"
+        },
+        "metricsTXBytes": {
+            "key": "TXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXBytes"
+        },
+        "metricsTXFrames": {
+            "key": "TXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXFrames"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
+    "destinationFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "deviceEnabled": {
+            "key": "DeviceEnabled",
+            "vtype": "bool",
+            "path": "schema.NetworkDeviceFunctions.DeviceEnabled"
+        },
+        "status": {
+            "path": "schema.Network.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Network.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Network.PowerCapability"
+        },
+        "metricsCPUCorePercent": {
+            "key": "CPUCorePercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.CPUCorePercent"
+        },
+        "metricsHostBusRXPercent": {
+            "key": "HostBusRXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusRXPercent"
+        },
+        "metricsHostBusTXPercent": {
+            "key": "HostBusTXPercent",
+            "vtype": ["int","float"],
+            "path": "metric.Network.HostBusTXPercent"
+        },
+        "metricsRXAvgQueueDepthPercent": {
+            "key": "RXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.RXAvgQueueDepthPercent"
+        },
+        "metricsTXAvgQueueDepthPercent": {
+            "key": "TXAvgQueueDepthPercent",
+            "vtype": ["int","float"],
+            "path": "metric.NetworkDeviceFunctions.TXAvgQueueDepthPercent"
+        },
+        "metricsRXBytes": {
+            "key": "RXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXBytes"
+        },
+        "metricsRXFrames": {
+            "key": "RXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.RXFrames"
+        },
+        "metricsTXBytes": {
+            "key": "TXBytes",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXBytes"
+        },
+        "metricsTXFrames": {
+            "key": "TXFrames",
+            "vtype": "int",
+            "path": "metric.NetworkDeviceFunctions.TXFrames"
+        },
+        "metricEnergyJoules": {
+            "key": "environment",
+            "vtype": "dict",
+            "sub_mapping": {
+                "sensorResetTime": {
+                    "key": "SensorResetTime",
+                    "vtype": "str",
+                    "path": "Sensor.SensorResetTime"
+                },
+                "sensingInterval": {
+                    "key": "SensingInterval",
+                    "vtype": "str",
+                    "path": "Sensor.SensingInterval",
+                    "convert_func": "duration_to_seconds"
+                },
+                "readingTime": {
+                    "key": "ReadingTime",
+                    "vtype": "str",
+                    "path": "Sensor.ReadingTime"
+                },
+                "reading": {
+                    "key": "Reading",
+                    "vtype": ["int","float"],
+                    "path": "EnergyJoules.Reading"
+                }
+            }
+        }
+    },
     "GPU": {
         "deviceID": {
             "vtype": "str"

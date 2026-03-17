@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -24,58 +24,13 @@ Usage:
 """
 
 import logging
-import uuid
 import time
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
-from app.common import request_id_utilities
-
 logger = logging.getLogger(__name__)
-
-
-class RequestIDMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
-    """
-    Middleware to generate and attach a unique request ID to each incoming HTTP request.
-
-    This middleware intercepts incoming requests, generates a unique UUID as the request ID,
-    and associates it with the request. The request ID can be used for tracking and logging
-    purposes throughout the lifecycle of the request.
-    The generated request ID is stored in a context variable and can be accessed using
-    `request_id_utilities.get_request_id()` throughout the request lifecycle.
-
-    Usage:
-        Add this middleware to your FastAPI application to enable automatic request ID generation.
-    """
-
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        """
-        Middleware method to handle the dispatch of requests and assign a unique request ID.
-
-        This method generates a unique request ID for each incoming request, sets it in the
-        request context, and then processes the request by calling the next middleware or
-        endpoint in the chain.
-
-        Args:
-            request (Request): The incoming HTTP request object.
-            call_next (RequestResponseEndpoint): A callable that processes the request and returns a response.
-
-        Returns:
-            Response: The HTTP response generated after processing the request.
-        """
-
-        # This middleware inherits from Starlette's BaseHTTPMiddleware.
-        # BaseHTTPMiddleware has limitations where context variables set in the middleware
-        # cannot be modified downstream. For more details on these limitations, refer to:
-        # https://www.starlette.io/middleware/#limitations
-        # There is no impact from this limitation because the request ID is set only once in this middleware.
-        request_id_utilities._request_id.set(str(uuid.uuid4()))  # pylint: disable=W0212
-
-        response = await call_next(request)
-
-        return response
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903

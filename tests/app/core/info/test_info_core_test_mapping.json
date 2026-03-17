@@ -49,12 +49,6 @@
             "path": "schema.SensingInterval",
             "convert_func": "duration_to_seconds"
         },
-        "socketNum": {
-            "key": "Socket",
-            "vtype": "str",
-            "path": "schema.Socket",
-            "convert_func": "get_socket_number"
-        },
         "noneConvert": {
             "key": "NoneConvert",
             "vtype": "str",

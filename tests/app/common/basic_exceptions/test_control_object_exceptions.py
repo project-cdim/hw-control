@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -27,7 +27,8 @@ import app.common.basic_exceptions as exc
             500,
             "EF004BAS001",
             (
-                "The Fabric Manager failed to establish a connection between the specified Host CPU and target device."
+                "The Fabric Manager failed to establish a connection between "
+                "the specified source device and the destination device."
                 " test_additional_message_01 test_additional_message_02"
             ),
         ),
@@ -36,8 +37,8 @@ import app.common.basic_exceptions as exc
             500,
             "EF004BAS002",
             (
-                "The Fabric Manager failed to disconnect a connection between the specified Host CPU"
-                " and the target device."
+                "The Fabric Manager failed to disconnect a connection between "
+                "the specified source device and the destination device."
                 " test_additional_message_01 test_additional_message_02"
             ),
         ),

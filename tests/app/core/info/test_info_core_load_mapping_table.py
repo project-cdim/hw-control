@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -43,14 +43,17 @@ def test_load_mapping_table_not_exist_mapping_file(mocker, caplog):
     current_path = os.path.dirname(os.path.abspath(__file__))
 
     # Replace the path of the mapping table file (constant) with the test mapping table file path.
-    mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "MAPPING_TABLE_PATH", current_path)
 
     test_mapping_file = {"fm": {"spec": "fm_spec_test.json"}, "oob": {"spec": "oob_spec_test.json"}}
     # Replace the mapping table file (constants) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", test_mapping_file)
 
-    # Exception
-    with pytest.raises(InternalHWControlError):
+    # Test exception is raised using pytest.raises context manager
+    with pytest.raises(InternalHWControlError) as exc_info:
         load_mapping_table()
+
+    assert "The definition file corresponding to the received data is not found" in str(exc_info.value)
+
+    # Verify warning log was generated
     assert _log_contains(caplog.record_tuples, logging.WARNING, "W00007: File does not exist: ")

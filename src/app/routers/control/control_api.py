@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -36,6 +36,7 @@ from app.core.control import agent_control
 
 import app.common.basic_exceptions as exc
 from app.common import constants
+from app.common.dim import device_id_base
 
 # The timeout value of the Is OS Ready endpoint.
 DEFAULT_IS_OS_READY_TIMEOUT = 30
@@ -98,125 +99,44 @@ router = APIRouter(
 )
 
 
-class AggregationControlRequestModel(BaseModel):
-    """Request Model of Aggregation Control."""
-
-    device_id: UUID4 = Field(
-        alias="deviceID",
-        description="The Device ID of aggregation control target device.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    )
-
-    action: AggregationControlAction = Field(
-        description=(
-            "Aggregation Control action for the specified host CPU and target device.  "
-            '\n "connect": Connect the aggregation state of the specified host CPU and target device.  '
-            '\n "disconnect": Disconnect the aggregation state of the specified host CPU and target device.  '
-        ),
-        examples=[AggregationControlAction.CONNECT.value, AggregationControlAction.DISCONNECT.value],
-    )
-
-
-# Aggregation Control endpoint
-@router.put(
-    path="/cpu/{CPUDeviceID}/aggregations",
-    status_code=http.HTTPStatus.OK.value,
-    description="Controls the aggregation state between the specified host CPU and target device.",
-    response_description=(
-        "Aggregation control successful."
-        " Returns this even if the specified host CPU and target device were already in the desired aggregation state."
-    ),
-    responses={
-        400: api_metadata.error_cases_spec_factory(
-            case_description="Bad request.",
-            sub_case_descriptions=["Your request is not supported for the specified device."],
-        ),
-        404: api_metadata.error_cases_spec_factory(
-            case_description="The specified resource not found.",
-            sub_case_descriptions=["The specified path not found.", "The specified device not found."],
-        ),
-        409: api_metadata.error_case_spec_factory(
-            case_description="Your request is conflict to the specified device state.",
-        ),
-        422: api_metadata.error_case_spec_factory(
-            case_description="The request parameter validation error.",
-        ),
-        500: api_metadata.error_cases_spec_factory(
-            case_description="Internal server error.",
-            sub_case_descriptions=[
-                "Encountered a Control Object error.",
-                "Encountered an application internal error.",
-                "Encountered a Dependency service error.",
-                "The configuration is invalid.",
-            ],
-        ),
-        503: api_metadata.error_case_spec_factory(
-            case_description="The specified device is busy.",
-        ),
-    },
-    deprecated=True,
-    response_class=JSONResponse,
-    name="Aggregation Control",
-)
-def aggregation_control_api(
-    request_body: AggregationControlRequestModel,
-    cpu_device_id: UUID4 = Path(
-        alias="CPUDeviceID",
-        description="The Device ID of aggregation control target host CPU.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    ),
-) -> response_models.AggregationControlResponseModel:
+def _get_true_device_ids(upstream_device_id: str, downstream_device_id: str) -> tuple[str, str]:
     """
-    Control the connection between a CPU and a target device.
-
-    This endpoint allows for connecting and disconnecting a CPU device to/from a specified target device.
-    The action performed is based on the `action` parameter provided in the `request_body`.
+    Get the true upstream and downstream device IDs based on switch port type.
 
     Args:
-        request_body (AggregationControlRequestModel):
-            The body of the request containing the action to perform and the target device 'Device ID'.
-
-        cpu_device_id (UUID4): The 'Device ID' of the host CPU device.
+        upstream_device_id (str): The Device ID of the upstream side device.
+        downstream_device_id (str): The Device ID of the downstream side device.
 
     Returns:
-        AggregationControlResponseModel: The response model of the result of the aggregation control operation.
+        tuple[str, str]: A tuple containing the true upstream device ID and true downstream device ID.
 
-    Note:
-        Actions:
-        - If `action="connect"`, the specified target device is connected to the host CPU.
-        - If `action="disconnect"`, the specified target device is disconnected from the host CPU.
-
-        Error Handling:
-        - Any exceptions raised by functions called within this endpoint will be handled by the error handler functions
-        defined in `src/app/routers/error_handlers.py`.
-
+    Example:
+        true_upstream_device_id, true_downstream_device_id = _get_true_device_ids("upstream_id", "downstream_id")
     """
 
-    logger.info(
-        "Aggregation Control start.",
-        extra={
-            "CPUDeviceID": str(cpu_device_id),
-            "deviceID": str(request_body.device_id),
-            "action": request_body.action.value,
-        },
+    # get true upstream_device_id
+    true_upstream_device_id = device_id_base.get_device_id_of_switch_port_type(
+        device_id=upstream_device_id, switch_port_type=constants.SwitchPortType.USP
     )
-
-    host_cpu = fm_control.FMControlTargetDevice(device_id=str(cpu_device_id))
-    target_device = fm_control.FMControlTargetDevice(device_id=str(request_body.device_id))
-    device_pair = fm_control.FMControlTargetDevicePair(upstream_device=host_cpu, downstream_device=target_device)
-
-    device_pair.get_lock()
-    try:
-        if request_body.action.value == AggregationControlAction.CONNECT.value:
-            fm_control.FMController.connect(device_pair=device_pair)
-        else:  # The 'action' specified by the client is "disconnect".
-            fm_control.FMController.disconnect(device_pair=device_pair)
-    finally:
-        device_pair.release_lock()
-
-    return response_models.AggregationControlResponseModel(
-        cpu_device_id=device_pair.upstream_device.device_id, device_id=device_pair.downstream_device.device_id
+    logger.debug(
+        "True upstream device ID determined.",
+        extra={"true_upstream_device_id": true_upstream_device_id},
     )
+    if true_upstream_device_id is None:
+        true_upstream_device_id = upstream_device_id
+
+    # get true downstream_device_id
+    true_downstream_device_id = device_id_base.get_device_id_of_switch_port_type(
+        device_id=downstream_device_id, switch_port_type=constants.SwitchPortType.DSP
+    )
+    logger.debug(
+        "True downstream device ID determined.",
+        extra={"true_downstream_device_id": true_downstream_device_id},
+    )
+    if true_downstream_device_id is None:
+        true_downstream_device_id = downstream_device_id
+
+    return true_upstream_device_id, true_downstream_device_id
 
 
 class DeviceAggregationControlRequestModel(BaseModel):
@@ -325,8 +245,12 @@ def device_aggregation_control_api(
         },
     )
 
-    upstream_device = fm_control.FMControlTargetDevice(device_id=str(upstream_device_id))
-    downstream_device = fm_control.FMControlTargetDevice(device_id=str(request_body.downstream_device_id))
+    true_upstream_device_id, true_downstream_device_id = _get_true_device_ids(
+        upstream_device_id=str(upstream_device_id), downstream_device_id=str(request_body.downstream_device_id)
+    )
+
+    upstream_device = fm_control.FMControlTargetDevice(device_id=true_upstream_device_id)
+    downstream_device = fm_control.FMControlTargetDevice(device_id=true_downstream_device_id)
     device_pair = fm_control.FMControlTargetDevicePair(
         upstream_device=upstream_device, downstream_device=downstream_device
     )

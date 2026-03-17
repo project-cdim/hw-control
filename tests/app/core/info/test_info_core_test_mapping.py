@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -33,8 +33,6 @@ RESP_NORMAL_MEMORY = {
     "deviceID": "1001",
     "type": "memory",
     "capacityMiB": 1073741824,
-    "logicalSizeMiB": 1.23,
-    "nonVolatileSizeMiB": "abc",
     "persistentRegionNumberLimit": 456.7,
     "allowedSpeedsMHz": [30, 40],
     "enabled": True,
@@ -46,8 +44,8 @@ DATA_NORMAL_MEMORY = {
     "type": "memory",
     "schema": {
         "CapacityMiB": 1073741824,
-        "LogicalSizeMiB": 1.23,
-        "NonVolatileSizeMiB": "abc",
+        "LogicalSizeMiB": None,
+        "NonVolatileSizeMiB": "",
         "PersistentRegionNumberLimit": 456.7,
         "AllowedSpeedsMHz": [30, 40],
         "Enabled": True,
@@ -211,7 +209,6 @@ RESP_CONVERT_FUNC = {
     "deviceID": "1001",
     "type": "memory",
     "sensingInterval": 5,
-    "socketNum": 1,
     "noneConvert": "T123",
 }
 
@@ -221,7 +218,6 @@ CONVERT_DATA = {
     "type": "memory",
     "schema": {
         "SensingInterval": "PT5S",
-        "Socket": "CPU 1",
         "NoneConvert": "T123",
     },
 }
@@ -231,13 +227,6 @@ CONVERT_INVALID_DATA_SENSING_INTERVAL = {
     "deviceID": "1001",
     "type": "memory",
     "schema": {"SensingInterval": "PTaS"},
-}
-
-# Convert invalid data Socket
-CONVERT_INVALID_DATA_SOCKET = {
-    "deviceID": "1001",
-    "type": "memory",
-    "schema": {"Socket": "CPU a"},
 }
 
 # Mapping table file
@@ -422,34 +411,13 @@ def test_mapping_convert_function_returned_none_sensing_interval(mocker, caplog)
     )
 
 
-def test_mapping_convert_function_returned_none_socket(mocker, caplog):
-    """Test mapping convert function returned none Socket"""
-    with pytest.raises(InternalHWControlError):
-        _create_resp(mocker, "1001", "memory", "agent", "metric", CONVERT_INVALID_DATA_SOCKET)
-    assert _log_contains(
-        caplog.record_tuples,
-        logging.WARNING,
-        "W00009: Invalid type value: Key:Socket, Value:CPU a, Value type:str, "
-        "Convert function:get_socket_number returned None.",
-    )
-
-
-def test_mapping_get_socket_number():
-    """Test mapping _get_socket_number"""
-    assert 1 == info_conv_funcs.get_socket_number({}, "", "CPU 1")  # pylint: disable=W0212
-    assert 100 == info_conv_funcs.get_socket_number({}, "", "CPU 100")  # pylint: disable=W0212
-    assert info_conv_funcs.get_socket_number({}, "", "CPU  2") is None  # pylint: disable=W0212
-    assert info_conv_funcs.get_socket_number({}, "", "CPU") is None  # pylint: disable=W0212
-    assert info_conv_funcs.get_socket_number({}, "", "memory 12345") is None  # pylint: disable=W0212
-
-
 def test_mapping_duration_to_seconds_normal():
     """Test mapping _duration_to_seconds normal input"""
     assert 86400 == info_conv_funcs.duration_to_seconds({}, "", "P1D")  # pylint: disable=W0212
     assert 3600 == info_conv_funcs.duration_to_seconds({}, "", "PT1H")  # pylint: disable=W0212
     assert 60 == info_conv_funcs.duration_to_seconds({}, "", "PT1M")  # pylint: disable=W0212
     assert 1 == info_conv_funcs.duration_to_seconds({}, "", "PT1S")  # pylint: disable=W0212
-    assert 1.5 == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")  # pylint: disable=W0212
+    assert pytest.approx(1.5) == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")  # pylint: disable=W0212
     assert 3660 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M")  # pylint: disable=W0212
     assert 3610 == info_conv_funcs.duration_to_seconds({}, "", "PT1H10S")  # pylint: disable=W0212
     assert 70 == info_conv_funcs.duration_to_seconds({}, "", "PT1M10S")  # pylint: disable=W0212

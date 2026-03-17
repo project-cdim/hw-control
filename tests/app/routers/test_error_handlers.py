@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -89,10 +89,10 @@ class TestErrorHandlers:
         assert response.status_code == expected_status_code
         assert actual_response_body == expected_response_body
 
-        assert len(caplog.records) == 1
+        assert len(caplog.records) == 2
 
         # Inspection: Check the exception log
-        exception_log = caplog.records[-1]
+        exception_log = caplog.records[0]
         assert exception_log.levelname == "ERROR"
         assert exception_log.getMessage() == "An unexpected error occurred."
         assert exception_log.exc_info is not None, "exc_info should be present in the log record"
@@ -103,6 +103,14 @@ class TestErrorHandlers:
 
         assert hasattr(exception_log, "error_message"), "error_message should be present in the log record"
         assert getattr(exception_log, "error_message") == expected_response_body["message"]
+
+        # Inspection: Check the response log
+        response_log = caplog.records[1]
+        assert response_log.levelname == "INFO"
+        assert response_log.getMessage() == "Return http response."
+
+        assert hasattr(response_log, "content_length"), "`content_length` should be present in the log record"
+        assert getattr(response_log, "content_length") == str(len(response.body))
 
     @pytest.mark.parametrize(
         "input_exception_instance, expected_status_code, expected_response_body",

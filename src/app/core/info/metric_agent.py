@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -76,7 +76,7 @@ class InfoMetricAgent:
 
         settings = FileLocationSettings()
         # Read device attribute information file. (stub data)
-        file_path = Path(settings.config_file_dir) / DEVICE_DATA_FILE
+        file_path = Path(settings.data_file_dir) / DEVICE_DATA_FILE
         with open(file_path, encoding="utf-8") as device_file:
             devices = yaml.safe_load(device_file)
             url = devices[cpu_device_id]["agent"]["url"] + const.BASE_URL + "/v1/agent/info?deviceType=" + device_type
@@ -127,7 +127,7 @@ class InfoMetricAgent:
                     error_code = error_data.get("code", error_code)
                     error_message = error_data.get("message", error_message)
                 except (ValueError, TypeError, AttributeError) as ex:
-                    logger.warning("Failed to parse error Agent response JSON: " + str(ex))
+                    logger.warning("Failed to parse error Agent response JSON: %s", ex)
             logger.warning(
                 message.get_log_message(
                     message.W00014,
@@ -168,7 +168,7 @@ class InfoMetricAgent:
             setting_data = yaml.safe_load(setting_file)
 
         # Generate device attribute information for the number of Device IDs in the device list.
-        attribute_data = {}
+        attribute_data: dict = {}
         for device_item in device_list:
             device_id = device_item.get(DEVICE_LIST_ITEM_NAME_DEVICE_ID)
             # If the Device ID has already been set in the device attribute information, set that information.
@@ -188,20 +188,26 @@ class InfoMetricAgent:
 
         # Only if there is data to write.
         if attribute_data:
-            settings = FileLocationSettings()
             # Read device attribute information file.
-            file_path = Path(settings.config_file_dir) / DEVICE_DATA_FILE
-            with open(file_path, encoding="utf-8") as device_file:
-                old_data = yaml.safe_load(device_file)
+            data_file_path = Path(settings.data_file_dir) / DEVICE_DATA_FILE
+            old_data: dict = {}
+            if data_file_path.exists():
+                with open(data_file_path, encoding="utf-8") as data_file:
+                    old_data = yaml.safe_load(data_file) or {}
+
             # Output file only if data has changed.
             if old_data != attribute_data:
                 # Write device attribute information file.
-                with open(file_path, "w", encoding="utf-8") as write_file:
+                with open(data_file_path, "w", encoding="utf-8") as write_data_file:
                     # Exclusive lock.
-                    fcntl.flock(write_file, fcntl.LOCK_EX)
+                    fcntl.flock(write_data_file, fcntl.LOCK_EX)
                     # Output file.
                     yaml.dump(
-                        attribute_data, write_file, default_flow_style=False, explicit_start=True, explicit_end=True
+                        attribute_data,
+                        write_data_file,
+                        default_flow_style=False,
+                        explicit_start=True,
+                        explicit_end=True,
                     )
                     # Release exclusive lock.
-                    fcntl.flock(write_file, fcntl.LOCK_UN)
+                    fcntl.flock(write_data_file, fcntl.LOCK_UN)

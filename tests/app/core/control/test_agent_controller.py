@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -62,12 +62,13 @@ class TestOSShutdown:
         ],
         indirect=["power_control_target_device_fixture", "control_target_agent_fixture"],
     )
-    def test_successful_case(
+    def test_successful_case(  # pylint: disable=R0913, R0917
         self,
         caplog: LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         control_target_agent_fixture: ControlTargetAgent,
+        dummy_correlation_id: str,
     ):
         """test successful case.
 
@@ -78,6 +79,9 @@ class TestOSShutdown:
             mocker (MockFixture):
                 Fixture for creating mock objects.
 
+            dummy_correlation_id (str):
+                Dummy correlation ID fixture.
+
         """
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         target_device = power_control_target_device_fixture
@@ -86,10 +90,28 @@ class TestOSShutdown:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_agent_response = Response()
-        dummy_agent_response.status_code = HTTPStatus.OK.value
-        dummy_agent_response._content = b""  # pylint: disable=W0212
-        mocker.patch.object(requests, "put", return_value=dummy_agent_response)
+        def mock_put_with_verification(url, **kwargs):
+            """Mock function to verify request details."""
+
+            # ++++ inspection ++++
+            # Verify request details
+            assert url == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/os-shutdown"
+            assert kwargs.get("timeout") == approx(agent_control.AGENT_REST_API_TIMEOUT)
+
+            # Verify headers
+            headers = kwargs.get("headers", {})
+            assert "Authorization" in headers
+            assert headers["Authorization"] == "Bearer dummy_access_token"
+            assert constants.CORRELATION_ID_HEADER in headers
+            assert headers[constants.CORRELATION_ID_HEADER] == dummy_correlation_id
+
+            # Return dummy response
+            dummy_agent_response = Response()
+            dummy_agent_response.status_code = HTTPStatus.OK.value
+            dummy_agent_response._content = b""  # pylint: disable=W0212
+            return dummy_agent_response
+
+        mocker.patch.object(requests, "put", side_effect=mock_put_with_verification)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
 
@@ -757,10 +779,27 @@ class TestIsOSReady:
         # Set up the mock.
         mocker.patch.object(PowerControlTargetDevice, "set_power_state", return_value=None)
 
-        dummy_agent_response = Response()
-        dummy_agent_response.status_code = HTTPStatus.OK.value
-        dummy_agent_response._content = b""  # pylint: disable=W0212
-        mocker.patch.object(requests.Session, "get", return_value=dummy_agent_response)
+        def mock_get_with_verification(url, **kwargs):
+            """Mock function to verify request details."""
+            # Verify request details
+            assert url == f"http://{target_agent.ip_address}:8000/cdim/api/v1/agent/is-os-ready"
+            assert kwargs.get("timeout") == approx(agent_control.AGENT_REST_API_TIMEOUT)
+
+            # Verify headers
+            headers = kwargs.get("headers", {})
+            assert "Authorization" in headers
+            assert headers["Authorization"] == "Bearer dummy_access_token"
+            assert constants.CORRELATION_ID_HEADER in headers
+            # Verify correlation ID is default value when context is empty
+            assert headers[constants.CORRELATION_ID_HEADER] == constants.CORRELATION_ID_DEFAULT_VALUE
+
+            # Return dummy response
+            dummy_agent_response = Response()
+            dummy_agent_response.status_code = HTTPStatus.OK.value
+            dummy_agent_response._content = b""  # pylint: disable=W0212
+            return dummy_agent_response
+
+        mocker.patch.object(requests.Session, "get", side_effect=mock_get_with_verification)
 
         mocker.patch.object(authorization_server_client, "get_agent_access_token", return_value="dummy_access_token")
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#

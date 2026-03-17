@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -40,21 +40,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # For log check
 PLUGIN_MGR_MODULE_NAME = "app.common.utils.plugin_manager"
-
-
-def check_log_message(caplog: LogCaptureFixture, levelname, request_id, messages):
-    """
-
-    check log
-
-    """
-    index = 0
-    for record in caplog.records:
-        plugin_call_log_message = json.loads(record.getMessage())
-        if record.levelname == levelname and plugin_call_log_message["message"]["request_id"] == request_id:
-            assert plugin_call_log_message["message"]["detail"] == messages[index]
-            index += 1
-    assert len(messages) == index
 
 
 def mock_import(name, *args, **kwargs):  # pylint: disable=W0613

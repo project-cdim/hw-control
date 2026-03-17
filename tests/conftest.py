@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,31 +17,36 @@
 import uuid
 import pytest
 from pytest_mock import MockFixture
+from asgi_correlation_id.context import correlation_id
 
 from tests import test_util
 
 from app.common import constants
-from app.common import request_id_utilities
 from app.core.control import control_base
 from app.core.control import agent_control
 from app.core.control import fm_control
 
 
 @pytest.fixture(scope="function")
-def dummy_request_id():
-    """Provides a dummy request ID set in the context variable for testing.
+def dummy_correlation_id():
+    """Provides a dummy Correlation ID set in the context variable for testing.
+
+    This fixture sets up a Correlation ID using asgi-correlation-id library
+    for testing purposes. The Correlation ID is automatically included in log
+    records when using the CorrelationIdFilter.
 
     Yields:
-        str: The dummy request ID set in the context.
+        str: The dummy Correlation ID set in the context.
     """
-    dummy_request_id = str(uuid.uuid4())
-    # Set up the dummy request ID in context.
-    token = request_id_utilities._request_id.set(dummy_request_id)  # pylint: disable=W0212
+    dummy_correlation_id = str(uuid.uuid4())
 
-    yield dummy_request_id
+    # Set up the dummy Correlation ID in context using asgi-correlation-id
+    token = correlation_id.set(dummy_correlation_id)
 
-    # Clean up the request ID in context.
-    request_id_utilities._request_id.reset(token)  # pylint: disable=W0212
+    yield dummy_correlation_id
+
+    # Clean up the Correlation ID in context
+    correlation_id.reset(token)
 
 
 @pytest.fixture(scope="function")

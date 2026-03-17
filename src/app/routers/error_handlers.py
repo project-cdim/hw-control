@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,7 +17,7 @@ Module for error handling in FastAPI applications.
 
 This module defines custom exception handlers and integrates them
 with a FastAPI application. These handlers are designed to log errors,
-generate appropriate JSON responses, and handle various types of 
+generate appropriate JSON responses, and handle various types of
 exceptions that might occur during API requests.
 """
 
@@ -30,7 +30,9 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import Response, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from asgi_correlation_id import correlation_id
 
+from app.common import constants
 import app.common.basic_exceptions as custom_exceptions
 from app.routers import response_models
 
@@ -198,8 +200,6 @@ def custom_exception_handler(_: Request, exc: Exception) -> Response:
                     - message: The general error message indicating an internal server error.
     """
 
-    status_code = HTTPStatus.INTERNAL_SERVER_ERROR.value
-
     error_code = "CF010BAS001"
     error_message = "The server encountered an unexpected internal error and was unable to complete your request."
 
@@ -210,6 +210,19 @@ def custom_exception_handler(_: Request, exc: Exception) -> Response:
     )
 
     response_body = response_models.ErrorResponseModel(code=error_code, message=error_message)
-    response = JSONResponse(status_code=status_code, content=jsonable_encoder(response_body))
+    response = JSONResponse(
+        content=jsonable_encoder(response_body),
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
+        # Use default value as fallback if correlation ID is not set in context variable
+        headers={constants.CORRELATION_ID_HEADER: correlation_id.get() or constants.CORRELATION_ID_DEFAULT_VALUE},
+    )
+
+    logger.info(
+        msg="Return http response.",
+        extra={
+            "http_status": response.status_code,
+            "content_length": response.headers.get("content-length"),
+        },
+    )
 
     return response

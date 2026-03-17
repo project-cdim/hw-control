@@ -6,6 +6,31 @@
         "type": {
             "vtype": "str"
         },
+        "attribute": {
+            "path": "schema.attribute",
+            "key": "attribute",
+            "vtype": "dict",
+            "sub_mapping": {
+                "deviceSpecificInformation": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "hostName": {
+                            "vtype": "str"
+                        },
+                        "id": {
+                            "vtype": "str"
+                        },
+                        "name": {
+                            "vtype": "str"
+                        },
+                        "firmware_version": {
+                            "key": "firmwareversion",
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
         "baseSpeedMHz": {
             "key": "BaseSpeedMHz",
             "vtype": "int",
@@ -153,10 +178,8 @@
             "path": "schema.SerialNumber"
         },
         "socketNum": {
-            "key": "Socket",
-            "vtype": "str",
-            "path": "schema.Socket",
-            "convert_func": "get_socket_number"
+            "vtype": "int",
+            "path": "schema.socketNum"
         },
         "manufacturer": {
             "key": "Manufacturer",
@@ -634,6 +657,39 @@
         "type": {
             "vtype": "str"
         },
+        "attribute": {
+            "path": "schema.attribute",
+            "key": "attribute",
+            "vtype": "dict",
+            "sub_mapping": {
+                "deviceSpecificInformation": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "type": {
+                            "vtype": "str"
+                        },
+                        "id": {
+                            "vtype": "str"
+                        },
+                        "status": {
+                            "vtype": "str"
+                        },
+                        "groupId": {
+                            "vtype": "int"
+                        },
+                        "linkStatus0": {
+                            "vtype": "str"
+                        },
+                        "linkStatus1": {
+                            "vtype": "str"
+                        },
+                        "switchName": {
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
         "bitRate": {
             "key": "BitRate",
             "vtype": "str",
@@ -962,6 +1018,813 @@
             "vtype": "bool",
             "path": "schema.Network.PowerCapability"
         },
+        "PCIeDeviceSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.PCIeDevice.SerialNumber"
+        },
+        "PCIeDeviceID": {
+            "key": "DeviceId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.DeviceId"
+        },
+        "PCIeVendorID": {
+            "key": "VendorId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.VendorId"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "sourceFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "attribute": {
+            "path": "schema.attribute",
+            "key": "attribute",
+            "vtype": "dict",
+            "sub_mapping": {
+                "deviceSpecificInformation": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "type": {
+                            "vtype": "str"
+                        },
+                        "id": {
+                            "vtype": "str"
+                        },
+                        "status": {
+                            "vtype": "str"
+                        },
+                        "groupId": {
+                            "vtype": "int"
+                        },
+                        "linkStatus0": {
+                            "vtype": "str"
+                        },
+                        "linkStatus1": {
+                            "vtype": "str"
+                        },
+                        "switchName": {
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
+        "bitRate": {
+            "key": "BitRate",
+            "vtype": "str",
+            "path": "schema.SerialInterfaces.BitRate"
+        },
+        "controllers": {
+            "path": "schema.Network.Controllers",
+            "key": "Controllers",
+            "vtype": "list",
+            "sub_mapping": {
+                "capability": {
+                    "key": "ControllerCapabilities",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "dataCenterBridging": {
+                            "key": "DataCenterBridging",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "capable": {
+                                    "key": "Capable",
+                                    "vtype": "bool"
+                                }
+                            }
+                        },
+                        "networkDeviceFunctionCount": {
+                            "key": "NetworkDeviceFunctionCount",
+                            "vtype": "int"
+                        },
+                        "networkPortCount": {
+                            "key": "NetworkPortCount",
+                            "vtype": "int"
+                        },
+                        "npar": {
+                            "key": "NPAR",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "capable": {
+                                    "key": "NparCapable",
+                                    "vtype": "bool"
+                                },
+                                "enabled": {
+                                    "key": "NparEnabled",
+                                    "vtype": "bool"
+                                }
+                            }
+                        },
+                        "npiv": {
+                            "key": "NPIV",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "maxDeviceLogins": {
+                                    "key": "MaxDeviceLogins",
+                                    "vtype": "int"
+                                },
+                                "maxPortLogins": {
+                                    "key": "MaxPortLogins",
+                                    "vtype": "int"
+                                }
+                            }
+                        },
+                        "virtualizationOffload": {
+                            "key": "VirtualizationOffload",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "virtualFunction": {
+                                    "key": "VirtualFunction",
+                                    "vtype": "dict",
+                                    "sub_mapping": {
+                                        "deviceMaxCount": {
+                                            "key": "DeviceMaxCount",
+                                            "vtype": "int"
+                                        },
+                                        "networkPortMaxCount": {
+                                            "key": "NetworkPortMaxCount",
+                                            "vtype": "int"
+                                        },
+                                        "minAssignmentGroupSize": {
+                                            "key": "MinAssignmentGroupSize",
+                                            "vtype": "int"
+                                        }
+                                    }
+                                },
+                                "sriov": {
+                                    "key": "SRIOV",
+                                    "vtype": "dict",
+                                    "sub_mapping": {
+                                        "VEPACapable": {
+                                            "key": "SRIOVVEPACapable",
+                                            "vtype": "bool"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "firmwarePackageVersion": {
+                    "key": "FirmwarePackageVersion",
+                    "vtype": "str"
+                },
+                "identifiers": {
+                    "key": "Identifiers",
+                    "vtype": "list",
+                    "sub_mapping": {
+                        "durableNameFormat": {
+                            "key": "DurableNameFormat",
+                            "vtype": "str"
+                        },
+                        "durableName": {
+                            "key": "DurableName",
+                            "vtype": "str"
+                        }
+                    }
+                },
+                "location": {
+                    "key": "Location",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "partLocation": {
+                            "key": "PartLocation",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "serviceLabel": {
+                                    "key": "ServiceLabel",
+                                    "vtype": "str"
+                                },
+                                "type": {
+                                    "key": "LocationType",
+                                    "vtype": "str"
+                                },
+                                "ordinalValue": {
+                                    "key": "LocationOrdinalValue",
+                                    "vtype": "int"
+                                },
+                                "reference": {
+                                    "key": "Reference",
+                                    "vtype": "str"
+                                },
+                                "orientation": {
+                                    "key": "Orientation",
+                                    "vtype": "str"
+                                }
+                            }
+                        }
+                    }
+                },
+                "PCIeInterface": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "lanesInUse": {
+                            "key": "LanesInUse",
+                            "vtype": "int"
+                        },
+                        "maxLanes": {
+                            "key": "MaxLanes",
+                            "vtype": "int"
+                        },
+                        "PCIeType": {
+                            "vtype": "str"
+                        },
+                        "maxPCIeType": {
+                            "key": "MaxPCIeType",
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
+        "deviceEnabled": {
+            "key": "DeviceEnabled",
+            "vtype": "bool",
+            "path": "schema.NetworkDeviceFunctions.DeviceEnabled"
+        },
+        "ethernet": {
+            "path": "schema.NetworkDeviceFunctions.Ethernet",
+            "key": "Ethernet",
+            "vtype": "dict",
+            "sub_mapping": {
+                "MACAddress": {
+                    "vtype": "str"
+                },
+                "MTUSize": {
+                    "vtype": "int"
+                },
+                "MTUSizeMaximum": {
+                    "vtype": "int"
+                },
+                "permanentMACAddress": {
+                    "key": "PermanentMACAddress",
+                    "vtype": "str"
+                },
+                "vlan": {
+                    "key": "VLAN",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "enable": {
+                            "key": "VLANEnable",
+                            "vtype": "bool"
+                        },
+                        "id": {
+                            "key": "VLANId",
+                            "vtype": "int"
+                        }
+                    }
+                }
+            }
+        },
+        "limits": {
+            "path": "schema.NetworkDeviceFunctions.Limits",
+            "key": "Limits",
+            "vtype": "list",
+            "sub_mapping": {
+                "burstBytesPerSecond": {
+                    "key": "BurstBytesPerSecond",
+                    "vtype": "int"
+                },
+                "burstPacketsPerSecond": {
+                    "key": "BurstPacketsPerSecond",
+                    "vtype": "int"
+                },
+                "direction": {
+                    "key": "Direction",
+                    "vtype": "str"
+                },
+                "sustainedBytesPerSecond": {
+                    "key": "SustainedBytesPerSecond",
+                    "vtype": "int"
+                },
+                "sustainedPacketsPerSecond": {
+                    "key": "SustainedPacketsPerSecond",
+                    "vtype": "int"
+                }
+            }
+        },
+        "functionMaxBandwidths": {
+            "path": "schema.Port.FunctionMaxBandwidth",
+            "key": "FunctionMaxBandwidth",
+            "vtype": "list",
+            "sub_mapping": {
+                "allocationPercent": {
+                    "key": "AllocationPercent",
+                    "vtype": "int"
+                }
+            }
+        },
+        "functionMinBandwidths": {
+            "path": "schema.Port.FunctionMinBandwidth",
+            "key": "FunctionMinBandwidth",
+            "vtype": "list",
+            "sub_mapping": {
+                "allocationPercent": {
+                    "key": "AllocationPercent",
+                    "vtype": "int"
+                }
+            }
+        },
+        "maxSpeedGbps": {
+            "key": "MaxSpeedGbps",
+            "vtype": ["int","float"],
+            "path": "schema.Port.MaxSpeedGbps"
+        },
+        "linkConfigurations": {
+            "path": "schema.Port.LinkConfiguration",
+            "key": "LinkConfiguration",
+            "vtype": "list",
+            "sub_mapping": {
+                "capableLinkSpeedsGbps": {
+                    "key": "CapableLinkSpeedGbps",
+                    "vtype": "list",
+                    "item_type": ["int","float","None"]
+                }
+            }
+        },
+        "networkAdapterSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.Network.SerialNumber"
+        },
+        "networkAdapterManufacturer": {
+            "key": "Manufacturer",
+            "vtype": "str",
+            "path": "schema.Network.Manufacturer"
+        },
+        "networkAdapterModel": {
+            "key": "Model",
+            "vtype": "str",
+            "path": "schema.Network.Model"
+        },
+        "fabricAdapterSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.Network.SerialNumber"
+        },
+        "fabricAdapterManufacturer": {
+            "key": "Manufacturer",
+            "vtype": "str",
+            "path": "schema.Network.Manufacturer"
+        },
+        "fabricAdapterModel": {
+            "key": "Model",
+            "vtype": "str",
+            "path": "schema.Network.Model"
+        },
+        "status": {
+            "path": "schema.Network.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Network.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Network.PowerCapability"
+        },
+        "PCIeDeviceSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.PCIeDevice.SerialNumber"
+        },
+        "PCIeDeviceID": {
+            "key": "DeviceId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.DeviceId"
+        },
+        "PCIeVendorID": {
+            "key": "VendorId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.VendorId"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "destinationFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "attribute": {
+            "path": "schema.attribute",
+            "key": "attribute",
+            "vtype": "dict",
+            "sub_mapping": {
+                "deviceSpecificInformation": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "type": {
+                            "vtype": "str"
+                        },
+                        "id": {
+                            "vtype": "str"
+                        },
+                        "status": {
+                            "vtype": "str"
+                        },
+                        "groupId": {
+                            "vtype": "int"
+                        },
+                        "linkStatus0": {
+                            "vtype": "str"
+                        },
+                        "linkStatus1": {
+                            "vtype": "str"
+                        },
+                        "switchName": {
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
+        "bitRate": {
+            "key": "BitRate",
+            "vtype": "str",
+            "path": "schema.SerialInterfaces.BitRate"
+        },
+        "controllers": {
+            "path": "schema.Network.Controllers",
+            "key": "Controllers",
+            "vtype": "list",
+            "sub_mapping": {
+                "capability": {
+                    "key": "ControllerCapabilities",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "dataCenterBridging": {
+                            "key": "DataCenterBridging",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "capable": {
+                                    "key": "Capable",
+                                    "vtype": "bool"
+                                }
+                            }
+                        },
+                        "networkDeviceFunctionCount": {
+                            "key": "NetworkDeviceFunctionCount",
+                            "vtype": "int"
+                        },
+                        "networkPortCount": {
+                            "key": "NetworkPortCount",
+                            "vtype": "int"
+                        },
+                        "npar": {
+                            "key": "NPAR",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "capable": {
+                                    "key": "NparCapable",
+                                    "vtype": "bool"
+                                },
+                                "enabled": {
+                                    "key": "NparEnabled",
+                                    "vtype": "bool"
+                                }
+                            }
+                        },
+                        "npiv": {
+                            "key": "NPIV",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "maxDeviceLogins": {
+                                    "key": "MaxDeviceLogins",
+                                    "vtype": "int"
+                                },
+                                "maxPortLogins": {
+                                    "key": "MaxPortLogins",
+                                    "vtype": "int"
+                                }
+                            }
+                        },
+                        "virtualizationOffload": {
+                            "key": "VirtualizationOffload",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "virtualFunction": {
+                                    "key": "VirtualFunction",
+                                    "vtype": "dict",
+                                    "sub_mapping": {
+                                        "deviceMaxCount": {
+                                            "key": "DeviceMaxCount",
+                                            "vtype": "int"
+                                        },
+                                        "networkPortMaxCount": {
+                                            "key": "NetworkPortMaxCount",
+                                            "vtype": "int"
+                                        },
+                                        "minAssignmentGroupSize": {
+                                            "key": "MinAssignmentGroupSize",
+                                            "vtype": "int"
+                                        }
+                                    }
+                                },
+                                "sriov": {
+                                    "key": "SRIOV",
+                                    "vtype": "dict",
+                                    "sub_mapping": {
+                                        "VEPACapable": {
+                                            "key": "SRIOVVEPACapable",
+                                            "vtype": "bool"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "firmwarePackageVersion": {
+                    "key": "FirmwarePackageVersion",
+                    "vtype": "str"
+                },
+                "identifiers": {
+                    "key": "Identifiers",
+                    "vtype": "list",
+                    "sub_mapping": {
+                        "durableNameFormat": {
+                            "key": "DurableNameFormat",
+                            "vtype": "str"
+                        },
+                        "durableName": {
+                            "key": "DurableName",
+                            "vtype": "str"
+                        }
+                    }
+                },
+                "location": {
+                    "key": "Location",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "partLocation": {
+                            "key": "PartLocation",
+                            "vtype": "dict",
+                            "sub_mapping": {
+                                "serviceLabel": {
+                                    "key": "ServiceLabel",
+                                    "vtype": "str"
+                                },
+                                "type": {
+                                    "key": "LocationType",
+                                    "vtype": "str"
+                                },
+                                "ordinalValue": {
+                                    "key": "LocationOrdinalValue",
+                                    "vtype": "int"
+                                },
+                                "reference": {
+                                    "key": "Reference",
+                                    "vtype": "str"
+                                },
+                                "orientation": {
+                                    "key": "Orientation",
+                                    "vtype": "str"
+                                }
+                            }
+                        }
+                    }
+                },
+                "PCIeInterface": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "lanesInUse": {
+                            "key": "LanesInUse",
+                            "vtype": "int"
+                        },
+                        "maxLanes": {
+                            "key": "MaxLanes",
+                            "vtype": "int"
+                        },
+                        "PCIeType": {
+                            "vtype": "str"
+                        },
+                        "maxPCIeType": {
+                            "key": "MaxPCIeType",
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
+        "deviceEnabled": {
+            "key": "DeviceEnabled",
+            "vtype": "bool",
+            "path": "schema.NetworkDeviceFunctions.DeviceEnabled"
+        },
+        "ethernet": {
+            "path": "schema.NetworkDeviceFunctions.Ethernet",
+            "key": "Ethernet",
+            "vtype": "dict",
+            "sub_mapping": {
+                "MACAddress": {
+                    "vtype": "str"
+                },
+                "MTUSize": {
+                    "vtype": "int"
+                },
+                "MTUSizeMaximum": {
+                    "vtype": "int"
+                },
+                "permanentMACAddress": {
+                    "key": "PermanentMACAddress",
+                    "vtype": "str"
+                },
+                "vlan": {
+                    "key": "VLAN",
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "enable": {
+                            "key": "VLANEnable",
+                            "vtype": "bool"
+                        },
+                        "id": {
+                            "key": "VLANId",
+                            "vtype": "int"
+                        }
+                    }
+                }
+            }
+        },
+        "limits": {
+            "path": "schema.NetworkDeviceFunctions.Limits",
+            "key": "Limits",
+            "vtype": "list",
+            "sub_mapping": {
+                "burstBytesPerSecond": {
+                    "key": "BurstBytesPerSecond",
+                    "vtype": "int"
+                },
+                "burstPacketsPerSecond": {
+                    "key": "BurstPacketsPerSecond",
+                    "vtype": "int"
+                },
+                "direction": {
+                    "key": "Direction",
+                    "vtype": "str"
+                },
+                "sustainedBytesPerSecond": {
+                    "key": "SustainedBytesPerSecond",
+                    "vtype": "int"
+                },
+                "sustainedPacketsPerSecond": {
+                    "key": "SustainedPacketsPerSecond",
+                    "vtype": "int"
+                }
+            }
+        },
+        "functionMaxBandwidths": {
+            "path": "schema.Port.FunctionMaxBandwidth",
+            "key": "FunctionMaxBandwidth",
+            "vtype": "list",
+            "sub_mapping": {
+                "allocationPercent": {
+                    "key": "AllocationPercent",
+                    "vtype": "int"
+                }
+            }
+        },
+        "functionMinBandwidths": {
+            "path": "schema.Port.FunctionMinBandwidth",
+            "key": "FunctionMinBandwidth",
+            "vtype": "list",
+            "sub_mapping": {
+                "allocationPercent": {
+                    "key": "AllocationPercent",
+                    "vtype": "int"
+                }
+            }
+        },
+        "maxSpeedGbps": {
+            "key": "MaxSpeedGbps",
+            "vtype": ["int","float"],
+            "path": "schema.Port.MaxSpeedGbps"
+        },
+        "linkConfigurations": {
+            "path": "schema.Port.LinkConfiguration",
+            "key": "LinkConfiguration",
+            "vtype": "list",
+            "sub_mapping": {
+                "capableLinkSpeedsGbps": {
+                    "key": "CapableLinkSpeedGbps",
+                    "vtype": "list",
+                    "item_type": ["int","float","None"]
+                }
+            }
+        },
+        "networkAdapterSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.Network.SerialNumber"
+        },
+        "networkAdapterManufacturer": {
+            "key": "Manufacturer",
+            "vtype": "str",
+            "path": "schema.Network.Manufacturer"
+        },
+        "networkAdapterModel": {
+            "key": "Model",
+            "vtype": "str",
+            "path": "schema.Network.Model"
+        },
+        "fabricAdapterSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.Network.SerialNumber"
+        },
+        "fabricAdapterManufacturer": {
+            "key": "Manufacturer",
+            "vtype": "str",
+            "path": "schema.Network.Manufacturer"
+        },
+        "fabricAdapterModel": {
+            "key": "Model",
+            "vtype": "str",
+            "path": "schema.Network.Model"
+        },
+        "status": {
+            "path": "schema.Network.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.Network.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.Network.PowerCapability"
+        },
+        "PCIeDeviceSerialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.PCIeDevice.SerialNumber"
+        },
+        "PCIeDeviceID": {
+            "key": "DeviceId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.DeviceId"
+        },
+        "PCIeVendorID": {
+            "key": "VendorId",
+            "vtype": "str",
+            "path": "schema.PCIeFunction.VendorId"
+        },
         "links": {
             "key": "link",
             "vtype": "list",
@@ -1127,12 +1990,6 @@
             "key": "SerialNumber",
             "vtype": "str",
             "path": "schema.SerialNumber"
-        },
-        "socketNum": {
-            "key": "Socket",
-            "vtype": "str",
-            "path": "schema.Socket",
-            "convert_func": "get_socket_number"
         },
         "manufacturer": {
             "key": "Manufacturer",

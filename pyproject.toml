@@ -1,6 +1,6 @@
 [project]
 name = "hw-control"
-version = "0.1.0"
+version = "0.2.0"
 description = "hw-control module of Composable Disaggregated Infrastructure Manager"
 authors = [{ name = "NEC Corporation" }]
 dependencies = [
@@ -11,12 +11,14 @@ dependencies = [
     "pydantic>=2.8.2",
     "requests>=2.32.3",
     "urllib3>=2.2.2",
-    "uvicorn>=0.30.6",
+    "uvicorn[standard]>=0.40.0",
     "python-json-logger>=3.3.0",
+    "asgi-correlation-id>=4.3.4",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 
 [build-system]
 requires = ["pdm-backend"]
@@ -24,7 +26,7 @@ build-backend = "pdm.backend"
 
 [dependency-groups]
 dev = [
-    "black==24.8.0",
+    "black>=25.12.0",
     "httpx>=0.27.2",
     "mypy>=1.15.0",
     "pandas-stubs>=2.2.2.240807",

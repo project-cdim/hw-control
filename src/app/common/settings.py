@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW control function - system environment definition
-"""
+"""HW control function - system environment definition"""
 
 from functools import lru_cache
 from pathlib import Path

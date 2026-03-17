@@ -6,10 +6,6 @@
         "type": {
             "vtype": "str"
         },
-        "fabricID": {
-            "key": "fabricId",
-            "vtype": "str"
-        },
         "links": {
             "key": "link",
             "vtype": "list",
@@ -22,8 +18,28 @@
                 }
             }
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "memory": {
@@ -33,10 +49,6 @@
         "type": {
             "vtype": "str"
         },
-        "fabricID": {
-            "key": "fabricId",
-            "vtype": "str"
-        },
         "PCIeVendorID": {
             "key": "PCIeVendorId",
             "vtype": "str"
@@ -60,8 +72,28 @@
                 }
             }
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "storage": {
@@ -71,10 +103,6 @@
         "type": {
             "vtype": "str"
         },
-        "fabricID": {
-            "key": "fabricId",
-            "vtype": "str"
-        },
         "PCIeVendorID": {
             "key": "PCIeVendorId",
             "vtype": "str"
@@ -98,8 +126,28 @@
                 }
             }
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "networkInterface": {
@@ -109,8 +157,58 @@
         "type": {
             "vtype": "str"
         },
-        "fabricID": {
-            "key": "fabricId",
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "sourceFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
             "vtype": "str"
         },
         "PCIeVendorID": {
@@ -136,8 +234,82 @@
                 }
             }
         },
-        "LTSSMState": {
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "destinationFabricAdapter": {
+        "deviceID": {
             "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "PCIeVendorID": {
+            "key": "PCIeVendorId",
+            "vtype": "str"
+        },
+        "PCIeDeviceID": {
+            "key": "PCIeDeviceId",
+            "vtype": "str"
+        },
+        "PCIeDeviceSerialNumber": {
+            "vtype": "str"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "GPU": {
@@ -147,10 +319,6 @@
         "type": {
             "vtype": "str"
         },
-        "fabricID": {
-            "key": "fabricId",
-            "vtype": "str"
-        },
         "PCIeVendorID": {
             "key": "PCIeVendorId",
             "vtype": "str"
@@ -174,8 +342,28 @@
                 }
             }
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "graphicController": {

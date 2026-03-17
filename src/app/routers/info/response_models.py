@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -125,10 +125,12 @@ class PortListInformation(BaseModel):
         examples=["fmsw-01"],
     )
     switch_port_number: str = Field(
+        alias="switchPortNumber",
         description="Port number of CXL switch",
         examples=["1"],
     )
     switch_port_type: str = Field(
+        alias="switchPortType",
         description="Whether the port type is USP side or DSP side",
         examples=["DSP"],
     )
@@ -138,14 +140,17 @@ class MetricEnergyJoules(BaseModel):
     """A class to represent defining energy consumption (J) for Devices."""
 
     sensor_reset_time: str = Field(
+        alias="sensorResetTime",
         description="The timestamp when the time property was last reset. (UTC)",
         examples=[SAMPLES_TIMESTAMP],
     )
     sensing_interval: int = Field(
+        alias="sensingInterval",
         description="The interval between sensor readings (in seconds).",
         examples=[10],
     )
     reading_time: str = Field(
+        alias="readingTime",
         description="The timestamp when the measurement was obtained from the sensor. (UTC)",
         examples=[SAMPLES_TIMESTAMP],
     )
@@ -173,10 +178,12 @@ class GetsDeviceInformationResponseBody(BaseModel):
         description=SAMPLES_DEVICE_STATUS_DESCRIPTION,
     )
     power_state: str = Field(
+        alias="powerState",
         description=SAMPLES_POWER_STATE_DESCRIPTION,
         examples=["On"],
     )
     power_capability: bool = Field(
+        alias="powerCapability",
         description=SAMPLES_POWER_CAPABILITY_DESCRIPTION,
         examples=["True"],
     )
@@ -202,6 +209,7 @@ class GetsDeviceInformationResponseBody(BaseModel):
         description=SAMPLES_CONSTRAINTS_DESCRIPTION,
     )
     device_port_list: PortListInformation = Field(
+        alias="devicePortList",
         description=SAMPLES_PORT_LIST_DESCRIPTION,
     )
     info_timestamp: str = Field(
@@ -215,6 +223,7 @@ class GetsResourceInformationResponseBody(GetsDeviceInformationResponseBody):
     """The HTTP Response Body schema of Gets Resource Of Device."""
 
     metric_energy_joules: MetricEnergyJoules = Field(
+        alias="metricEnergyJoules",
         description="The energy consumption of the device.",
     )
     info_timestamp: str = Field(
@@ -241,17 +250,21 @@ class GetsMetricInformationResponseBody(BaseModel):
         description=SAMPLES_DEVICE_STATUS_DESCRIPTION,
     )
     power_state: str = Field(
+        alias="powerState",
         description=SAMPLES_POWER_STATE_DESCRIPTION,
         examples=["On"],
     )
     power_capability: bool = Field(
+        alias="powerCapability",
         description=SAMPLES_POWER_CAPABILITY_DESCRIPTION,
         examples=["True"],
     )
     device_port_list: PortListInformation = Field(
+        alias="devicePortList",
         description=SAMPLES_PORT_LIST_DESCRIPTION,
     )
     metric_energy_joules: MetricEnergyJoules = Field(
+        alias="metricEnergyJoules",
         description="The energy consumption of the device.",
     )
     info_timestamp: str = Field(

@@ -6,8 +6,28 @@
         "type": {
             "vtype": "str"
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "memory": {
@@ -36,8 +56,28 @@
                 }
             }
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "storage": {
@@ -47,8 +87,28 @@
         "type": {
             "vtype": "str"
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "networkInterface": {
@@ -58,8 +118,90 @@
         "type": {
             "vtype": "str"
         },
-        "LTSSMState": {
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "sourceFabricAdapter": {
+        "deviceID": {
             "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
+        }
+    },
+    "destinationFabricAdapter": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "GPU": {
@@ -69,8 +211,28 @@
         "type": {
             "vtype": "str"
         },
-        "LTSSMState": {
-            "vtype": "str"
+        "devicePortList": {
+            "key": "devicePortList",
+            "vtype": "list",
+            "sub_mapping": {
+                "fabricID": {
+                    "key": "fabricId",
+                    "vtype": "str"
+                },
+                "LTSSMState": {
+                    "vtype": "str"
+                },
+                "switchID": {
+                    "key": "switchId",
+                    "vtype": "str"
+                },
+                "switchPortNumber": {
+                    "vtype": "str"
+                },
+                "switchPortType": {
+                    "vtype": "str"
+                }
+            }
         }
     },
     "graphicController": {

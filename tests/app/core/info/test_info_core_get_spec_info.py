@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,6 +14,7 @@
 
 """This is a test program."""  # pylint: disable=C0302
 
+import copy
 import os
 import json
 import logging
@@ -21,6 +22,7 @@ import datetime
 import pytest
 from app.common.settings import settings
 from app.core.info.info_core import InformationCore
+from app.core.info.info_const import RESP_ITEM_NAME_CONSTRAINTS
 from app.common.constants import TIME_STAMP_FORMAT
 from app.common.basic_exceptions import (
     BaseHWControlError,
@@ -61,6 +63,15 @@ OOB_DATA_CPU_LINK = {
                 "Replaceable": True,
                 "SerialNumber": "PROCESSOR1",
                 "Socket": "CPU 1",
+                "socketNum": 1,
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "hostName": "sv01",
+                        "id": "0P96F00",
+                        "name": "Quadro P400",
+                        "firmwareversion": "86.07.6B.00.01",
+                    },
+                },
                 "Links": {
                     "Chassis": {"@odata.id": "/redfish/v1/Chassis/Chassis-1"},
                     "ConnectedProcessors": {"@odata.id": "/redfish/v1/System/System-1/Processors/PROC-0001"},
@@ -135,6 +146,15 @@ OOB_DATA_CPU_NO_LINK = {
                 "Replaceable": True,
                 "SerialNumber": "PROCESSOR1",
                 "Socket": "CPU 1",
+                "socketNum": 1,
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "hostName": "sv01",
+                        "id": "0P96F00",
+                        "name": "Quadro P400",
+                        "firmwareversion": "86.07.6B.00.01",
+                    },
+                },
                 "MaxSpeedMHz": 2200,
                 "TotalCores": 8,
                 "TotalThreads": 16,
@@ -170,10 +190,58 @@ FM_DATA_CPU_LINK = {
         {
             "deviceID": "0001",
             "type": "CPU",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "link": [{"deviceID": "2001", "type": "storage"}, {"deviceID": "3001", "type": "networkInterface"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
+    ]
+}
+
+# FM_DATA CPU multi Link present
+FM_DATA_CPU_MULTI_LINK = {
+    "data": [
+        {
+            "deviceID": "0001",
+            "type": "CPU",
+            "link": [{"deviceID": "2001", "type": "storage"}, {"deviceID": "3001", "type": "networkInterface"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                }
+            ],
+        },
+        {
+            "deviceID": "0001",
+            "type": "CPU",
+            "link": [{"deviceID": "2002", "type": "storage"}, {"deviceID": "3002", "type": "networkInterface"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                }
+            ],
+        },
     ]
 }
 
@@ -183,20 +251,65 @@ FM_DATA_CPU_LINK_CPU = {
         {
             "deviceID": "0001",
             "type": "CPU",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "link": [{"deviceID": "0002", "type": "CPU"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
 
 # FM_DATA CPU No Link
-FM_DATA_CPU_NO_LINK = {"data": [{"deviceID": "0001", "type": "CPU", "fabricId": "NEC-01", "LTSSMState": "L0"}]}
+FM_DATA_CPU_NO_LINK = {
+    "data": [
+        {
+            "deviceID": "0001",
+            "type": "CPU",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
 
 # RESP CPU Link present
 RESP_CPU_LINK = {
     "deviceID": "0001",
     "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
     "baseSpeedMHz": 1200,
     "operatingSpeedMHz": 1000,
     "TDPWatts": 100,
@@ -228,14 +341,99 @@ RESP_CPU_LINK = {
     "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP CPU multi Link present
+RESP_CPU_MULTI_LINK = {
+    "deviceID": "0001",
+    "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
+    "baseSpeedMHz": 1200,
+    "operatingSpeedMHz": 1000,
+    "TDPWatts": 100,
+    "totalCores": 8,
+    "totalEnabledCores": 8,
+    "totalThreads": 16,
+    "processorMemories": [{"capacityMiB": 123, "integrated": True, "type": "DDR", "speedMHz": 1200}],
+    "memorySummary": {"ECCModeEnabled": True, "totalCacheSizeMiB": 4096, "totalMemorySizeMiB": 8192},
+    "status": {"health": "OK", "state": "Enabled"},
+    "powerState": "On",
+    "powerCapability": True,
+    "instructionSet": "x86-64",
+    "processorArchitecture": "x86",
+    "processorID": {
+        "effectiveFamily": "0x42",
+        "effectiveModel": "0x61",
+        "identificationRegister": "0x34AC34DC8901274A",
+        "microcodeInfo": "0x429943",
+        "protectedIdentificationNumber": "123456",
+        "step": "0x1",
+        "vendorID": "GenuineIntel",
+    },
+    "links": [
+        {"deviceID": "1001", "type": "memory"},
+        {"deviceID": "2001", "type": "storage"},
+        {"deviceID": "2002", "type": "storage"},
+        {"deviceID": "3001", "type": "networkInterface"},
+        {"deviceID": "3002", "type": "networkInterface"},
+    ],
+    "serialNumber": "PROCESSOR1",
+    "socketNum": 1,
+    "manufacturer": "Intel(R) Corporation",
+    "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP CPU Link CPU
 RESP_CPU_LINK_CPU = {
     "deviceID": "0001",
     "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
     "baseSpeedMHz": 1200,
     "operatingSpeedMHz": 1000,
     "TDPWatts": 100,
@@ -263,14 +461,36 @@ RESP_CPU_LINK_CPU = {
     "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP CPU Link present
 RESP_CPU_LINK_OOB_ONLY = {
     "deviceID": "0001",
     "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
     "baseSpeedMHz": 1200,
     "operatingSpeedMHz": 1000,
     "TDPWatts": 100,
@@ -298,14 +518,36 @@ RESP_CPU_LINK_OOB_ONLY = {
     "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP CPU Link present
 RESP_CPU_LINK_FM_ONLY = {
     "deviceID": "0001",
     "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
     "baseSpeedMHz": 1200,
     "operatingSpeedMHz": 1000,
     "TDPWatts": 100,
@@ -333,14 +575,36 @@ RESP_CPU_LINK_FM_ONLY = {
     "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP CPU No Link
 RESP_CPU_NO_LINK = {
     "deviceID": "0001",
     "type": "CPU",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "hostName": "sv01",
+            "id": "0P96F00",
+            "name": "Quadro P400",
+            "firmware_version": "86.07.6B.00.01",
+        },
+    },
     "baseSpeedMHz": 1200,
     "operatingSpeedMHz": 1000,
     "TDPWatts": 100,
@@ -367,8 +631,22 @@ RESP_CPU_NO_LINK = {
     "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # OOB_DATA memory Link present
@@ -486,12 +764,26 @@ FM_DATA_MEMORY_LINK = {
         {
             "deviceID": "1001",
             "type": "memory",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
             "link": [{"deviceID": "0001", "type": "CPU"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -502,11 +794,25 @@ FM_DATA_MEMORY_NO_LINK = {
         {
             "deviceID": "1001",
             "type": "memory",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -542,11 +848,25 @@ RESP_MEMORY_LINK = {
     "serialNumber": "TJ27JXQY",
     "manufacturer": "Generic",
     "model": "Modelxxx",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP memory No Link
@@ -579,11 +899,25 @@ RESP_MEMORY_NO_LINK = {
     "serialNumber": "TJ27JXQY",
     "manufacturer": "Generic",
     "model": "Modelxxx",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # OOB_DATA storage Link present
@@ -803,12 +1137,26 @@ FM_DATA_STORAGE_LINK = {
         {
             "deviceID": "2001",
             "type": "storage",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
             "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -819,11 +1167,25 @@ FM_DATA_STORAGE_NO_LINK = {
         {
             "deviceID": "2001",
             "type": "storage",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -869,12 +1231,26 @@ RESP_STORAGE_LINK = {
     "volumeManufacturer": "Contoso",
     "volumeModel": "Modelxx123",
     "volumeIdentifiers": [{"durableNameFormat": "UUID", "durableName": "0324c96c-8031-4f5e-886c-50cd90aca854"}],
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
     "model": "C123",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP storage No Link
@@ -917,12 +1293,26 @@ RESP_STORAGE_NO_LINK = {
     "volumeManufacturer": "Contoso",
     "volumeModel": "Modelxx123",
     "volumeIdentifiers": [{"durableNameFormat": "UUID", "durableName": "0324c96c-8031-4f5e-886c-50cd90aca854"}],
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
     "model": "C123",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP storage int value
@@ -950,6 +1340,17 @@ OOB_DATA_NIC_LINK = {
             "type": "networkInterface",
             "deviceID": "3001",
             "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
                 "SerialInterfaces": {"BitRate": "115200"},
                 "Network": {
                     "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
@@ -1002,6 +1403,13 @@ OOB_DATA_NIC_LINK = {
                         }
                     ],
                     "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
                 },
                 "NetworkDeviceFunctions": {
                     "DeviceEnabled": True,
@@ -1042,6 +1450,17 @@ OOB_DATA_NIC_NO_LINK = {
             "type": "networkInterface",
             "deviceID": "3001",
             "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
                 "SerialInterfaces": {"BitRate": "115200"},
                 "Network": {
                     "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
@@ -1094,6 +1513,13 @@ OOB_DATA_NIC_NO_LINK = {
                         }
                     ],
                     "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial005",
+                },
+                "PCIeFunction": {
+                    "DeviceId": None,
+                    "VendorId": "",
                 },
                 "NetworkDeviceFunctions": {
                     "DeviceEnabled": True,
@@ -1142,12 +1568,26 @@ FM_DATA_NIC_LINK = {
         {
             "deviceID": "3001",
             "type": "networkInterface",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
-            "PCIeVendorId": "vendor001",
-            "PCIeDeviceId": "device002",
-            "PCIeDeviceSerialNumber": "serial003",
+            "PCIeVendorId": "",
+            "PCIeDeviceId": None,
+            "PCIeDeviceSerialNumber": "serial005",
             "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -1158,11 +1598,25 @@ FM_DATA_NIC_NO_LINK = {
         {
             "deviceID": "3001",
             "type": "networkInterface",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -1171,6 +1625,17 @@ FM_DATA_NIC_NO_LINK = {
 RESP_NIC_LINK = {
     "deviceID": "3001",
     "type": "networkInterface",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
     "bitRate": "115200",
     "controllers": [
         {
@@ -1230,18 +1695,43 @@ RESP_NIC_LINK = {
     "status": {"state": "Enabled", "health": "OK"},
     "powerState": "On",
     "powerCapability": False,
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
-    "PCIeDeviceSerialNumber": "serial003",
+    "PCIeDeviceSerialNumber": "serial005",
     "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP NIC No Link
 RESP_NIC_NO_LINK = {
     "deviceID": "3001",
     "type": "networkInterface",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
     "bitRate": "115200",
     "controllers": [
         {
@@ -1300,12 +1790,26 @@ RESP_NIC_NO_LINK = {
     "status": {"state": "Enabled", "health": "OK"},
     "powerState": "On",
     "powerCapability": False,
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
     "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP NIC int value
@@ -1313,6 +1817,983 @@ RESP_NIC_INT = {"deviceID": "3001", "type": "networkInterface", "maxSpeedGbps": 
 
 # RESP NIC float value
 RESP_NIC_FLOAT = {"deviceID": "3001", "type": "networkInterface", "maxSpeedGbps": 34.56}
+
+# OOB_DATA FA Link present
+OOB_DATA_FA_LINK = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# OOB_DATA FA No Link
+OOB_DATA_FA_NO_LINK = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# OOB_DATA FA int value
+OOB_DATA_FA_INT = {
+    "devices": [{"type": "sourceFabricAdapter", "deviceID": "3101", "schema": {"Port": {"MaxSpeedGbps": 12}}}]
+}
+
+# OOB_DATA FA float value
+OOB_DATA_FA_FLOAT = {
+    "devices": [{"type": "sourceFabricAdapter", "deviceID": "3101", "schema": {"Port": {"MaxSpeedGbps": 34.56}}}]
+}
+
+# FM_DATA networkInterface Link present
+FM_DATA_FA_LINK = {
+    "data": [
+        {
+            "deviceID": "3101",
+            "type": "sourceFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# FM_DATA networkInterface No Link
+FM_DATA_FA_NO_LINK = {
+    "data": [
+        {
+            "deviceID": "3101",
+            "type": "sourceFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP FA Link present
+RESP_FA_LINK = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "constraints": {
+        "nonRemovableDevices": [
+            {
+                "deviceID": "0001",
+            },
+        ],
+    },
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:ED",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:ED",
+        "vlan": {"enable": True, "id": 101},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "links": [{"type": "CPU", "deviceID": "0001"}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP FA No Link
+RESP_FA_NO_LINK = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:ED",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:ED",
+        "vlan": {"enable": True, "id": 101},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP FA int value
+RESP_FA_INT = {"deviceID": "3101", "type": "sourceFabricAdapter", "maxSpeedGbps": 12}
+
+# RESP FA float value
+RESP_FA_FLOAT = {"deviceID": "3101", "type": "sourceFabricAdapter", "maxSpeedGbps": 34.56}
+
+# OOB_DATA NA Link present
+OOB_DATA_NA_LINK = {
+    "devices": [
+        {
+            "type": "destinationFabricAdapter",
+            "deviceID": "3201",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "dfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# OOB_DATA NA No Link
+OOB_DATA_NA_NO_LINK = {
+    "devices": [
+        {
+            "type": "destinationFabricAdapter",
+            "deviceID": "3201",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "dfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# OOB_DATA NA int value
+OOB_DATA_NA_INT = {
+    "devices": [{"type": "destinationFabricAdapter", "deviceID": "3201", "schema": {"Port": {"MaxSpeedGbps": 12}}}]
+}
+
+# OOB_DATA NA float value
+OOB_DATA_NA_FLOAT = {
+    "devices": [{"type": "destinationFabricAdapter", "deviceID": "3201", "schema": {"Port": {"MaxSpeedGbps": 34.56}}}]
+}
+
+# FM_DATA networkInterface Link present
+FM_DATA_NA_LINK = {
+    "data": [
+        {
+            "deviceID": "3201",
+            "type": "destinationFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# FM_DATA networkInterface No Link
+FM_DATA_NA_NO_LINK = {
+    "data": [
+        {
+            "deviceID": "3201",
+            "type": "destinationFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP NA Link present
+RESP_NA_LINK = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "dfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:ED",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:ED",
+        "vlan": {"enable": True, "id": 101},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "links": [{"type": "CPU", "deviceID": "0001"}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP NA No Link
+RESP_NA_NO_LINK = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "dfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:ED",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:ED",
+        "vlan": {"enable": True, "id": 101},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+# RESP NA int value
+RESP_NA_INT = {"deviceID": "3201", "type": "destinationFabricAdapter", "maxSpeedGbps": 12}
+
+# RESP NA float value
+RESP_NA_FLOAT = {"deviceID": "3201", "type": "destinationFabricAdapter", "maxSpeedGbps": 34.56}
 
 # OOB_DATA GPU Link present
 OOB_DATA_GPU_LINK = {
@@ -1452,12 +2933,26 @@ FM_DATA_GPU_LINK = {
         {
             "deviceID": "4001",
             "type": "GPU",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
             "link": [{"deviceID": "2001", "type": "storage"}, {"deviceID": "3001", "type": "networkInterface"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -1468,11 +2963,25 @@ FM_DATA_GPU_NO_LINK = {
         {
             "deviceID": "4001",
             "type": "GPU",
-            "fabricId": "NEC-01",
-            "LTSSMState": "L0",
             "PCIeVendorId": "vendor001",
             "PCIeDeviceId": "device002",
             "PCIeDeviceSerialNumber": "serial003",
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
         }
     ]
 }
@@ -1509,14 +3018,27 @@ RESP_GPU_LINK = {
         {"deviceID": "5001", "type": "graphicController"},
     ],
     "serialNumber": "GPU1",
-    "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP GPU Link present
@@ -1547,14 +3069,27 @@ RESP_GPU_LINK_OOB_ONLY = {
     },
     "links": [{"deviceID": "5001", "type": "graphicController"}],
     "serialNumber": "GPU1",
-    "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # RESP GPU No Link
@@ -1584,14 +3119,27 @@ RESP_GPU_NO_LINK = {
         "vendorID": "GenuineIntel",
     },
     "serialNumber": "GPU1",
-    "socketNum": 1,
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
-    "fabricID": "NEC-01",
-    "LTSSMState": "L0",
     "PCIeVendorID": "vendor001",
     "PCIeDeviceID": "device002",
     "PCIeDeviceSerialNumber": "serial003",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # OOB_DATA graphicController
@@ -1628,6 +3176,690 @@ RESP_GC = {
     "serialNumber": "GC1",
     "manufacturer": "Intel(R) Corporation",
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
+}
+
+# OOB_DATA FA and PCIe device Link present
+OOB_DATA_FA_PCIE_DEVICE_1 = {
+    "devices": [
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": ""},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": None,
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:FF",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:FF",
+                        "VLAN": {"VLANEnable": True, "VLANId": 100},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "time": "2023-07-06T05:55:55Z",
+        },
+        {
+            "type": "networkInterface",
+            "deviceID": "3001",
+            "schema": {
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "time": "2023-07-06T05:55:55Z",
+        },
+    ]
+}
+
+# OOB_DATA FA and PCIe device Link present
+OOB_DATA_FA_PCIE_DEVICE_2 = {
+    "devices": [
+        {
+            "type": "networkInterface",
+            "deviceID": "3001",
+            "schema": {
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "Network Adapter View",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:ED",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:ED",
+                        "VLAN": {"VLANEnable": True, "VLANId": 101},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "time": "2023-07-06T05:55:55Z",
+        },
+        {
+            "type": "sourceFabricAdapter",
+            "deviceID": "3101",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "type": "eeCard",
+                        "id": "12345",
+                        "status": "sfa",
+                        "groupId": 16,
+                        "linkStatus0": "up",
+                        "linkStatus1": "down",
+                        "switchName": "AD102GL",
+                    },
+                },
+                "SerialInterfaces": {"BitRate": "115200"},
+                "Network": {
+                    "@odata.type": "#NetworkAdapter.v1_9_0.NetworkAdapter",
+                    "Id": "9fa725a1",
+                    "Name": "ExpEther SV",
+                    "Manufacturer": "Contoso",
+                    "Model": "599TPS-T",
+                    "SKU": "Contoso TPS-Net 2-Port Base-T",
+                    "SerialNumber": "003BFLRT00023234",
+                    "PartNumber": "975421-B20",
+                    "Ports": [],
+                    "NetworkDeviceFunctions": [],
+                    "PowerState": "On",
+                    "Status": {"State": "Enabled", "Health": "OK"},
+                    "PowerCapability": False,
+                    "Controllers": [
+                        {
+                            "FirmwarePackageVersion": "7.4.10",
+                            "ControllerCapabilities": {
+                                "NetworkPortCount": 2,
+                                "NetworkDeviceFunctionCount": 8,
+                                "DataCenterBridging": {"Capable": True},
+                                "VirtualizationOffload": {
+                                    "VirtualFunction": {
+                                        "DeviceMaxCount": 256,
+                                        "NetworkPortMaxCount": 128,
+                                        "MinAssignmentGroupSize": 4,
+                                    },
+                                    "SRIOV": {"SRIOVVEPACapable": True},
+                                },
+                                "NPIV": {"MaxDeviceLogins": 4, "MaxPortLogins": 2},
+                                "NPAR": {"NparCapable": True, "NparEnabled": False},
+                            },
+                            "PCIeInterface": {
+                                "PCIeType": "Gen2",
+                                "MaxPCIeType": "Gen3",
+                                "LanesInUse": 1,
+                                "MaxLanes": 4,
+                            },
+                            "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "345C59DBD970859C"}],
+                            "Location": {
+                                "PartLocation": {
+                                    "ServiceLabel": "Slot 1",
+                                    "LocationType": "Slot",
+                                    "LocationOrdinalValue": 0,
+                                    "Reference": "Rear",
+                                    "Orientation": "LeftToRight",
+                                }
+                            },
+                        }
+                    ],
+                    "@odata.id": "/redfish/v1/Chassis/Chassis-1/NetworkAdapters/NIC-3001",
+                },
+                "PCIeDevice": {
+                    "SerialNumber": "serial003",
+                },
+                "PCIeFunction": {
+                    "DeviceId": "device002",
+                    "VendorId": "vendor001",
+                },
+                "NetworkDeviceFunctions": {
+                    "DeviceEnabled": True,
+                    "Ethernet": {
+                        "MACAddress": "00:0C:29:9A:98:FF",
+                        "MTUSize": 1500,
+                        "MTUSizeMaximum": 2500,
+                        "PermanentMACAddress": "00:0C:29:9A:98:FF",
+                        "VLAN": {"VLANEnable": True, "VLANId": 100},
+                    },
+                    "Limits": [
+                        {
+                            "BurstBytesPerSecond": 1,
+                            "BurstPacketsPerSecond": 2,
+                            "Direction": "Ingress",
+                            "SustainedBytesPerSecond": 3,
+                            "SustainedPacketsPerSecond": 4,
+                        }
+                    ],
+                },
+                "Port": {
+                    "FunctionMaxBandwidth": [{"AllocationPercent": 80}],
+                    "FunctionMinBandwidth": [{"AllocationPercent": 80}],
+                    "MaxSpeedGbps": 48,
+                    "LinkConfiguration": [{"CapableLinkSpeedGbps": [1, 2.2, 3]}],
+                },
+            },
+            "time": "2023-07-06T05:55:55Z",
+        },
+    ]
+}
+
+# FM_DATA FA and PCIe device Link present
+FM_DATA_FA_PCIE_DEVICE_1 = {
+    "data": [
+        {
+            "deviceID": "3101",
+            "type": "sourceFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                }
+            ],
+        },
+        {
+            "deviceID": "3001",
+            "type": "networkInterface",
+            "PCIeVendorId": "",
+            "PCIeDeviceId": None,
+            "PCIeDeviceSerialNumber": "serial005",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        },
+    ]
+}
+
+# FM_DATA FA and PCIe device Link present
+FM_DATA_FA_PCIE_DEVICE_2 = {
+    "data": [
+        {
+            "deviceID": "3001",
+            "type": "networkInterface",
+            "PCIeVendorId": "",
+            "PCIeDeviceId": None,
+            "PCIeDeviceSerialNumber": "serial005",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-02",
+                    "LTSSMState": "L2",
+                    "switchId": "fmsw-02",
+                    "switchPortNumber": "2",
+                    "switchPortType": "USP",
+                },
+            ],
+        },
+        {
+            "deviceID": "3101",
+            "type": "sourceFabricAdapter",
+            "PCIeVendorId": "vendor001",
+            "PCIeDeviceId": "device002",
+            "PCIeDeviceSerialNumber": "serial003",
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "devicePortList": [
+                {
+                    "fabricId": "NEC-01",
+                    "LTSSMState": "L0",
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                }
+            ],
+        },
+    ]
+}
+
+# RESP FA and PCIe device Link present
+RESP_FA_PCIE_DEVICE_1 = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "constraints": {
+        "nonRemovableDevices": [
+            {
+                "deviceID": "0001",
+            },
+        ],
+    },
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:FF",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:FF",
+        "vlan": {"enable": True, "id": 100},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "links": [{"type": "CPU", "deviceID": "0001"}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+    ],
+}
+
+
+# RESP FA and PCIe device Link present
+RESP_FA_PCIE_DEVICE_2 = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "type": "eeCard",
+            "id": "12345",
+            "status": "sfa",
+            "groupId": 16,
+            "linkStatus0": "up",
+            "linkStatus1": "down",
+            "switchName": "AD102GL",
+        }
+    },
+    "bitRate": "115200",
+    "controllers": [
+        {
+            "capability": {
+                "dataCenterBridging": {"capable": True},
+                "networkDeviceFunctionCount": 8,
+                "networkPortCount": 2,
+                "npar": {"capable": True, "enabled": False},
+                "npiv": {"maxDeviceLogins": 4, "maxPortLogins": 2},
+                "virtualizationOffload": {
+                    "virtualFunction": {"deviceMaxCount": 256, "networkPortMaxCount": 128, "minAssignmentGroupSize": 4},
+                    "sriov": {"VEPACapable": True},
+                },
+            },
+            "firmwarePackageVersion": "7.4.10",
+            "identifiers": [{"durableNameFormat": "NAA", "durableName": "345C59DBD970859C"}],
+            "location": {
+                "partLocation": {
+                    "serviceLabel": "Slot 1",
+                    "type": "Slot",
+                    "ordinalValue": 0,
+                    "reference": "Rear",
+                    "orientation": "LeftToRight",
+                }
+            },
+            "PCIeInterface": {"lanesInUse": 1, "maxLanes": 4, "PCIeType": "Gen2", "maxPCIeType": "Gen3"},
+        }
+    ],
+    "deviceEnabled": True,
+    "ethernet": {
+        "MACAddress": "00:0C:29:9A:98:FF",
+        "MTUSize": 1500,
+        "MTUSizeMaximum": 2500,
+        "permanentMACAddress": "00:0C:29:9A:98:FF",
+        "vlan": {"enable": True, "id": 100},
+    },
+    "limits": [
+        {
+            "burstBytesPerSecond": 1,
+            "burstPacketsPerSecond": 2,
+            "direction": "Ingress",
+            "sustainedBytesPerSecond": 3,
+            "sustainedPacketsPerSecond": 4,
+        }
+    ],
+    "functionMaxBandwidths": [{"allocationPercent": 80}],
+    "functionMinBandwidths": [{"allocationPercent": 80}],
+    "maxSpeedGbps": 48,
+    "linkConfigurations": [{"capableLinkSpeedsGbps": [1, 2.2, 3]}],
+    "links": [{"type": "CPU", "deviceID": "0001"}],
+    "networkAdapterSerialNumber": "003BFLRT00023234",
+    "networkAdapterManufacturer": "Contoso",
+    "networkAdapterModel": "599TPS-T",
+    "fabricAdapterSerialNumber": "003BFLRT00023234",
+    "fabricAdapterManufacturer": "Contoso",
+    "fabricAdapterModel": "599TPS-T",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "PCIeVendorID": "vendor001",
+    "PCIeDeviceID": "device002",
+    "PCIeDeviceSerialNumber": "serial003",
+    "model": "599TPS-T",
+    "devicePortList": [
+        {
+            "fabricID": "NEC-02",
+            "LTSSMState": "L2",
+            "switchID": "fmsw-02",
+            "switchPortNumber": "2",
+            "switchPortType": "USP",
+        },
+        {
+            "fabricID": "NEC-01",
+            "LTSSMState": "L0",
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "USP",
+        },
+    ],
 }
 
 # Mapping table file
@@ -1735,6 +3967,36 @@ def test_get_spec_info_cpu_link_fm_only(mocker):
     assert RESP_CPU_LINK_FM_ONLY == _link_sort(spec_data)
 
 
+def test_get_spec_info_cpu_multi_links(mocker):
+    """Test Get Information CPU multi links"""
+    spec_data, _ = _get_spec_info(mocker, "0001", "CPU", OOB_DATA_CPU_LINK, FM_DATA_CPU_MULTI_LINK, True)
+    # Link present
+    assert RESP_CPU_MULTI_LINK == _link_sort(spec_data)
+
+
+def test_get_spec_info_cpu_multi_links_error(mocker, caplog):
+    """Test Get Information CPU multi links on error"""
+    fm_data = copy.deepcopy(FM_DATA_CPU_MULTI_LINK)
+    fm_data["data"][1]["deviceID"] = "0002"
+    spec_data, errors = _get_spec_info(mocker, "0001", "CPU", OOB_DATA_CPU_LINK, fm_data, False)
+
+    assert spec_data is None
+
+    assert errors == [
+        {
+            "errorCode": "EF010BAS000",
+            "errorMessage": "The server encountered an internal error. "
+            "The target device cannot merged. Device ID 1: 0001,CPU, Device ID 2: 0002,CPU.",
+        }
+    ]
+
+    assert _log_contains(
+        caplog.record_tuples,
+        logging.WARNING,
+        "W00001: Unexpected Exception: The target device cannot merged. Device ID 1: 0001,CPU, Device ID 2: 0002,CPU.",
+    )
+
+
 def test_get_spec_info_cpu_no_link(mocker):
     """Test Get Information CPU"""
     spec_data, errors = _get_spec_info(mocker, "0001", "CPU", OOB_DATA_CPU_NO_LINK, FM_DATA_CPU_NO_LINK, True)
@@ -1816,6 +4078,66 @@ def test_get_spec_info_nic_float(mocker):
     assert RESP_NIC_FLOAT == spec_data
 
 
+def test_get_spec_info_fa_link(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    spec_data, _ = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_LINK, FM_DATA_FA_LINK, True)
+    # Link present
+    assert RESP_FA_LINK == _link_sort(spec_data)
+
+
+def test_get_spec_info_fa_no_link(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    # No Link
+    spec_data, errors = _get_spec_info(
+        mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_NO_LINK, FM_DATA_FA_NO_LINK, True
+    )
+    assert (RESP_FA_NO_LINK, []) == (spec_data, errors)
+
+
+def test_get_spec_info_fa_int(mocker):
+    """Test Get Information sourceFabricAdapter int value"""
+    spec_data, _ = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_INT, None, True)
+    # int value
+    assert RESP_FA_INT == spec_data
+
+
+def test_get_spec_info_fa_float(mocker):
+    """Test Get Information sourceFabricAdapter float value"""
+    spec_data, _ = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_FLOAT, None, True)
+    # float value
+    assert RESP_FA_FLOAT == spec_data
+
+
+def test_get_spec_info_na_link(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    spec_data, _ = _get_spec_info(mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_LINK, FM_DATA_NA_LINK, True)
+    # Link present
+    assert RESP_NA_LINK == _link_sort(spec_data)
+
+
+def test_get_spec_info_na_no_link(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    # No Link
+    spec_data, errors = _get_spec_info(
+        mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_NO_LINK, FM_DATA_NA_NO_LINK, True
+    )
+    assert (RESP_NA_NO_LINK, []) == (spec_data, errors)
+
+
+def test_get_spec_info_na_int(mocker):
+    """Test Get Information destinationFabricAdapter int value"""
+    spec_data, _ = _get_spec_info(mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_INT, None, True)
+    # int value
+    assert RESP_NA_INT == spec_data
+
+
+def test_get_spec_info_na_float(mocker):
+    """Test Get Information destinationFabricAdapter float value"""
+    spec_data, _ = _get_spec_info(mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_FLOAT, None, True)
+    # float value
+    assert RESP_NA_FLOAT == spec_data
+
+
 def test_get_spec_info_other_device_type(mocker, caplog):
     """Test Get Information other Device Type"""
     spec_data, errors = _get_spec_info(mocker, "5001", None, {}, {}, False)
@@ -1889,6 +4211,40 @@ def test_get_spec_info_create_spec_info_device_type_none():
     assert {"deviceID": "0001", "type": None} == resp
 
 
+def test_get_spec_info_create_spec_info_remove_empty_item_none(mocker):
+    """create_spec_info remove_empty_item return none"""
+
+    def get_mapping_table(_, __, ___):
+        return {}
+
+    # Replace get mapping table.
+    mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=get_mapping_table)
+
+    def create_resp_from_mapping(_, __):
+        return {}
+
+    # Replace create resp from mapping.
+    mocker.patch("app.core.info.info_utils.create_resp_from_mapping", side_effect=create_resp_from_mapping)
+
+    def remove_empty_item(_):
+        return None
+
+    # Replace remove empty items.
+    mocker.patch("app.core.info.info_utils.remove_empty_item", side_effect=remove_empty_item)
+
+    def _create_constraints(_, __, ___):
+        return {RESP_ITEM_NAME_CONSTRAINTS: {}}
+
+    # Replace create constraints.
+    mocker.patch("app.core.info.info_core.InformationCore._create_constraints", side_effect=_create_constraints)
+
+    get_information = InformationCore()
+    resp = get_information._create_spec_info(  # pylint: disable=protected-access
+        "0001", "CPU", FM_DATA_CPU_LINK, OOB_DATA_CPU_LINK
+    )
+    assert {"deviceID": "0001", "type": "CPU"} == resp
+
+
 def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_oob(mocker, caplog):
     """create_spec_info create_resp_from_mapping exception oob"""
 
@@ -1950,7 +4306,7 @@ def test_get_spec_info_create_spec_info_get_mapping_table_none(mocker):
     def mock_get_mapping_table(_, __, ___):
         return None
 
-    def mock_create_constraints(_, __):
+    def mock_create_constraints(_, __, ___):
         return {"constraints": None}
 
     mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=mock_get_mapping_table)
@@ -2178,6 +4534,118 @@ def test_get_spec_info_nic_no_constraints_nonremovable(mocker):
     assert RESP_NIC_NO_LINK == ret
 
 
+def test_get_spec_info_fa_constraints_nonremovable(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    resp_constraints_dict = dict(RESP_FA_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    resp, errors = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_LINK, FM_DATA_FA_LINK, True, False)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_built_in_fa_constraints_nonremovable(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    resp_constraints_dict = dict(RESP_FA_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+
+    resp, errors = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_LINK, FM_DATA_FA_LINK, True, None)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_cxl_fa_constraints_nonremovable(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+
+    resp, errors = _get_spec_info(mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_LINK, FM_DATA_FA_LINK, True, None)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_FA_LINK == ret
+
+
+def test_get_spec_info_fa_no_constraints_nonremovable(mocker):
+    """Test Get Information sourceFabricAdapter"""
+    # No Link
+    resp, errors = _get_spec_info(
+        mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_NO_LINK, FM_DATA_FA_NO_LINK, True, False
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_FA_NO_LINK == ret
+
+
+def test_get_spec_info_na_constraints_nonremovable(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    resp_constraints_dict = dict(RESP_NA_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    resp, errors = _get_spec_info(
+        mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_LINK, FM_DATA_NA_LINK, True, False
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_built_in_na_constraints_nonremovable(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    resp_constraints_dict = dict(RESP_NA_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+
+    resp, errors = _get_spec_info(
+        mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_LINK, FM_DATA_NA_LINK, True, None
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_cxl_na_constraints_nonremovable(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+
+    resp, errors = _get_spec_info(
+        mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_LINK, FM_DATA_NA_LINK, True, None
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_NA_LINK == ret
+
+
+def test_get_spec_info_na_no_constraints_nonremovable(mocker):
+    """Test Get Information destinationFabricAdapter"""
+    # No Link
+    resp, errors = _get_spec_info(
+        mocker, "3201", "destinationFabricAdapter", OOB_DATA_NA_NO_LINK, FM_DATA_NA_NO_LINK, True, False
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_NA_NO_LINK == ret
+
+
 def test_get_spec_info_gpu_constraints_nonremovable(mocker):
     """Test Get Information GPU"""
     resp_constraints_dict = dict(RESP_GPU_LINK)
@@ -2258,3 +4726,21 @@ def test_get_spec_info_create_constraints_exception_devicenotfound(mocker):
     _, errors = get_information.get_spec_info("0001")
     assert len(errors) > 0
     assert errors[0] == {"errorCode": "EF013BAS000", "errorMessage": "The specified target device is not found."}
+
+
+def test_get_spec_info_fa_and_pcie_device_1(mocker):
+    """Test Get Information sourceFabricAdapter and PCIe device value"""
+    spec_data, _ = _get_spec_info(
+        mocker, "3101", "sourceFabricAdapter", OOB_DATA_FA_PCIE_DEVICE_1, FM_DATA_FA_PCIE_DEVICE_1, True
+    )
+
+    assert RESP_FA_PCIE_DEVICE_1 == spec_data
+
+
+def test_get_spec_info_fa_and_pcie_device_2(mocker):
+    """Test Get Information sourceFabricAdapter and PCIe device value"""
+    spec_data, _ = _get_spec_info(
+        mocker, "3001", "networkInterface", OOB_DATA_FA_PCIE_DEVICE_2, FM_DATA_FA_PCIE_DEVICE_2, True
+    )
+
+    assert RESP_FA_PCIE_DEVICE_2 == spec_data

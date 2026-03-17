@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW control function - constant definition
-"""
+"""HW control function - constant definition"""
 from enum import Enum
 
 
@@ -22,6 +21,13 @@ BASE_URL = "/cdim/api"
 
 # Date and time format
 TIME_STAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+# Correlation ID header
+CORRELATION_ID_HEADER = "x-correlation-id"
+
+# Default correlation ID value when not set in context variable (asgi_correlation_id.correlation_id).
+# This value is used as a fallback when the correlation ID is not stored in the context variable.
+CORRELATION_ID_DEFAULT_VALUE = "-"
 
 
 class DeviceType(Enum):
@@ -39,6 +45,8 @@ class DeviceType(Enum):
         GC: Represents a Graphic Controller device.
         SWITCH: Represents a SWITCH device.
         VM: Represents a Virtual Media device.
+        SFA: Represents a source fabric adapter device.
+        DFA: Represents a destination fabric adapter device.
     """
 
     CPU = "CPU"
@@ -49,6 +57,8 @@ class DeviceType(Enum):
     GC = "graphicController"
     SWITCH = "switch"
     VM = "virtualMedia"
+    SFA = "sourceFabricAdapter"
+    DFA = "destinationFabricAdapter"
 
 
 class ManagerType(Enum):

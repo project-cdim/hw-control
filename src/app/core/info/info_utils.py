@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -23,10 +23,12 @@ type and return it to the information acquisition API.
 
 import logging
 import json
-from typing import Any
 from pathlib import Path
-from app.common.messages import message
+from typing import Any
 from app.common.basic_exceptions import InternalHWControlError
+import app.common.constants as const
+from app.common.dim import device_id_base as dim
+from app.common.messages import message
 from app.common.settings import settings
 from app.core.info import info_const, info_conv_funcs
 
@@ -95,7 +97,7 @@ def remove_empty_item(resp: Any) -> Any:
     return resp
 
 
-def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict:
+def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict[str, Any]:
     """Create response data from mapping table
 
     Create response data from source data according to mapping table.
@@ -105,9 +107,9 @@ def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict:
         source_data (dict): source data
 
     Returns:
-        dict: response data
+        dict[str, Any]: response data
     """
-    response_data = {}
+    response_data: dict[str, Any] = {}
 
     # Loops while extracting the destination key and its mapping information.
     for dest_key, mapping_data in mapping_table.items():
@@ -118,14 +120,14 @@ def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict:
         # If a path is specified (different hierarchy to migrate to),
         if info_const.MAPPING_ITEM_PATH in mapping_data:
             parts = mapping_data[info_const.MAPPING_ITEM_PATH].split(".")
-            temp_data = source_data
+            temp_data: dict[str, Any] | Any = source_data
             # Extract the path value.
             for part in parts:
                 temp_data = temp_data.get(part, {})
             value = temp_data
         else:
             # Extract data for the source key.
-            value = source_data.get(key, None)
+            value = source_data.get(key, None)  # type: ignore[assignment]
 
         if isinstance(value, dict):
             # Process the target dict type data by recursive calls.
@@ -164,10 +166,8 @@ def _check_required_item(mapping_data: dict, key: str, item_value: Any) -> None:
     Returns:
         None
     """
-    if (
-        mapping_data.get(info_const.MAPPING_ITEM_REQUIRED, False)
-        and item_value is None
-        or (isinstance(item_value, str) and item_value.strip() == "")
+    if mapping_data.get(info_const.MAPPING_ITEM_REQUIRED, False) and (
+        item_value is None or (isinstance(item_value, str) and item_value.strip() == "")
     ):
         logger.warning(message.get_log_message(message.W00008, [f"key:{key}"]))
         raise InternalHWControlError(additional_message="The received data is missing required item.")
@@ -313,10 +313,12 @@ def load_mapping_table() -> None:
                 source_type, ""
             )
             # File does not exist.
-            if not Path.exists(file_path):
+            if not file_path.exists():
                 logger.warning(message.get_log_message(message.W00007, [file_path]))
+                # This function is called from info api router lifespan,
+                # so set the message in args instead of additional_message
                 raise InternalHWControlError(
-                    additional_message="The definition file corresponding to the received data is not found."
+                    f"The definition file corresponding to the received data is not found: {file_path}"
                 )
 
             # Read file.
@@ -383,3 +385,153 @@ def get_valid_string(val: Any) -> str | None:
         return val
 
     return None
+
+
+def get_high_priority_device_type(device_type_1: str, device_type_2: str | None) -> str:
+    """Get higher priority Device Type
+
+    Determines and returns the Device Type with higher priority based on predefined priority levels.
+
+    Args:
+        device_type_1 (str): The first Device Type to compare.
+        device_type_2 (str | None): The second Device Type to compare, can be None.
+
+    Returns:
+        str: The Device Type with higher priority. Returns device_type_1 if it has equal or higher priority,
+             otherwise returns device_type_2.
+
+    Priority Levels:
+        - "CPU": 255
+        - "sourceFabricAdapter": 200
+        - "destinationFabricAdapter": 150
+        - "Memory": 100
+        - "Storage": 80
+        - "NetworkInterface": 60
+        - "GPU": 40
+        - "other": 0
+
+    Examples:
+        >>> get_high_priority_device_type("networkInterface", "sourceFabricAdapter")
+        'sourceFabricAdapter'
+        >>> get_high_priority_device_type("networkInterface", None)
+        'networkInterface'
+    """
+    priority = {
+        "cpu": 255,
+        "sourcefabricadapter": 200,
+        "destinationfabricadapter": 150,
+        "memory": 100,
+        "storage": 80,
+        "networkinterface": 60,
+        "gpu": 40,
+        "other": 0,
+    }
+
+    if not device_type_2:
+        return device_type_1
+
+    s_priority = priority.get(device_type_1.lower(), 0)
+    t_priority = priority.get(device_type_2.lower(), 0)
+
+    return device_type_1 if s_priority >= t_priority else device_type_2
+
+
+def get_combination_match_device(device_id: str) -> tuple[str | None, str | None]:
+    """Get Device ID and Device Type for device that combination data match
+
+    Retrieve the combination match Device ID and Device Type based on the given Device ID.
+
+    Args:
+        device_id (str): Device ID for which to find the matching information.
+
+    Returns:
+        tuple[str | None, str | None]: A tuple containing:
+            - The target Device ID (or None if not found)
+            - The target Device Type (or None if not found)
+    """
+    port_type = dim.device_id_to_switch_port_type(device_id)
+
+    target_id = dim.get_device_id_of_switch_port_type(
+        device_id, const.SwitchPortType.DSP if port_type == const.SwitchPortType.USP.value else const.SwitchPortType.USP
+    )
+    if target_id:
+        # Return the information once the combination device is obtained.
+        return target_id, dim.device_id_to_device_type(target_id)
+
+    if port_type:
+        target_id = dim.get_device_id_of_switch_port_type(device_id, None)
+        if target_id:
+            # Return the information once the combination device is obtained.
+            return target_id, dim.device_id_to_device_type(target_id)
+
+    # Return None if a combination device is not found.
+    return None, None
+
+
+def get_merge_type(device_type_1: str, device_type_2: str | None) -> int:
+    """Get merge type
+
+    Determines the merge type between two device types.
+
+    Args:
+        device_type_1 (str): The first device type to compare.
+        device_type_2 (str | None): The second device type to compare, can be None.
+
+    Returns:
+        int:
+            0 if the first device type has higher priority
+            1 if the second device type has higher priority
+    """
+    if get_high_priority_device_type(device_type_1, device_type_2) == device_type_1:
+        return 0
+
+    return 1
+
+
+def merge_dict(source: dict, target: dict, duplicate_key_action: int) -> dict:
+    """
+    Recursively merges two dictionaries with configurable handling of duplicate keys.
+
+    Args:
+        source (dict): The dictionary to which values will be merged
+        target (dict): The dictionary containing values to merge into source
+        duplicate_key_action (int): Action to take when duplicate keys are found:
+            - 0 (default): Keep the original value from source
+            - 1: Overwrite with the value from target
+
+    Returns:
+        dict (dict): Dict data after merge
+    """
+
+    def _is_empty(val):
+        """Return True if val is None or an empty string."""
+        return val is None or (isinstance(val, str) and val.strip() == "")
+
+    for key in target:
+        if key not in source or _is_empty(source[key]):
+            source[key] = target[key]
+        elif isinstance(target[key], dict):
+            merge_dict(source[key], target[key], duplicate_key_action)
+        elif isinstance(target[key], list):
+            merge_lists(source[key], target[key])
+        elif duplicate_key_action == 1 and not _is_empty(target[key]):
+            source[key] = target[key]
+    return source
+
+
+def merge_lists(list1, list2):
+    """
+    Combine two lists and overwrite duplicate elements with the last element.
+
+    Args:
+        list1: The first list
+        list2: The second list
+
+    Returns:
+        The combined list (duplicate elements are merged.
+    """
+    for item in list2:
+        if item not in list1:
+            list1.append(item)
+
+    return list1

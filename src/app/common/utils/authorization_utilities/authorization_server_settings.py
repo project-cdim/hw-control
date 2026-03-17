@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,8 +15,8 @@
 """
 Module for configure settings for request to the Authorization Server.
 
-This module provides a class, `AuthorizationServerSettings`, which fetches 
-configuration settings from environment variables and validates them. 
+This module provides a class, `AuthorizationServerSettings`, which fetches
+configuration settings from environment variables and validates them.
 These settings can be used to facilitate requests to the Authorization Server.
 
 """

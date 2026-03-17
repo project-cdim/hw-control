@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -74,11 +74,11 @@ def _set_device_data_file(mocker, monkeypatch, trailing_slash: bool = True):
     """set device data file"""
     # Current path
     current_path = Path(os.path.dirname(os.path.abspath(__file__)))
-    # Replace the environment variable setting file directory with the current path.
-    config_path = str(current_path)
+    # Replace the environment variable data file directory with the current path.
+    data_path = str(current_path)
     if trailing_slash:
-        config_path += "/"
-    monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", config_path)
+        data_path += "/"
+    monkeypatch.setenv("HW_CONTROL_DATA_FILE_DIR", data_path)
     # Replace the device attribute information file name with the test device attribute information file name.
     mocker.patch.object(app.core.info.metric_agent, "DEVICE_DATA_FILE", TEST_DEVICE_DATA_FILE)
 

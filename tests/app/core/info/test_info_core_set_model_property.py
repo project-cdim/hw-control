@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -71,6 +71,98 @@ RESP_NIC_NETWORK_FABRIC_EXIST_IN = {
 RESP_NIC_NETWORK_FABRIC_EXIST_OUT = {
     "deviceID": "3001",
     "type": "networkInterface",
+    "networkAdapterModel": "NETWORK-T",
+    "fabricAdapterModel": "FABRIC-T",
+    "model": "NETWORK-T",
+}
+
+# RESP FA networkAdapterModel fabricAdapterModel not exist input output
+RESP_FA_NETWORK_FABRIC_NOT_EXIST_IN_OUT = {"deviceID": "3101", "type": "sourceFabricAdapter"}
+
+# RESP FA networkAdapterModel not exist input
+RESP_FA_NETWORK_NOT_EXIST_IN = {"deviceID": "3101", "type": "sourceFabricAdapter", "fabricAdapterModel": "FABRIC-T"}
+
+# RESP FA networkAdapterModel not exist output
+RESP_FA_NETWORK_NOT_EXIST_OUT = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "fabricAdapterModel": "FABRIC-T",
+    "model": "FABRIC-T",
+}
+
+# RESP FA fabricAdapterModel not exist input
+RESP_FA_FABRIC_NOT_EXIST_IN = {"deviceID": "3101", "type": "sourceFabricAdapter", "networkAdapterModel": "NETWORK-T"}
+
+# RESP FA fabricAdapterModel not exist output
+RESP_FA_FABRIC_NOT_EXIST_OUT = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+    "model": "NETWORK-T",
+}
+
+# RESP FA networkAdapterModel fabricAdapterModel exist input
+RESP_FA_NETWORK_FABRIC_EXIST_IN = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+    "fabricAdapterModel": "FABRIC-T",
+}
+
+# RESP FA networkAdapterModel fabricAdapterModel exist output
+RESP_FA_NETWORK_FABRIC_EXIST_OUT = {
+    "deviceID": "3101",
+    "type": "sourceFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+    "fabricAdapterModel": "FABRIC-T",
+    "model": "NETWORK-T",
+}
+
+# RESP NA networkAdapterModel fabricAdapterModel not exist input output
+RESP_NA_NETWORK_FABRIC_NOT_EXIST_IN_OUT = {"deviceID": "3201", "type": "destinationFabricAdapter"}
+
+# RESP NA networkAdapterModel not exist input
+RESP_NA_NETWORK_NOT_EXIST_IN = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "fabricAdapterModel": "FABRIC-T",
+}
+
+# RESP NA networkAdapterModel not exist output
+RESP_NA_NETWORK_NOT_EXIST_OUT = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "fabricAdapterModel": "FABRIC-T",
+    "model": "FABRIC-T",
+}
+
+# RESP NA fabricAdapterModel not exist input
+RESP_NA_FABRIC_NOT_EXIST_IN = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+}
+
+# RESP NA fabricAdapterModel not exist output
+RESP_NA_FABRIC_NOT_EXIST_OUT = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+    "model": "NETWORK-T",
+}
+
+# RESP NA networkAdapterModel fabricAdapterModel exist input
+RESP_NA_NETWORK_FABRIC_EXIST_IN = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
+    "networkAdapterModel": "NETWORK-T",
+    "fabricAdapterModel": "FABRIC-T",
+}
+
+# RESP NA networkAdapterModel fabricAdapterModel exist output
+RESP_NA_NETWORK_FABRIC_EXIST_OUT = {
+    "deviceID": "3201",
+    "type": "destinationFabricAdapter",
     "networkAdapterModel": "NETWORK-T",
     "fabricAdapterModel": "FABRIC-T",
     "model": "NETWORK-T",
@@ -155,6 +247,70 @@ def test_network_fabric_exist():
     assert resp == RESP_NIC_NETWORK_FABRIC_EXIST_OUT
 
 
+def test_network_fabric_fa_not_exist():
+    """Test FA networkAdapterModel fabricAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_FA_NETWORK_FABRIC_NOT_EXIST_IN_OUT
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_FA_NETWORK_FABRIC_NOT_EXIST_IN_OUT
+
+
+def test_network_fa_not_exist():
+    """Test FA networkAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_FA_NETWORK_NOT_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_FA_NETWORK_NOT_EXIST_OUT
+
+
+def test_fabric_fa_not_exist():
+    """Test FA fabricAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_FA_FABRIC_NOT_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_FA_FABRIC_NOT_EXIST_OUT
+
+
+def test_network_fabric_fa_exist():
+    """Test FA networkAdapterModel fabricAdapterModel exist"""
+    get_information = InformationCore()
+    resp = RESP_FA_NETWORK_FABRIC_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_FA_NETWORK_FABRIC_EXIST_OUT
+
+
+def test_network_fabric_na_not_exist():
+    """Test NA networkAdapterModel fabricAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_NA_NETWORK_FABRIC_NOT_EXIST_IN_OUT
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_NA_NETWORK_FABRIC_NOT_EXIST_IN_OUT
+
+
+def test_network_na_not_exist():
+    """Test NA networkAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_NA_NETWORK_NOT_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_NA_NETWORK_NOT_EXIST_OUT
+
+
+def test_fabric_na_not_exist():
+    """Test NA fabricAdapterModel not exist"""
+    get_information = InformationCore()
+    resp = RESP_NA_FABRIC_NOT_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_NA_FABRIC_NOT_EXIST_OUT
+
+
+def test_network_fabric_na_exist():
+    """Test NA networkAdapterModel fabricAdapterModel exist"""
+    get_information = InformationCore()
+    resp = RESP_NA_NETWORK_FABRIC_EXIST_IN
+    get_information._set_model_property(resp)  # pylint: disable=protected-access
+    assert resp == RESP_NA_NETWORK_FABRIC_EXIST_OUT
+
+
 def test_other_device_type():
     """Test other Device Type"""
     get_information = InformationCore()
@@ -171,9 +327,9 @@ def test_device_type_not_exist():
     assert resp == RESP_DEVICE_TYPE_NOT_EXIST_IN_OUT
 
 
-def test_resp_is_none():
-    """Test when response is None"""
+def test_resp_is_not_dict():
+    """Test when response is not a dict (no changes should be made)"""
     get_information = InformationCore()
-    resp = None
+    resp = ""
     get_information._set_model_property(resp)  # pylint: disable=protected-access # type: ignore[protected-access]
-    assert resp is None
+    assert resp == ""

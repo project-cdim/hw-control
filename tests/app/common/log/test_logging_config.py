@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -39,10 +39,10 @@ import pythonjsonlogger
 from uvicorn.config import LOGGING_CONFIG as UvicornLoggingConfig
 from uvicorn.logging import DefaultFormatter as UvicornDefaultFormatter
 from uvicorn.logging import AccessFormatter as UvicornAccessFormatter
+from asgi_correlation_id import CorrelationIdFilter
 
 import app
 import plugins
-from app.common.log import filters
 
 
 @pytest.fixture(scope="function")
@@ -77,196 +77,240 @@ class TestConstructedLoggingSystemConfig:
     def test_app_logger_config(self, default_logging_config: dict):
         """Test the default logging system config."""
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+            logging.config.dictConfig(default_logging_config)
 
-        # logger inspection
-        app_logger = logging.getLogger(app.__name__)
-        assert app_logger.propagate is True, "`app` Logger should propagate messages to the root logger."
-        assert app_logger.level == logging.INFO, "`app` Logger should be set to INFO level."
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
 
-        # handler inspection
-        assert isinstance(
-            app_logger.handlers[0], logging.handlers.RotatingFileHandler
-        ), "`app` Logger should have a RotatingFileHandler."
-        assert app_logger.handlers[0].baseFilename == "/var/log/cdim/app_hw_control.log"
-        assert app_logger.handlers[0].level == logging.INFO
-        assert app_logger.handlers[0].maxBytes == 15000000
-        assert app_logger.handlers[0].backupCount == 100
-        assert app_logger.handlers[0].encoding == "utf-8"
+            # logger inspection
+            app_logger = logging.getLogger(app.__name__)
+            assert app_logger.propagate is True, "`app` Logger should propagate messages to the root logger."
+            assert app_logger.level == logging.INFO, "`app` Logger should be set to INFO level."
 
-        # formatter inspection
-        app_logger_json_formatter = app_logger.handlers[0].formatter
-        assert isinstance(app_logger_json_formatter, pythonjsonlogger.json.JsonFormatter)
-        assert (
-            app_logger_json_formatter._fmt  # pylint: disable=W0212
-            == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d %(request_id)s %(message)s"
-        )
-        assert app_logger_json_formatter.datefmt is None
+            # handler inspection
+            assert isinstance(
+                app_logger.handlers[0], logging.handlers.RotatingFileHandler
+            ), "`app` Logger should have a RotatingFileHandler."
+            assert app_logger.handlers[0].baseFilename == log_file_path_for_test
+            assert app_logger.handlers[0].level == logging.INFO
+            assert app_logger.handlers[0].maxBytes == 15000000
+            assert app_logger.handlers[0].backupCount == 100
+            assert app_logger.handlers[0].encoding == "utf-8"
 
-        # filter inspection
-        assert isinstance(app_logger.handlers[0].filters[0], filters.RequestIDFilter)
+            # formatter inspection
+            app_logger_json_formatter = app_logger.handlers[0].formatter
+            assert isinstance(app_logger_json_formatter, pythonjsonlogger.json.JsonFormatter)
+            assert (
+                app_logger_json_formatter._fmt  # pylint: disable=W0212
+                == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d [%(correlation_id)s] %(message)s"
+            )
+            assert app_logger_json_formatter.datefmt is None
+
+            # filter inspection
+            assert isinstance(app_logger.handlers[0].filters[0], CorrelationIdFilter)
 
     @pytest.mark.usefixtures("shutdown_logging_system")
     def test_plugins_logger_config(self, default_logging_config: dict):
         """Test the plugins logger config."""
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        plugins_logger = logging.getLogger("plugins")
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+            logging.config.dictConfig(default_logging_config)
 
-        # logger inspection
-        assert plugins_logger.level == logging.INFO
-        assert plugins_logger.propagate is True, "Plugins logger should propagate messages to the root logger."
-        assert isinstance(plugins_logger.handlers[0], logging.handlers.RotatingFileHandler)
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
+            plugins_logger = logging.getLogger("plugins")
 
-        # handler inspection
-        assert plugins_logger.handlers[0].baseFilename == "/var/log/cdim/app_hw_control.log"
-        assert plugins_logger.handlers[0].level == logging.INFO
-        assert plugins_logger.handlers[0].maxBytes == 15000000
-        assert plugins_logger.handlers[0].backupCount == 100
-        assert plugins_logger.handlers[0].encoding == "utf-8"
+            # logger inspection
+            assert plugins_logger.level == logging.INFO
+            assert plugins_logger.propagate is True, "Plugins logger should propagate messages to the root logger."
+            assert isinstance(plugins_logger.handlers[0], logging.handlers.RotatingFileHandler)
 
-        # formatter inspection
-        assert isinstance(plugins_logger.handlers[0].formatter, pythonjsonlogger.json.JsonFormatter)
-        assert (
-            plugins_logger.handlers[0].formatter._fmt  # pylint: disable=W0212
-            == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d %(request_id)s %(message)s"
-        )
-        assert plugins_logger.handlers[0].formatter.datefmt is None
+            # handler inspection
+            assert plugins_logger.handlers[0].baseFilename == log_file_path_for_test
+            assert plugins_logger.handlers[0].level == logging.INFO
+            assert plugins_logger.handlers[0].maxBytes == 15000000
+            assert plugins_logger.handlers[0].backupCount == 100
+            assert plugins_logger.handlers[0].encoding == "utf-8"
 
-        # filter inspection
-        assert isinstance(plugins_logger.handlers[0].filters[0], filters.RequestIDFilter)
+            # formatter inspection
+            assert isinstance(plugins_logger.handlers[0].formatter, pythonjsonlogger.json.JsonFormatter)
+            assert (
+                plugins_logger.handlers[0].formatter._fmt  # pylint: disable=W0212
+                == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d [%(correlation_id)s] %(message)s"
+            )
+            assert plugins_logger.handlers[0].formatter.datefmt is None
+
+            # filter inspection
+            assert isinstance(plugins_logger.handlers[0].filters[0], CorrelationIdFilter)
 
     @pytest.mark.usefixtures("shutdown_logging_system")
     def test_uvicorn_logger_config(self, default_logging_config: dict):
         """Test the uvicorn logger config."""
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ config file inspection
-        # logger inspection
-        assert (
-            default_logging_config["loggers"]["uvicorn"]["level"] == UvicornLoggingConfig["loggers"]["uvicorn"]["level"]
-        )
-        assert (
-            default_logging_config["loggers"]["uvicorn"]["propagate"]
-            == UvicornLoggingConfig["loggers"]["uvicorn"]["propagate"]
-        )
-        # handler(uvicorn_default) inspection
-        assert (
-            default_logging_config["handlers"]["uvicorn_default"]["class"]
-            == UvicornLoggingConfig["handlers"]["default"]["class"]
-        )
-        assert (
-            default_logging_config["handlers"]["uvicorn_default"]["stream"]
-            == UvicornLoggingConfig["handlers"]["default"]["stream"]
-        )
-        # formatter(uvicorn_default_formatter) inspection
-        assert (
-            default_logging_config["formatters"]["uvicorn_default_formatter"]
-            == UvicornLoggingConfig["formatters"]["default"]
-        )
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+            logging.config.dictConfig(default_logging_config)
 
-        # ++++ logging system inspection
-        uvicorn_logger = logging.getLogger("uvicorn")
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
 
-        # logger inspection
-        assert uvicorn_logger.level == logging.INFO
-        assert uvicorn_logger.propagate is False, "Uvicorn logger should not propagate messages to the root logger."
-        assert len(uvicorn_logger.handlers) == 1
+            # ++++ config file inspection
+            # logger inspection
+            assert (
+                default_logging_config["loggers"]["uvicorn"]["level"]
+                == UvicornLoggingConfig["loggers"]["uvicorn"]["level"]
+            )
+            assert (
+                default_logging_config["loggers"]["uvicorn"]["propagate"]
+                == UvicornLoggingConfig["loggers"]["uvicorn"]["propagate"]
+            )
+            # handler(uvicorn_default) inspection
+            assert (
+                default_logging_config["handlers"]["uvicorn_default"]["class"]
+                == UvicornLoggingConfig["handlers"]["default"]["class"]
+            )
+            assert (
+                default_logging_config["handlers"]["uvicorn_default"]["stream"]
+                == UvicornLoggingConfig["handlers"]["default"]["stream"]
+            )
+            # formatter(uvicorn_default_formatter) inspection
+            assert (
+                default_logging_config["formatters"]["uvicorn_default_formatter"]
+                == UvicornLoggingConfig["formatters"]["default"]
+            )
 
-        # handler(uvicorn_default) inspection
-        assert isinstance(uvicorn_logger.handlers[0], logging.StreamHandler)
-        assert uvicorn_logger.handlers[0].stream == sys.stderr
+            # ++++ logging system inspection
+            uvicorn_logger = logging.getLogger("uvicorn")
 
-        # formatter(uvicorn_default_formatter) inspection
-        assert isinstance(uvicorn_logger.handlers[0].formatter, UvicornDefaultFormatter)
-        assert getattr(uvicorn_logger.handlers[0].formatter, "_fmt") == "%(levelprefix)s %(message)s"
-        assert getattr(uvicorn_logger.handlers[0].formatter, "use_colors") is False
+            # logger inspection
+            assert uvicorn_logger.level == logging.INFO
+            assert uvicorn_logger.propagate is False, "Uvicorn logger should not propagate messages to the root logger."
+            assert len(uvicorn_logger.handlers) == 1
+
+            # handler(uvicorn_default) inspection
+            assert isinstance(uvicorn_logger.handlers[0], logging.StreamHandler)
+            assert uvicorn_logger.handlers[0].stream == sys.stderr
+
+            # formatter(uvicorn_default_formatter) inspection
+            assert isinstance(uvicorn_logger.handlers[0].formatter, UvicornDefaultFormatter)
+            assert getattr(uvicorn_logger.handlers[0].formatter, "_fmt") == "%(levelprefix)s %(message)s"
+            assert getattr(uvicorn_logger.handlers[0].formatter, "use_colors") is False
 
     @pytest.mark.usefixtures("shutdown_logging_system")
     def test_uvicorn_access_logger_config(self, default_logging_config: dict):
         """Test the uvicorn.access logger config."""
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
 
-        # ++++ config file inspection
-        # logger inspection
-        assert (
-            default_logging_config["loggers"]["uvicorn.access"]["level"]
-            == UvicornLoggingConfig["loggers"]["uvicorn.access"]["level"]
-        )
-        assert (
-            default_logging_config["loggers"]["uvicorn.access"]["propagate"]
-            == UvicornLoggingConfig["loggers"]["uvicorn.access"]["propagate"]
-        )
-        # handler(uvicorn_access) inspection
-        assert (
-            default_logging_config["handlers"]["uvicorn_access"]["class"]
-            == UvicornLoggingConfig["handlers"]["access"]["class"]
-        )
-        assert (
-            default_logging_config["handlers"]["uvicorn_access"]["stream"]
-            == UvicornLoggingConfig["handlers"]["access"]["stream"]
-        )
-        # formatter(uvicorn_access_formatter) inspection
-        assert (
-            default_logging_config["formatters"]["uvicorn_access_formatter"]
-            == UvicornLoggingConfig["formatters"]["access"]
-        )
+            logging.config.dictConfig(default_logging_config)
 
-        # ++++ logging system inspection
-        uvicorn_access_logger = logging.getLogger("uvicorn.access")
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
 
-        # logger inspection
-        assert uvicorn_access_logger.level == logging.INFO
-        assert (
-            uvicorn_access_logger.propagate is False
-        ), "Uvicorn access logger should not propagate messages to the root logger."
-        assert len(uvicorn_access_logger.handlers) == 1
+            # ++++ config file inspection
+            # logger inspection
+            assert (
+                default_logging_config["loggers"]["uvicorn.access"]["level"]
+                == UvicornLoggingConfig["loggers"]["uvicorn.access"]["level"]
+            )
+            assert (
+                default_logging_config["loggers"]["uvicorn.access"]["propagate"]
+                == UvicornLoggingConfig["loggers"]["uvicorn.access"]["propagate"]
+            )
+            # handler(uvicorn_access) inspection
+            assert (
+                default_logging_config["handlers"]["uvicorn_access"]["class"]
+                == UvicornLoggingConfig["handlers"]["access"]["class"]
+            )
+            assert (
+                default_logging_config["handlers"]["uvicorn_access"]["stream"]
+                == UvicornLoggingConfig["handlers"]["access"]["stream"]
+            )
+            # formatter(uvicorn_access_formatter) inspection
+            assert (
+                default_logging_config["formatters"]["uvicorn_access_formatter"]
+                == UvicornLoggingConfig["formatters"]["access"]
+            )
 
-        # handler(uvicorn_access) inspection
-        assert isinstance(uvicorn_access_logger.handlers[0], logging.StreamHandler)
-        assert uvicorn_access_logger.handlers[0].stream == sys.stdout
+            # ++++ logging system inspection
+            uvicorn_access_logger = logging.getLogger("uvicorn.access")
 
-        # formatter(uvicorn_access_formatter) inspection
-        assert isinstance(uvicorn_access_logger.handlers[0].formatter, UvicornAccessFormatter)
-        assert (
-            getattr(uvicorn_access_logger.handlers[0].formatter, "_fmt")
-            == '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
-        )
+            # logger inspection
+            assert uvicorn_access_logger.level == logging.INFO
+            assert (
+                uvicorn_access_logger.propagate is False
+            ), "Uvicorn access logger should not propagate messages to the root logger."
+            assert len(uvicorn_access_logger.handlers) == 1
+
+            # handler(uvicorn_access) inspection
+            assert isinstance(uvicorn_access_logger.handlers[0], logging.StreamHandler)
+            assert uvicorn_access_logger.handlers[0].stream == sys.stdout
+
+            # formatter(uvicorn_access_formatter) inspection
+            assert isinstance(uvicorn_access_logger.handlers[0].formatter, UvicornAccessFormatter)
+            assert (
+                getattr(uvicorn_access_logger.handlers[0].formatter, "_fmt")
+                == '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s'
+            )
 
     @pytest.mark.usefixtures("shutdown_logging_system")
     def test_uvicorn_error_logger_config(self, default_logging_config: dict):
         """Test the uvicorn.error logger config."""
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        # ++++ config file inspection
-        # logger inspection
-        assert (
-            default_logging_config["loggers"]["uvicorn.error"]["level"]
-            == UvicornLoggingConfig["loggers"]["uvicorn.error"]["level"]
-        )
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
 
-        # ++++ logging system inspection
-        uvicorn_error_logger = logging.getLogger("uvicorn.error")
+            logging.config.dictConfig(default_logging_config)
 
-        # logger inspection
-        assert uvicorn_error_logger.level == logging.INFO
-        assert len(uvicorn_error_logger.handlers) == 0
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
+            # ++++ config file inspection
+            # logger inspection
+            assert (
+                default_logging_config["loggers"]["uvicorn.error"]["level"]
+                == UvicornLoggingConfig["loggers"]["uvicorn.error"]["level"]
+            )
+
+            # ++++ logging system inspection
+            uvicorn_error_logger = logging.getLogger("uvicorn.error")
+
+            # logger inspection
+            assert uvicorn_error_logger.level == logging.INFO
+            assert len(uvicorn_error_logger.handlers) == 0
 
 
 class TestConstructedLoggingSystemBehavior:
@@ -308,14 +352,14 @@ class TestConstructedLoggingSystemBehavior:
 
     @pytest.mark.parametrize("logger_name", [app.__name__, plugins.__name__])
     @pytest.mark.usefixtures("shutdown_logging_system")
-    def test_log_output_default_request_id(self, default_logging_config: dict, logger_name: str):
+    def test_log_output_default_correlation_id(self, default_logging_config: dict, logger_name: str):
         """
-        Test that the logger can log the correct log content and format when request id is not set.
+        Test that the logger can log the correct log content and format when Correlation ID is not set.
         """
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
         # Create a temporary directory for log testing
-        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+        with tempfile.TemporaryDirectory(prefix="hw-control-temp_log_") as log_dir_for_test:
             # Define a subdirectory that does not exist yet
             log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
             # Set the logger configuration dictionary
@@ -346,19 +390,21 @@ class TestConstructedLoggingSystemBehavior:
             assert log_entry_lines[0]["levelname"] == "INFO"
             assert log_entry_lines[0]["pathname"] == os.path.abspath(__file__)
             assert log_entry_lines[0]["lineno"] > 0  # Check that the line number is valid
-            assert "request_id" in log_entry_lines[0], "Log entry should contain request_id."
-            assert log_entry_lines[0]["request_id"] == ""
+            assert "correlation_id" in log_entry_lines[0], "Log entry should contain correlation_id."
+            assert log_entry_lines[0]["correlation_id"] == "-"
             assert log_entry_lines[0]["message"] == expected_log_message
 
     @pytest.mark.parametrize("logger_name", [app.__name__, plugins.__name__])
     @pytest.mark.usefixtures("shutdown_logging_system")
-    def test_log_output_set_request_id(self, logger_name: str, default_logging_config: dict, dummy_request_id: str):
+    def test_log_output_set_correlation_id(
+        self, logger_name: str, default_logging_config: dict, dummy_correlation_id: str
+    ):
         """
-        Test that the logger can log the correct log content and format when request id is set.
+        Test that the logger can log the correct log content and format when Correlation ID is set.
         """
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Create a temporary directory for log testing
-        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+        with tempfile.TemporaryDirectory(prefix="hw-control-temp_log_") as log_dir_for_test:
             # Define a subdirectory that does not exist yet
             log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
             # Set the logger configuration dictionary
@@ -386,33 +432,34 @@ class TestConstructedLoggingSystemBehavior:
             assert len(log_entry_lines) == 1, "There should be exactly one log entry."
             assert log_entry_lines[0]["levelname"] == "ERROR"
 
-            assert "request_id" in log_entry_lines[0], "Log entry should contain request_id."
-            assert log_entry_lines[0]["request_id"] == dummy_request_id
+            assert "correlation_id" in log_entry_lines[0], "Log entry should contain correlation_id."
+            assert len(log_entry_lines[0]["correlation_id"]) == 36
+            assert log_entry_lines[0]["correlation_id"] == dummy_correlation_id
 
     @pytest.mark.parametrize("logger_name", [app.__name__, plugins.__name__])
     @pytest.mark.usefixtures("shutdown_logging_system")
-    def test_filter_overwrites_request_id_from_extra_parameter(
-        self, logger_name: str, default_logging_config: dict, dummy_request_id: str
+    def test_filter_overwrites_correlation_id_from_extra_parameter(
+        self, logger_name: str, default_logging_config: dict, dummy_correlation_id: str
     ):
-        """Test that RequestIDFilter overwrites request_id set via extra parameter.
+        """Test that CorrelationIdFilter overwrites correlation_id set via extra parameter.
 
-        This test verifies that when a developer accidentally sets 'request_id' in the
-        extra parameters during logging (e.g., logger.error(msg="test", extra={"request_id": "value"})),
-        the RequestIDFilter will overwrite that value with the current request ID obtained
-        from the request context, ensuring consistent request ID tracking throughout the
+        This test verifies that when a developer accidentally sets 'correlation_id' in the
+        extra parameters during logging (e.g., logger.error(msg="test", extra={"correlation_id": "value"})),
+        the CorrelationIdFilter will overwrite that value with the current Correlation ID obtained
+        from the request context, ensuring consistent Correlation ID tracking throughout the
         application logs.
         """
 
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Create a temporary directory for log testing
-        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+        with tempfile.TemporaryDirectory(prefix="hw-control-temp_log_") as log_dir_for_test:
             # Define a subdirectory that does not exist yet
             log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
             # Set the logger configuration dictionary
             default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-            # Set the expected request_id (value from request context set by fixture)
-            expected_request_id = dummy_request_id
+            # Set the expected correlation_id (value from request context set by fixture)
+            expected_correlation_id = dummy_correlation_id
 
             # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
             logging.config.dictConfig(default_logging_config)
@@ -420,7 +467,7 @@ class TestConstructedLoggingSystemBehavior:
             # get logger
             logger = logging.getLogger(f"{logger_name}.foo")
             # output log
-            logger.error(msg="foo", extra={"request_id": "existing Request ID from Logger.log extra parameter"})
+            logger.error(msg="foo", extra={"correlation_id": "existing Correlation ID from Logger.log extra parameter"})
 
             # Read the log
             with open(log_file_path_for_test, encoding="utf-8") as log_file:
@@ -430,65 +477,97 @@ class TestConstructedLoggingSystemBehavior:
             # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
             assert len(log_entry_lines) == 1, "There should be exactly one log entry."
             assert (
-                log_entry_lines[0]["request_id"] == expected_request_id
-            ), "request_id Log entry should set by RequestIDFilter, not from extra parameter."
+                log_entry_lines[0]["correlation_id"] == expected_correlation_id
+            ), "correlation_id Log entry should set by CorrelationIdFilter, not from extra parameter."
 
     def test_uvicorn_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
         """Test that the uvicorn logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
-        logger = logging.getLogger("uvicorn")
-
+        # Set the input values for the log
         log_message = "test_uvicorn_logger"
+
+        # Set the expected log message
         expected_log = f"INFO:     {log_message}\n"
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logger.info(log_message)
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        captured = capsys.readouterr()
-        assert captured.err == expected_log
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+
+            logging.config.dictConfig(default_logging_config)
+            logger = logging.getLogger("uvicorn")
+
+            logger.info(log_message)
+
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
+            captured = capsys.readouterr()
+            assert captured.err == expected_log
 
     def test_uvicorn_access_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
         """Test that the uvicorn access logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
-        logger = logging.getLogger("uvicorn.access")
-
+        # Set the input values for the log
         client_addr = "127.0.0.1"
         method = "GET"
         path = "/api/test"
         http_version = "1.1"
         status_code = http.HTTPStatus.OK
 
+        # Set the expected log message
         expected_log = f'INFO:     {client_addr} - "{method} {path} HTTP/{http_version}" {status_code} OK\n'
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logger.info(
-            '%s - "%s %s HTTP/%s" %d',
-            client_addr,
-            method,
-            path,
-            http_version,
-            status_code,
-        )
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        captured = capsys.readouterr()
-        assert captured.out == expected_log
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+
+            logging.config.dictConfig(default_logging_config)
+            logger = logging.getLogger("uvicorn.access")
+
+            logger.info(
+                '%s - "%s %s HTTP/%s" %d',
+                client_addr,
+                method,
+                path,
+                http_version,
+                status_code,
+            )
+
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
+            captured = capsys.readouterr()
+            assert captured.out == expected_log
 
     def test_uvicorn_error_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
         """Test that the uvicorn error logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        logging.config.dictConfig(default_logging_config)
-        logger = logging.getLogger("uvicorn.error")
-
+        # Set the input values for the log
         log_message = "test_uvicorn_error_logger"
+
+        # Set the expected log message
         expected_log = f"INFO:     {log_message}\n"
 
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        logger.info(log_message)
+        # Create a temporary directory for log testing
+        with tempfile.TemporaryDirectory(prefix="hw-control_temp_log_") as log_dir_for_test:
+            # Define a subdirectory that does not exist yet
+            log_file_path_for_test = os.path.join(log_dir_for_test, "app_hw_control.log")
+            # Set the logger configuration dictionary
+            default_logging_config["handlers"]["app_log_handler"]["filename"] = log_file_path_for_test
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        captured = capsys.readouterr()
-        assert captured.err == expected_log
+            # ++++ execution ++++++++++++++++++++++++++++++++++++++++++#
+
+            logging.config.dictConfig(default_logging_config)
+            logger = logging.getLogger("uvicorn.error")
+
+            logger.info(log_message)
+
+            # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
+            captured = capsys.readouterr()
+            assert captured.err == expected_log

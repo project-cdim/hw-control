@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,7 +13,7 @@
 #  under the License.
 
 """
-This module defines an exception class that inherits from the 
+This module defines an exception class that inherits from the
 InternalHWControlError class.
 The exception classes defined in this module are as follows.
 

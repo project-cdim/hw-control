@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -21,31 +21,7 @@ type and return it to the information acquisition API.
 
 """
 
-import re
 from typing import Any
-
-
-def get_socket_number(mapping_data: dict, key: str, item_value: str) -> Any:  # pylint: disable=W0613
-    """Get socket number
-
-    Get socket number from socket string.
-
-    Args:
-        mapping_data (dict): mapping data
-        key (str): item key
-        item_value (str): item value
-
-    Returns:
-        Any: socket number or None
-    """
-    # Regular expression.
-    pattern = r"CPU (\d+)"
-
-    # Matching.
-    match = re.match(pattern, item_value)
-
-    # If it matches, convert it to a number and return it, otherwise return None.
-    return int(match.group(1)) if match else None
 
 
 def _parse_days(date_part: str) -> int | None:

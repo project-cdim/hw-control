@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -29,15 +29,14 @@ from collections.abc import Callable
 from pydantic import BaseModel, Field
 from app.common.messages import message
 from app.common.basic_exceptions import BaseHWControlError, InternalHWControlError
-from app.core.info.spec_oob import GetSpecOOBInfo
-from app.core.info.spec_fm import GetSpecFMInfo
-from app.core.info.metric_agent import InfoMetricAgent
-from app.common.constants import TIME_STAMP_FORMAT
-from app.common.dim import device_id_base as dim
 import app.common.constants as const
+from app.common.dim import device_id_base as dim
+from app.common.settings import settings
 from app.common.utils import error_utils
 from app.core.info import info_utils, info_const
-from app.common.settings import settings
+from app.core.info.metric_agent import InfoMetricAgent
+from app.core.info.spec_fm import GetSpecFMInfo
+from app.core.info.spec_oob import GetSpecOOBInfo
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +134,7 @@ class InformationCore:
             if response_data is not None:
                 # Set current datetime and assign it to the return data structure.
                 response_data[info_const.RESP_ITEM_NAME_INFO_TIMESTAMP] = datetime.datetime.now(datetime.UTC).strftime(
-                    TIME_STAMP_FORMAT
+                    const.TIME_STAMP_FORMAT
                 )
 
         # Return response data.
@@ -185,6 +184,8 @@ class InformationCore:
             const.DeviceType.CPU.value,
             const.DeviceType.STORAGE.value,
             const.DeviceType.NIC.value,
+            const.DeviceType.SFA.value,
+            const.DeviceType.DFA.value,
             const.DeviceType.MEMORY.value,
             const.DeviceType.GPU.value,
         ):
@@ -216,7 +217,11 @@ class InformationCore:
         get_spec_fm_info = GetSpecFMInfo()
         fm_data = fetch_data(lambda: get_spec_fm_info.get_spec_fm(device_id, device_type))
 
-        if settings.HW_CONTROL_AGENT_ENABLED and device_type != const.DeviceType.GPU.value:
+        if settings.HW_CONTROL_AGENT_ENABLED and device_type not in (
+            const.DeviceType.GPU.value,
+            const.DeviceType.SFA.value,
+            const.DeviceType.DFA.value,
+        ):
             try:
                 # Check agent connectivity.
                 is_agent_access, cpu_device_id = self._verify_agent_access(device_id, device_type, oob_data, fm_data)
@@ -235,7 +240,7 @@ class InformationCore:
         if response_data:
             # Retrieve current datetime and assign it to the return data structure.
             response_data[info_const.RESP_ITEM_NAME_INFO_TIMESTAMP] = datetime.datetime.now(datetime.UTC).strftime(
-                TIME_STAMP_FORMAT
+                const.TIME_STAMP_FORMAT
             )
 
         # Return response data.
@@ -265,58 +270,114 @@ class InformationCore:
         if device_type is None:
             return resp
 
+        def _merge_resp(source_type: str, data: dict) -> dict:
+            """
+            Merges response data for a given source type and data item using a mapping table.
+
+            Args:
+                source_type (str): The type of the data source.
+                data (dict): The data dictionary containing the response data.
+
+            Returns:
+                dict: The merged response dictionary created from the mapping table and data item.
+                      Returns an empty dictionary if data or mapping is None, or if an exception occurs.
+
+            Raises:
+                BaseHWControlError: If an error occurs during response creation from the mapping.
+            """
+            mapping = info_utils.get_mapping_table(device_type, source_type, info_const.DATA_TYPE_SPEC)
+            if mapping is not None:
+                try:
+                    resp = info_utils.create_resp_from_mapping(mapping, data)
+                    # Remove items with missing values from the response.
+                    return info_utils.remove_empty_item(resp)
+                except BaseHWControlError as bex:
+                    logger.warning(
+                        "Device ID:%s, %s data:%r, Error Code:%s, Error Message:%s, Exception:%r",
+                        device_id,
+                        source_type,
+                        data,
+                        bex.error_code,
+                        bex.message,
+                        bex,
+                    )
+                    raise
+            return {}
+
         resp_oob, resp_fm = None, None
 
-        if oob_data:
-            try:
-                # Get OOB mapping table.
-                oob_mapping = info_utils.get_mapping_table(
-                    device_type, info_const.DATA_SOURCE_TYPE_OOB, info_const.DATA_TYPE_SPEC
-                )
-                if oob_mapping is not None:
-                    # Generate OOB response.
-                    resp_oob = info_utils.create_resp_from_mapping(oob_mapping, oob_data[info_const.OOB_DATA_ITEM][0])
-                    # Merge responses.
-                    resp.update(resp_oob)
-            except BaseHWControlError as bex:
-                logger.warning(
-                    f"Device ID:{device_id}, Agent data:{repr(oob_data)}, "
-                    f"Error Code:{bex.error_code}, Error Message:{bex.message}, Exception:{repr(bex)}"
-                )
-                raise
+        # OOB
+        if oob_data is not None:
+            resp_oob = _merge_resp(
+                info_const.DATA_SOURCE_TYPE_OOB, self._merge_device_info(oob_data[info_const.OOB_DATA_ITEM])
+            )
+            if resp_oob is not None:
+                resp.update(resp_oob)
 
-        if fm_data:
-            try:
-                # Get FM mapping table.
-                fm_mapping = info_utils.get_mapping_table(
-                    device_type, info_const.DATA_SOURCE_TYPE_FM, info_const.DATA_TYPE_SPEC
-                )
-                if fm_mapping is not None:
-                    # Generate FM response.
-                    resp_fm = info_utils.create_resp_from_mapping(fm_mapping, fm_data[info_const.FM_DATA_ITEM][0])
-                    # Merge responses.
-                    resp.update(resp_fm)
-            except BaseHWControlError as bex:
-                logger.warning(
-                    f"Device ID:{device_id}, Agent data:{repr(fm_data)}, "
-                    f"Error Code:{bex.error_code}, Error Message:{bex.message}, Exception:{repr(bex)}"
-                )
-                raise
+        # FM
+        if fm_data is not None:
+            resp_fm = _merge_resp(
+                info_const.DATA_SOURCE_TYPE_FM, self._merge_device_info(fm_data[info_const.FM_DATA_ITEM])
+            )
+            if resp_fm is not None:
+                resp.update(resp_fm)
 
         merged_link = self._merge_spec_link_data(resp_oob, resp_fm)
         # Set link data.
-        if len(merged_link) > 0:
+        if merged_link:
             resp[info_const.RESP_ITEM_NAME_LINK] = merged_link
 
         # Set constraints property.
-        constraints = self._create_constraints(device_id, merged_link)
-        resp[info_const.RESP_ITEM_NAME_CONSTRAINTS] = constraints[info_const.RESP_ITEM_NAME_CONSTRAINTS]
+        constraints = self._create_constraints(device_id, device_type, merged_link)
+        if constraints and constraints[info_const.RESP_ITEM_NAME_CONSTRAINTS]:
+            resp[info_const.RESP_ITEM_NAME_CONSTRAINTS] = constraints[info_const.RESP_ITEM_NAME_CONSTRAINTS]
 
         # Set model property according to the Device Type.
         self._set_model_property(resp)
 
-        # Remove items with missing values from the response.
-        return info_utils.remove_empty_item(resp)
+        return resp
+
+    def _merge_device_info(self, device_info_list: list) -> dict:
+        """Merge device information
+
+        Merge a list of device information dictionaries into a single dictionary.
+
+        Args:
+            device_info_list (list):
+                A list of dictionaries containing device information to be merged.
+
+        Returns:
+            dict: Device information after merge.
+
+        Notes:
+            If the input list is empty, an empty dictionary is returned.
+        """
+        result = None
+
+        for item in device_info_list:
+            if result is None:
+                # Set as a merge source.
+                result = item
+                continue
+
+            device_id = result.get(info_const.RESP_ITEM_NAME_DEVICE_ID)
+            device_type = result.get(info_const.RESP_ITEM_NAME_TYPE)
+            target_id = item.get(info_const.RESP_ITEM_NAME_DEVICE_ID)
+            target_type = item.get(info_const.RESP_ITEM_NAME_TYPE)
+
+            if (device_id != target_id) and (device_type == target_type):
+                msg1 = "The target device cannot merged. "
+                msg2 = f"Device ID 1: {device_id},{device_type}, Device ID 2: {target_id},{target_type}."
+                logger.warning(message.get_log_message(message.W00001, [msg1 + msg2]))
+                raise InternalHWControlError(additional_message=msg1 + msg2)
+
+            info_utils.merge_dict(
+                result,
+                item,
+                info_utils.get_merge_type(result[info_const.RESP_ITEM_NAME_TYPE], item[info_const.RESP_ITEM_NAME_TYPE]),
+            )
+
+        return result if result is not None else {}
 
     def _merge_spec_link_data(self, resp_oob: dict | None, resp_fm: dict | None) -> list[Any]:
         """Merge spec link data
@@ -369,7 +430,7 @@ class InformationCore:
             val = info_utils.get_valid_string(resp.get(info_const.RESP_ITEM_NAME_DRIVE_MODEL, None))
             if val is not None:
                 model = val
-        elif device_type == const.DeviceType.NIC.value:
+        elif device_type in (const.DeviceType.NIC.value, const.DeviceType.SFA.value, const.DeviceType.DFA.value):
             val = info_utils.get_valid_string(resp.get(info_const.RESP_ITEM_NAME_NETWORK_ADAPTER_MODEL, None))
             if val is not None:
                 model = val
@@ -429,11 +490,18 @@ class InformationCore:
             mapping = info_utils.get_mapping_table(device_type, source_type, info_const.DATA_TYPE_METRIC)
             if mapping is not None:
                 try:
-                    return info_utils.create_resp_from_mapping(mapping, data[data_item][0])
+                    resp = info_utils.create_resp_from_mapping(mapping, data[data_item][0])
+                    # Remove items with missing values from the response.
+                    return info_utils.remove_empty_item(resp)
                 except BaseHWControlError as bex:
                     logger.warning(
-                        f"Device ID:{device_id}, {source_type} data:{repr(data)}, "
-                        f"Error Code:{bex.error_code}, Error Message:{bex.message}, Exception:{repr(bex)}"
+                        "Device ID:%s, %s data:%r, Error Code:%s, Error Message:%s, Exception:%r",
+                        device_id,
+                        source_type,
+                        data,
+                        bex.error_code,
+                        bex.message,
+                        bex,
                     )
                     raise
             return {}
@@ -441,29 +509,31 @@ class InformationCore:
         # Agent
         if agent_data is not None:
             resp_agent = _merge_resp(info_const.DATA_SOURCE_TYPE_AGENT, agent_data, info_const.AGENT_DATA_ITEM)
-            resp = {**resp_agent, **resp}
+            if resp_agent is not None:
+                resp.update(resp_agent)
 
         # OOB
         if oob_data is not None:
             resp_oob = _merge_resp(info_const.DATA_SOURCE_TYPE_OOB, oob_data, info_const.OOB_DATA_ITEM)
-            resp = {**resp_oob, **resp}
+            if resp_oob is not None:
+                resp.update(resp_oob)
 
         # FM
         if fm_data is not None:
             resp_fm = _merge_resp(info_const.DATA_SOURCE_TYPE_FM, fm_data, info_const.FM_DATA_ITEM)
-            resp = {**resp_fm, **resp}
+            if resp_fm is not None:
+                resp.update(resp_fm)
 
-        # Remove items with non-existent values from response.
-        resp = info_utils.remove_empty_item(resp)
         return resp
 
-    def _create_constraints(self, device_id: str, links: list) -> dict:
+    def _create_constraints(self, device_id: str, device_type: str, links: list) -> dict:
         """Create constraints
 
         Generates constraints based on information obtained from OOB and FM and returns them.
 
         Args:
             device_id (str): base Device ID
+            device_type (str): base Device Type
             links (list): device connection information
 
         Returns:
@@ -479,11 +549,18 @@ class InformationCore:
         non_removable_devices: list = []
         for link_device in links:
             link_device_id = link_device.get(info_const.RESP_ITEM_NAME_DEVICE_ID)
-            if (dim.device_id_to_fm_valid(link_device_id) is False) or (
-                is_built_in_device is True and link_device.get(info_const.RESP_ITEM_NAME_TYPE)
+            link_device_type = link_device.get(info_const.RESP_ITEM_NAME_TYPE)
+            if (
+                # If no information has been obtained from the FM,
+                not dim.device_id_to_fm_valid(link_device_id)  # pylint: disable=R0916
+                # or if the base device is an internal device and linking Device Type is "CPU",
+                or (is_built_in_device and link_device_type == const.DeviceType.CPU.value)
+                # or if the base Device Type is "CPU" and linking Device Type is "sourceFabricAdapter",
+                or (device_type == const.DeviceType.CPU.value and link_device_type == const.DeviceType.SFA.value)
+                # or if the base Device Type is "sourceFabricAdapter" and linking Device Type is "CPU",
+                or (device_type == const.DeviceType.SFA.value and link_device_type == const.DeviceType.CPU.value)
             ):
-                # If no information has been obtained from the FM, or if the base device is an internal device
-                # and the Device Type is "CPU", it is determined that disconnection is not possible.
+                # it is determined that disconnection is not possible.
                 non_removable_devices.append({info_const.RESP_ITEM_NAME_DEVICE_ID: link_device_id})
         # Add a list of non-dis-connectable devices to the constraints.
         if len(non_removable_devices) > 0:
@@ -512,38 +589,41 @@ class InformationCore:
                 device_list = get_info.get_device_list("CPU")
 
         """
-
-        resp_data = None
-
         # Create a data structure for returning (for device list).
         resp_device_list = DeviceList()
 
-        # Get a list of Device IDs from Device ID management.
-        dev_id_list = dim.get_controllable_device_id_list()
         # For generating device attribute information (stub).
         dev_list_all = []
         # Loop for the number of Device IDs.
-        for dev_id in dev_id_list:
+        for dev_id in dim.get_controllable_device_id_list():
             # Get Device Type from Device ID management.
             dev_type = dim.device_id_to_device_type(dev_id)
-            if dev_type is not None:
-                # Add to device list for generating device attribute information (stub).
-                dev_list_all.append(
-                    {
-                        info_const.DEVICE_LIST_ITEM_NAME_DEVICE_ID: dev_id,
-                        info_const.DEVICE_LIST_ITEM_NAME_DEVICE_TYPE: dev_type,
-                    }
-                )
-                # If a Device Type is specified as an argument, does it match?
-                if device_type is None or (device_type is not None and dev_type == device_type):
-                    # Pair the Device ID and the Device Type and add to the array.
-                    device = Device()
-                    device.device_id = dev_id
-                    device.type = dev_type
-                    resp_device_list.device_list.append(device)
+            if not dev_type:
+                # Do not return unknown device.
+                continue
+
+            _, target_type = info_utils.get_combination_match_device(dev_id)
+            if info_utils.get_high_priority_device_type(dev_type, target_type) != dev_type:
+                # Do not return low-priority devices.
+                continue
+
+            # Add to device list for generating device attribute information (stub).
+            dev_list_all.append(
+                {
+                    info_const.DEVICE_LIST_ITEM_NAME_DEVICE_ID: dev_id,
+                    info_const.DEVICE_LIST_ITEM_NAME_DEVICE_TYPE: dev_type,
+                }
+            )
+            # If a Device Type is specified as an argument, does it match?
+            if device_type is None or (device_type is not None and dev_type == device_type):
+                # Pair the Device ID and the Device Type and add to the array.
+                device = Device()
+                device.device_id = dev_id
+                device.type = dev_type
+                resp_device_list.device_list.append(device)
 
         # Get the current date and time and set it to the data structure for returning.
-        resp_device_list.info_timestamp = datetime.datetime.now(datetime.UTC).strftime(TIME_STAMP_FORMAT)
+        resp_device_list.info_timestamp = datetime.datetime.now(datetime.UTC).strftime(const.TIME_STAMP_FORMAT)
 
         # Generate device list information from the data structure for returning.
         resp_data = resp_device_list.model_dump(by_alias=True)

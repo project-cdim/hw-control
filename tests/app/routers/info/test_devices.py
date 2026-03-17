@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,7 +20,7 @@ import logging
 import datetime
 import pytest
 from fastapi.testclient import TestClient
-from app.routers.info.devices import router
+from app.hw_control_main import app
 from app.common.basic_exceptions import BaseHWControlError
 from app.common.basic_exceptions import DeviceIDFileNotFoundHWControlError
 from app.common.basic_exceptions import DeviceIDFileIncorrectHWControlError
@@ -32,7 +32,7 @@ from app.common.constants import TIME_STAMP_FORMAT
 # Device list information, item name, current date and time
 DEVICE_LIST_ITEM_NAME_TIME_STAMP = "infoTimestamp"
 
-client = TestClient(router)
+client = TestClient(app)
 
 MOCK_LIST_RET = {
     "deviceList": [
@@ -164,7 +164,7 @@ mock_storage_ret = {
     "infoTimestamp": "2023-10-14T01:36:16Z",
 }
 
-mock_networkInterface_ret = {
+mock_networkInterface_ret = {  # pylint: disable=invalid-name
     "deviceID": "3001",
     "type": "networkInterface",
     "status": {"state": "Enabled", "health": "OK"},

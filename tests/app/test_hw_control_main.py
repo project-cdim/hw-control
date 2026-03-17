@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,6 +16,7 @@
 
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from asgi_correlation_id import CorrelationIdMiddleware
 
 from app import app_life_span
 from app.routers import middlewares
@@ -73,7 +74,7 @@ class TestApplicationInstance:
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert len(middleware_classes) == 2
-        assert middleware_classes[0] is middlewares.RequestIDMiddleware
+        assert middleware_classes[0] is CorrelationIdMiddleware
         assert middleware_classes[1] is middlewares.LoggingMiddleware
 
     def test_lifespan_function_set(self):

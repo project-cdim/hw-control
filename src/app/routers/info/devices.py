@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -28,6 +28,7 @@ from fastapi import APIRouter, Path, Query
 from fastapi.responses import JSONResponse
 
 import app.common.messages.message as msg
+import app.common.plugin.svc.loader as plugin_loader
 from app.common.constants import TIME_STAMP_FORMAT
 from app.common.basic_exceptions import (
     BaseHWControlError,
@@ -37,7 +38,7 @@ from app.common.basic_exceptions import (
 from app.common.dim import device_id_base
 
 from app.routers import api_metadata
-from app.routers.info import response_models
+from app.routers.info import response_models, info_life_span
 from app.routers.info.response_models import ResourceList
 from app.routers.info.response_models import IncompleteList
 from app.routers.info.response_models import DeviceResourceList
@@ -66,6 +67,7 @@ DEVICES_API_LOG_ERR_MESSAGE = " err_message: "  # Log message err_message
 router = APIRouter(
     prefix=f"{constants.BASE_URL}/v1",
     tags=[api_metadata.DEVICE_INFO_API],
+    lifespan=info_life_span.info_router_lifespan,
     responses={
         422: {
             "description": "HTTP status code 422 will not occur.",
@@ -596,6 +598,7 @@ def _get_device_list(device_type: str | None, log_param: str, device_list: dict)
     return None
 
 
+@plugin_loader.enable_plugin_lifecycle
 def _get_all_device_info(
     device_array: list,
     log_param: str,

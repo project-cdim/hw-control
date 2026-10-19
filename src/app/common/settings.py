@@ -12,36 +12,46 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW control function - system environment definition"""
+"""HW control function - system environment definition."""
 
 from functools import lru_cache
 from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """System Preferences
+    """System Preferences.
 
     Set constants used in the system from environment variables.
 
     """
 
-    MAPPING_TABLE_PATH: str = Field(
+    mapping_table_path: str = Field(
         default=str((Path(__file__).parent.parent / "mapping").resolve()),
         alias="HW_CONTROL_MAPPING_TABLE_PATH",
         description="Directory for placing the mapping data file used in response generation.",
     )
 
-    HW_CONTROL_AGENT_ENABLED: bool = Field(
+    agent_enabled: bool = Field(
         default=False,
+        alias="HW_CONTROL_AGENT_ENABLED",
         description="Operation status of Hardware Control Agent",
+    )
+
+    plugin_max_response_size: int = Field(
+        default=1024 * 1024,
+        ge=64 * 1024,
+        le=10 * 1024 * 1024,
+        alias="HW_CONTROL_PLUGIN_MAX_RESPONSE_SIZE",
+        description="Maximum allowed size in bytes of a response received from a remote plugin.",
     )
 
 
 @lru_cache
 def get_settings() -> Settings:
-    """Get device information
+    """Get device information.
 
     Get system environment definition information.
 

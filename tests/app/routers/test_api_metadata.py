@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,15 +14,10 @@
 
 """Unit test module for api_metadata.py module."""
 
-from app.routers import response_models
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.routers import api_metadata
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from app.routers import api_metadata, response_models
 
 
-class TestErrorExampleFactory:  # pylint: disable=R0903
+class TestErrorExampleFactory:
     """Test class for error_example_factory function."""
 
     def test_can_set_error_case_spec(self):
@@ -52,7 +47,45 @@ class TestErrorExampleFactory:  # pylint: disable=R0903
         assert actual == expected_error_example
 
 
-class TestErrorExamplesFactory:  # pylint: disable=R0903
+class TestValidationErrorExampleFactory:
+    """Test class for validation_error_case_spec_factory function."""
+
+    def test_can_set_error_case_spec(self):
+        """
+        Test that the function returns the correct dictionary structure.
+        """
+        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
+        input_case_description = "Test validation error case."
+
+        expected_error_example = {
+            "description": input_case_description,
+            "model": response_models.ValidationErrorResponseModel,
+            "content": {
+                "application/json": {
+                    "example": {
+                        "code": "< An error code will be provided here >",
+                        "message": "< A detailed error message will be provided here >",
+                        "detail": [
+                            {
+                                "type": "< The type of the validation error will be provided here >",
+                                "loc": ["< The location of the invalid request parameter will be provided here >"],
+                                "msg": "< A message describing the validation error will be provided here >",
+                                "input": "< The invalid input value will be provided here >",
+                            },
+                        ],
+                    },
+                }
+            },
+        }
+
+        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
+        actual = api_metadata.validation_error_case_spec_factory(input_case_description)
+
+        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+        assert actual == expected_error_example
+
+
+class TestErrorExamplesFactory:
     """Test class for error_example_factory function."""
 
     def test_can_set_error_case_spec(self):

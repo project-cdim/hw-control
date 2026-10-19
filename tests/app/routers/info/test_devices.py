@@ -12,22 +12,24 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=C0302
 
 """This is a test program."""
 
-import logging
 import datetime
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
-from app.hw_control_main import app
-from app.common.basic_exceptions import BaseHWControlError
-from app.common.basic_exceptions import DeviceIDFileNotFoundHWControlError
-from app.common.basic_exceptions import DeviceIDFileIncorrectHWControlError
-from app.common.basic_exceptions import InternalHWControlError
-from app.routers.info.devices import _get_individually_specified_device_info
 
+from app.common.basic_exceptions import (
+    BaseHWControlError,
+    DeviceIDFileIncorrectHWControlError,
+    DeviceIDFileNotFoundHWControlError,
+    InternalHWControlError,
+)
 from app.common.constants import TIME_STAMP_FORMAT
+from app.hw_control_main import app
+from app.routers.info.devices import _get_individually_specified_device_info
 
 # Device list information, item name, current date and time
 DEVICE_LIST_ITEM_NAME_TIME_STAMP = "infoTimestamp"
@@ -164,7 +166,7 @@ mock_storage_ret = {
     "infoTimestamp": "2023-10-14T01:36:16Z",
 }
 
-mock_networkInterface_ret = {  # pylint: disable=invalid-name
+mock_network_interface_ret = {
     "deviceID": "3001",
     "type": "networkInterface",
     "status": {"state": "Enabled", "health": "OK"},
@@ -174,7 +176,7 @@ mock_networkInterface_ret = {  # pylint: disable=invalid-name
 }
 
 mock_all_resource_list_ret = {
-    "deviceList": [mock_cpu_ret, mock_memory_ret, mock_storage_ret, mock_networkInterface_ret],
+    "deviceList": [mock_cpu_ret, mock_memory_ret, mock_storage_ret, mock_network_interface_ret],
     "infoTimestamp": "2023-10-14T19:00:00Z",
 }
 
@@ -556,7 +558,7 @@ mock_errors_multiple_ret = [
 
 mock_all_resource_list_multiple_ret = {
     "incompleteDeviceList": [mock_cpu_err_info_ret],
-    "deviceList": [mock_memory_ret, mock_storage_ret, mock_networkInterface_ret],
+    "deviceList": [mock_memory_ret, mock_storage_ret, mock_network_interface_ret],
     "infoTimestamp": "2023-10-14T19:00:00Z",
 }
 
@@ -619,7 +621,7 @@ def test_devices_all(mocker, caplog):
         if device_id == "2001":
             return mock_storage_ret, ""
         if device_id == "3001":
-            return mock_networkInterface_ret, ""
+            return mock_network_interface_ret, ""
         return None, ""
 
     _freeze_datetime(mocker)
@@ -2087,7 +2089,7 @@ def test_devices_all_multiple_types(mocker, caplog):
         if device_id == "2001":
             return mock_storage_ret, ""
         if device_id == "3001":
-            return mock_networkInterface_ret, ""
+            return mock_network_interface_ret, ""
         return None, ""
 
     _freeze_datetime(mocker)

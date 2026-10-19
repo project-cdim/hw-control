@@ -12,9 +12,8 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-This module defines an exception class that inherits from the
-ConfigurationHWControlError class.
+"""This module defines an exception class that inherits from the ConfigurationHWControlError class.
+
 The exception classes defined in this module are as follows.
 
 APIUsageHWControlError
@@ -37,7 +36,8 @@ from app.common.basic_exceptions.base_exceptions import ConfigurationHWControlEr
 
 
 class APIUsageHWControlError(ConfigurationHWControlError):
-    """API usage Error Case Exception class
+    """API usage Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of API usage Error.
     """
@@ -47,7 +47,8 @@ class APIUsageHWControlError(ConfigurationHWControlError):
 
 
 class ManagerIDHWControlError(ConfigurationHWControlError):
-    """Manager ID Error Case Exception class
+    """Manager ID Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of Manager ID Error.
     """
@@ -57,7 +58,8 @@ class ManagerIDHWControlError(ConfigurationHWControlError):
 
 
 class PluginGetInstanceHWControlError(ConfigurationHWControlError):
-    """No MethodError Error Case Exception class
+    """No MethodError Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of getting instance error.
     """
@@ -67,7 +69,8 @@ class PluginGetInstanceHWControlError(ConfigurationHWControlError):
 
 
 class PluginRespondUnExpectedTypeHWControlError(ConfigurationHWControlError):
-    """HwControl Configuration Error Exception class
+    """HwControl Configuration Error Exception class.
+
     Class for  HwControl defined exceptions of Plugin Respond Un Expected Type Error.
     """
 
@@ -76,7 +79,8 @@ class PluginRespondUnExpectedTypeHWControlError(ConfigurationHWControlError):
 
 
 class InvalidSerialNumberConfigFileNotFoundHWControlError(ConfigurationHWControlError):
-    """Not Found json file(Invalid Serial Number list file) Error Case Exception class
+    """Not Found json file(Invalid Serial Number list file) Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of finding json file(Invalid Serial Number list file).
     """
@@ -86,7 +90,8 @@ class InvalidSerialNumberConfigFileNotFoundHWControlError(ConfigurationHWControl
 
 
 class InvalidSerialNumberConfigFileIncorrectHWControlError(ConfigurationHWControlError):
-    """Json file(Invalid Serial Number list file) Error Case Exception class
+    """Json file(Invalid Serial Number list file) Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of json file setting error.
     """
@@ -96,7 +101,8 @@ class InvalidSerialNumberConfigFileIncorrectHWControlError(ConfigurationHWContro
 
 
 class DeviceIDFileNotFoundHWControlError(ConfigurationHWControlError):
-    """Not Found json file(Device ID manager file) Error Case Exception class
+    """Not Found json file(Device ID manager file) Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of finding json file(Device ID manager file).
     """
@@ -106,7 +112,8 @@ class DeviceIDFileNotFoundHWControlError(ConfigurationHWControlError):
 
 
 class DeviceIDFileIncorrectHWControlError(ConfigurationHWControlError):
-    """Json file(Device ID manager file) Error Case Exception class
+    """Json file(Device ID manager file) Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of json file setting error.
     """
@@ -116,7 +123,8 @@ class DeviceIDFileIncorrectHWControlError(ConfigurationHWControlError):
 
 
 class DeviceIDFileUpdateHWControlError(ConfigurationHWControlError):
-    """No MethodError Error Case Exception class
+    """No MethodError Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of updating Device ID Management File.
     """
@@ -126,7 +134,8 @@ class DeviceIDFileUpdateHWControlError(ConfigurationHWControlError):
 
 
 class InvalidTypeDeviceIDHWControlError(ConfigurationHWControlError):
-    """Invalid Type Device ID Error Case Exception class
+    """Invalid Type Device ID Error Case Exception class.
+
     This class is common detail exception class for HwControl
     defined exceptions of invalid Type Device ID.
     """
@@ -136,7 +145,8 @@ class InvalidTypeDeviceIDHWControlError(ConfigurationHWControlError):
 
 
 class InvalidDeviceTypeParameterHWControlError(ConfigurationHWControlError):
-    """HwControl Configuration Error Exception class
+    """HwControl Configuration Error Exception class.
+
     Class for  HwControl defined exceptions of Invalid Device Type Parameter Error.
     """
 
@@ -145,7 +155,8 @@ class InvalidDeviceTypeParameterHWControlError(ConfigurationHWControlError):
 
 
 class InvalidLogMessageParameterHWControlError(ConfigurationHWControlError):
-    """HwControl Configuration Error Exception class
+    """HwControl Configuration Error Exception class.
+
     Class for  HwControl defined exceptions of Invalid Log Message Parameter Error.
     """
 
@@ -154,7 +165,8 @@ class InvalidLogMessageParameterHWControlError(ConfigurationHWControlError):
 
 
 class PluginRespondNoneHWControlError(ConfigurationHWControlError):
-    """HwControl Configuration Error Exception class
+    """HwControl Configuration Error Exception class.
+
     Class for  HwControl defined exceptions of Plugin Respond None Error.
     """
 

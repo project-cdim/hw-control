@@ -15,8 +15,10 @@
 """This is a test program."""
 
 from unittest.mock import patch
+
 import pytest
 from fastapi import APIRouter
+
 from app.routers.info import info_life_span
 
 

@@ -6,6 +6,7 @@ hw-control - Pluggable Hardware Controller
 
 - Python 3.13 and later
 - [pdm](https://pdm-project.org/en/latest/)
+- Docker (required for running integration tests)
 
 ## How to install dependencies
 
@@ -58,6 +59,43 @@ pdm run start
 - `HW_CONTROL_DATA_FILE_DIR`
   - This variable specifies the base directory relative to which the data files are located.
   - Default to `/opt/cdim/hw-control/data/`.
+
+- `HW_CONTROL_PLUGIN_FILE_DIR`
+  - This variable specifies the base directory relative to which the plugin configuration files are located.
+  - Default to `/opt/cdim/hw-control/data/plugins`.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_URL`
+  - This variable specifies the connection URL for the device management database.
+  - The URL must follow the [SQLAlchemy database URL format](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls).
+  - This variable is required.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_POOL_SIZE`
+  - This variable specifies the base number of connections maintained in the device management database connection pool.
+  - Default to `5`.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_MAX_OVERFLOW`
+  - This variable specifies the maximum number of temporary connections allowed beyond the device management database connection pool size.
+  - Default to `10`.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_POOL_TIMEOUT`
+  - This variable specifies the timeout value in seconds for acquiring a connection from the device management database connection pool.
+  - Please specify in seconds.
+  - Default to `30`.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_POOL_RECYCLE`
+  - This variable specifies the time in seconds after which device management database connections are recycled.
+  - Please specify in seconds.
+  - Default to `1800`.
+
+- `HW_CONTROL_DEVICE_MANAGER_DB_ECHO`
+  - This variable controls whether SQLAlchemy logs all SQL statements executed against the device management database.
+  - Set to `true` to enable SQL logging. Not recommended for production use.
+  - Default to `false`.
+
+- `HW_CONTROL_PLUGIN_MAX_RESPONSE_SIZE`
+  - This variable specifies the maximum allowed size of a response received from a remote plugin.
+  - Please specify in bytes.
+  - Default to `1048576` (1 MiB).
 
 ### Configuration files
 
@@ -153,12 +191,12 @@ You can use the file registered in the config directory of the repository.
     ```yaml
     ---
     DEFAULT:
-        agent:
-            url: http://0.0.0.0:8100
-            timeout: 600
-        specific_data:
-            diskID: 00000000000000000000
-            macAddress: 00:00:00:00:00:00
+      agent:
+        url: http://0.0.0.0:8100
+        timeout: 600
+      specific_data:
+        diskID: 00000000000000000000
+        macAddress: 00:00:00:00:00:00
     ...
     ```
 
@@ -215,6 +253,12 @@ pdm run lint
 
 ```bash
 pdm run test
+```
+
+## How to run integration tests
+
+```bash
+pdm run test-it
 ```
 
 ## Directories

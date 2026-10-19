@@ -14,16 +14,18 @@
 
 """This is a test program."""
 
-import os
 import logging
+import os
+
 import pytest
-from app.common.settings import settings
+
+import app.core.info.info_conv_funcs as info_conv_funcs
+import app.core.info.info_utils as info_utils
 from app.common.basic_exceptions import (
     InternalHWControlError,
 )
+from app.common.settings import settings
 from app.core.info.info_utils import load_mapping_table
-import app.core.info.info_utils as info_utils
-import app.core.info.info_conv_funcs as info_conv_funcs
 
 # Response Item Name Current DateTime
 RESP_ITEM_NAME_TIME_STAMP = "infoTimestamp"
@@ -249,16 +251,14 @@ def _log_contains(record, level, message) -> bool:
     return next(filter(lambda x: (x[1] == level) and (message in x[2]), record), None) is not None
 
 
-def _create_resp(
-    mocker, _, device_type, data_type, data_source_type, input_data, map_table=MAPPING_TABLE_FILE1
-):  # pylint: disable=W0102
+def _create_resp(mocker, _, device_type, data_type, data_source_type, input_data, map_table=MAPPING_TABLE_FILE1):
     """Create response"""
     # Current path
     current_path = os.path.dirname(os.path.abspath(__file__))
 
     # Replace the path of the mapping table file (constant) with the test mapping table file path.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", map_table)
@@ -267,10 +267,10 @@ def _create_resp(
 
     resp = {}
     # Retrieve mapping table
-    mapping = info_utils.get_mapping_table(device_type, data_type, data_source_type)  # pylint: disable=W0212
+    mapping = info_utils.get_mapping_table(device_type, data_type, data_source_type)
     if mapping is not None:
         # Response generation
-        resp_agent = info_utils.create_resp_from_mapping(mapping, input_data)  # pylint: disable=W0212
+        resp_agent = info_utils.create_resp_from_mapping(mapping, input_data)
         # Remove items with no values from the response.
         resp = info_utils.remove_empty_item(resp_agent)
 
@@ -413,56 +413,56 @@ def test_mapping_convert_function_returned_none_sensing_interval(mocker, caplog)
 
 def test_mapping_duration_to_seconds_normal():
     """Test mapping _duration_to_seconds normal input"""
-    assert 86400 == info_conv_funcs.duration_to_seconds({}, "", "P1D")  # pylint: disable=W0212
-    assert 3600 == info_conv_funcs.duration_to_seconds({}, "", "PT1H")  # pylint: disable=W0212
-    assert 60 == info_conv_funcs.duration_to_seconds({}, "", "PT1M")  # pylint: disable=W0212
-    assert 1 == info_conv_funcs.duration_to_seconds({}, "", "PT1S")  # pylint: disable=W0212
-    assert pytest.approx(1.5) == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")  # pylint: disable=W0212
-    assert 3660 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M")  # pylint: disable=W0212
-    assert 3610 == info_conv_funcs.duration_to_seconds({}, "", "PT1H10S")  # pylint: disable=W0212
-    assert 70 == info_conv_funcs.duration_to_seconds({}, "", "PT1M10S")  # pylint: disable=W0212
-    assert 3670 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M10S")  # pylint: disable=W0212
-    assert 183845 == info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S")  # pylint: disable=W0212
-    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0DT0H0M0S")  # pylint: disable=W0212
-    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0D")  # pylint: disable=W0212
-    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0H")  # pylint: disable=W0212
-    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0M")  # pylint: disable=W0212
-    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0S")  # pylint: disable=W0212
-    assert 183845 == info_conv_funcs.duration_to_seconds({"a": 1}, "b", "P2DT3H4M5S")  # pylint: disable=W0212
+    assert 86400 == info_conv_funcs.duration_to_seconds({}, "", "P1D")
+    assert 3600 == info_conv_funcs.duration_to_seconds({}, "", "PT1H")
+    assert 60 == info_conv_funcs.duration_to_seconds({}, "", "PT1M")
+    assert 1 == info_conv_funcs.duration_to_seconds({}, "", "PT1S")
+    assert pytest.approx(1.5) == info_conv_funcs.duration_to_seconds({}, "", "PT1.5S")
+    assert 3660 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M")
+    assert 3610 == info_conv_funcs.duration_to_seconds({}, "", "PT1H10S")
+    assert 70 == info_conv_funcs.duration_to_seconds({}, "", "PT1M10S")
+    assert 3670 == info_conv_funcs.duration_to_seconds({}, "", "PT1H1M10S")
+    assert 183845 == info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S")
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0DT0H0M0S")
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "P0D")
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0H")
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0M")
+    assert 0 == info_conv_funcs.duration_to_seconds({}, "", "PT0S")
+    assert 183845 == info_conv_funcs.duration_to_seconds({"a": 1}, "b", "P2DT3H4M5S")
 
 
 def test_mapping_duration_to_seconds_invalid():
     """Test mapping _duration_to_seconds invalid input"""
-    assert info_conv_funcs.duration_to_seconds({}, "", "") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "") is None
     assert info_conv_funcs.duration_to_seconds({}, "", None) is None  # type: ignore[arg-type]
-    assert info_conv_funcs.duration_to_seconds({}, "", "T1S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PaDT3H4M5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DTaH4M5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3HaM5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4MaS") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5Sa") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", " P1D") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1D ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "T1S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PaDT3H4M5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DTaH4M5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3HaM5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4MaS") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5Sa") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", " P1D") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1D ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1") is None
     assert info_conv_funcs.duration_to_seconds({}, "", 123) is None  # type: ignore[arg-type]
-    assert info_conv_funcs.duration_to_seconds({}, "", "P") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PD") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PDT") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P-1D") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1H") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1M") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1.5D") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5H") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5M") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1M1DT3H4M5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1M1DT3H4M5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1DT3H4M5S") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "p2DT3H4M5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2dT3H4M5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2Dt3H4M5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3h4M5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4m5S ") is None  # pylint: disable=W0212
-    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5s ") is None  # pylint: disable=W0212
+    assert info_conv_funcs.duration_to_seconds({}, "", "P") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PD") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PDT") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P-1D") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1H") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1M") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT-1S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1.5D") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5H") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "PT1.5M") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1M1DT3H4M5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1M1DT3H4M5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P1Y1DT3H4M5S") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "p2DT3H4M5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2dT3H4M5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2Dt3H4M5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3h4M5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4m5S ") is None
+    assert info_conv_funcs.duration_to_seconds({}, "", "P2DT3H4M5s ") is None

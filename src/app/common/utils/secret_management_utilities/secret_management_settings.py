@@ -12,21 +12,20 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-Module for managing configuration settings for a Secret Management service.
+"""Module for managing configuration settings for a Secret Management service.
 
 This module provides a class, `SecretManagementSettings`, which fetches
 configuration settings from environment variables and validates them.
 These settings can be used to facilitate requests to a Secret Management service.
 
 """
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class SecretManagementSettings(BaseSettings):
-    """
-    Configuration settings for interacting with a Secret Management service.
+    """Configuration settings for interacting with a Secret Management service.
 
     This class retrieves configuration settings from environment variables
     for making requests to a secret management service,

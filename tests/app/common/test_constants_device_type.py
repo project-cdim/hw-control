@@ -21,7 +21,7 @@ def test_device_type_enum_unique():
     """Test that the number of types of ENUM values is correct (must be unique)"""
     # Verify that the number of ENUM values is correct (unique).
     device_types = {item.value for item in DeviceType}
-    assert len(device_types) == 10
+    assert len(device_types) == 11
 
 
 def test_device_type_enum_member_value():
@@ -36,3 +36,4 @@ def test_device_type_enum_member_value():
     assert DeviceType.GC.value == "graphicController"
     assert DeviceType.SWITCH.value == "switch"
     assert DeviceType.VM.value == "virtualMedia"
+    assert DeviceType.UNKNOWN.value == "unknown"

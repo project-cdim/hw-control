@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -47,8 +47,7 @@ def _set_logging_settings() -> None:
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    """
-    Lifespan context manager for the FastAPI application.
+    """Lifespan context manager for the FastAPI application.
 
     This function is called automatically by FastAPI at application startup and shutdown.
     The argument 'application' is set by FastAPI and receives the FastAPI app instance.

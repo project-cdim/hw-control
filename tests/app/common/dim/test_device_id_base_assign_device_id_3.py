@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 3)
 
 Device manager UT.
@@ -103,7 +103,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -646,7 +646,7 @@ class MockPluginGetManagerList:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -760,7 +760,7 @@ class MockPluginPortAndSwitchAndDeviceInvalidInfo:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInvalidInfo(),
 )
 @patch(
@@ -883,7 +883,7 @@ class MockPluginPortAndSwitchAndDeviceInfoNoManagerIDs:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoNoManagerIDs(),
 )
 @patch(
@@ -970,7 +970,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDiffFMPortID:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDiffFMPortID(),
 )
 @patch(
@@ -1049,7 +1049,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDisablePort:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDisablePort(),
 )
 @patch(
@@ -1169,7 +1169,7 @@ class MockPluginPortAndSwitchAndDeviceInfoMultiFM:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoMultiFM(),
 )
 @patch(
@@ -1257,7 +1257,7 @@ class MockPluginPortEssentialAllNone:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortEssentialAllNone())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortEssentialAllNone())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1328,9 +1328,9 @@ def test__assemble_port_data_manager_id_none():
     manager_id = None
 
     ret = 0
-    # pylint: disable=W0212
+
     assembled_data = dim._assemble_port_data(base_info, new_info, manager_id)
-    # pylint: enable=W0212
+
     ret = 1
     assert ret == 1
     assert assembled_data["fmValid"] is False
@@ -1370,9 +1370,9 @@ def test__assemble_switch_data_manager_id_none():
     manager_id = None
 
     ret = 0
-    # pylint: disable=W0212
+
     assembled_data = dim._assemble_switch_data(base_info, new_info, manager_id)
-    # pylint: enable=W0212
+
     ret = 1
     assert ret == 1
     assert assembled_data["fmValid"] is False
@@ -1412,9 +1412,9 @@ def test__update_db_info_fmswid_portkeys_empty_dataframe():
     ]
     devices_info_json = pd.DataFrame()
     new_info_fm_sw_id_d = pd.DataFrame(fm_sw_id_d)
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID"])
-    # pylint: enable=W0212
+
     assert ret1.equals(new_info_fm_sw_id_d)
     assert ret2.empty
 
@@ -1439,9 +1439,9 @@ def test__convert_obj_to_str_1():
         "deviceKeys": "{'D0': {'d02': '1', 'd01': '2'}, 'D1': '111', 'D2': '222'}",
         "portKeys": "{'P0': {'p01': '01', 'p02': '02'}, 'P1': 'p1', 'P2': 'p2'}",
     }
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
 
 
@@ -1459,9 +1459,9 @@ def test__convert_obj_to_str_2():
         "deviceKeys": "123",
         "portKeys": "321",
     }
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
 
 
@@ -1483,9 +1483,9 @@ def test__convert_obj_to_str_3():
         "fmPortID": None,
         "portKeys": "{'P0': {'p01': '01', 'p02': '02'}, 'P1': 'p1', 'P2': 'p2'}",
     }
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
 
 
@@ -1507,9 +1507,9 @@ def test__convert_obj_to_str_4():
         "fmPortID": None,
         "deviceKeys": "{'D0': {'d02': '1', 'd01': '2'}, 'D1': '111', 'D2': '222'}",
     }
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
 
 
@@ -1521,9 +1521,9 @@ def test__convert_obj_to_str_5():
     """
     test = {"DeviceID": "new_deveic_id", "deviceType": None, "fmPortID": None, "deviceKeys": None, "portKeys": None}
     expected = {"DeviceID": "new_deveic_id", "deviceType": None, "fmPortID": None, "deviceKeys": None, "portKeys": None}
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
 
 
@@ -1535,9 +1535,9 @@ def test__convert_obj_to_str_6():
     """
     test = {"DeviceID": "new_deveic_id", "deviceType": None, "fmPortID": None}
     expected = {"DeviceID": "new_deveic_id", "deviceType": None, "fmPortID": None}
-    # pylint: disable=W0212
+
     result = dim._convert_obj_to_str(test, ["deviceKeys", "portKeys"])
-    # pylint: enable=W0212
+
     assert expected == result
     all_reset()
 

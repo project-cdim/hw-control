@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 1)
 
 Device manager UT.
@@ -20,6 +20,7 @@ Note: Currently,
 data accuracy is not automated and must be checked manually.
 
 """
+
 import logging
 import os
 import json
@@ -103,7 +104,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -338,7 +339,7 @@ def test_assign_device_id_get_plugin_err(mocker: MockFixture, caplog: LogCapture
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
 
     ret = 0
-    with patch("app.common.utils.plugin_manager.get_plugin", autospec=True) as mock_get_plugin:
+    with patch("app.common.plugin.plugin_manager._get_plugin", autospec=True) as mock_get_plugin:
         mock_get_plugin.side_effect = Err.APIUsageHWControlError
         caplog.clear()
         with caplog.at_level(logging.INFO, logger=device_id_base.__name__):
@@ -386,7 +387,7 @@ def test_assign_device_id_get_plugin_err_exception(mocker: MockFixture, caplog: 
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
 
     ret = 0
-    with patch("app.common.utils.plugin_manager.get_plugin", autospec=True) as mock_get_plugin:
+    with patch("app.common.plugin.plugin_manager._get_plugin", autospec=True) as mock_get_plugin:
         mock_get_plugin.side_effect = Err.BaseHWControlError
         caplog.clear()
         with caplog.at_level(logging.INFO, logger=device_id_base.__name__):
@@ -452,7 +453,7 @@ class MockPluginErr:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginErr())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginErr())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -545,7 +546,7 @@ class MockPluginOnlySwitchErr:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginOnlySwitchErr())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginOnlySwitchErr())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -618,7 +619,7 @@ class MockPluginErrException:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginErrException())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginErrException())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -712,7 +713,7 @@ class MockPluginOnlySwitchErrException:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginOnlySwitchErrException())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginOnlySwitchErrException())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -791,7 +792,7 @@ class MockPluginNoInfo:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginNoInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginNoInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -930,7 +931,7 @@ class MockPluginJustPortInfo:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginJustPortInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginJustPortInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -991,7 +992,7 @@ class MockPluginJustPortInfo2:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginJustPortInfo2())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginJustPortInfo2())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1051,7 +1052,7 @@ class MockPluginJustPortAndSwitchInfo:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginJustPortAndSwitchInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginJustPortAndSwitchInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1112,7 +1113,7 @@ class MockPluginJustDeviceInfo:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginJustDeviceInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginJustDeviceInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1171,7 +1172,7 @@ class MockPluginPortAndSwitchAndDeviceInfo:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1418,7 +1419,7 @@ class MockPluginPortAndSwitchAndDeviceInfo2:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo2())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo2())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1477,7 +1478,7 @@ class MockPluginPortAndSwitchAndDeviceInfo3:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo3())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo3())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,

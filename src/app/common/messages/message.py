@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -103,8 +103,8 @@ E00006 = "E00006"
 
 
 def get_log_message(message_code: str, param_list: list):
-    """get log message"""
+    """Get log message."""
     try:
         return LOG_MESSAGES[message_code].format(param_list)
-    except Exception as error:  # pylint: disable=W0718
+    except Exception as error:
         raise exc.InvalidLogMessageParameterHWControlError from error

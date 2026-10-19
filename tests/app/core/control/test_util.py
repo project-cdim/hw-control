@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,8 +17,6 @@
 from enum import Enum
 
 from app.common import constants
-from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData, FMSwitchData
-from app.common.utils.oob_plugin_base import OOBPluginBase, OOBDeviceListItem
 
 # ++++ test data ++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -51,60 +49,3 @@ class DummyDeviceInfo(Enum):
 
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-# ++++ side effect of mock ++++++++++++++++++++++++++++++++++++++++++++#
-class DummyFMPlugin(FMPluginBase):
-    """Dummy FM Plugin class for UT."""
-
-    def connect(self, cpu_id: str, device_id: str) -> None:
-        """Dummy connect method."""
-        return None
-
-    def disconnect(self, cpu_id: str, device_id: str) -> None:
-        """Dummy disconnect method."""
-        return None
-
-    def get_port_info(self, target_id: str | None = None) -> dict[str, list[FMPortData]]:
-        """Dummy get_port_info method ."""
-        return {}
-
-    def get_switch_info(self, switch_id: str | None = None) -> dict[str, list[FMSwitchData]]:
-        """Dummy get_port_info method ."""
-        return {}
-
-
-class DummyOOBPlugin(OOBPluginBase):
-    """Dummy OOB Plugin class for UT."""
-
-    def get_spec_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy get_spec_info method."""
-        return {}
-
-    def get_metric_info(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy get_metric_info method."""
-        return {}
-
-    def get_power_state(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy get_power_state method."""
-        return {}
-
-    def get_device_info(self) -> list[OOBDeviceListItem]:
-        """Dummy get_device_info method."""
-        return []
-
-    def post_power_on(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy post_power_on method."""
-        return {}
-
-    def post_power_off(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy post_power_off method."""
-        return {}
-
-    def post_cpu_reset(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy post_cpu_reset method."""
-        return {}
-
-    def post_os_shutdown(self, key_values: list[dict[str, str]]) -> dict[str, list[dict]]:
-        """Dummy post_os_shutdown method."""
-        return {}

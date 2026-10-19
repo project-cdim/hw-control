@@ -18,14 +18,13 @@ This module defines an exception class that inherits from the
 DeviceNotFoundHWControlError class.
 """
 
-
 from app.common.basic_exceptions.base_exceptions import DeviceNotFoundHWControlError
 
 
 class HostCPUNotFoundHWControlError(
     DeviceNotFoundHWControlError
 ):  # TODO: Remove this class after migration to UpstreamDeviceNotFoundHWControlError is complete.
-    """HwControl Host CPU Not Found Error Detail Exception class
+    """HwControl Host CPU Not Found Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Host CPU Not Found Error.
@@ -42,7 +41,7 @@ class HostCPUNotFoundHWControlError(
 class HostCPUAndDeviceNotFoundHWControlError(
     DeviceNotFoundHWControlError
 ):  # TODO: Remove this class after migration to the recommended exceptions is complete.
-    """HwControl Host cpu and Device Not Found Error Detail Exception class
+    """HwControl Host cpu and Device Not Found Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Host cpu and Device Not Found Error.
@@ -59,7 +58,7 @@ class HostCPUAndDeviceNotFoundHWControlError(
 
 
 class ResourceNotFoundHWControlError(DeviceNotFoundHWControlError):
-    """HwControl Resource Not Found Error Detail Exception class
+    """HwControl Resource Not Found Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Resource Not Found Error.
@@ -71,7 +70,7 @@ class ResourceNotFoundHWControlError(DeviceNotFoundHWControlError):
 
 
 class SwitchNotFoundHWControlError(DeviceNotFoundHWControlError):
-    """HwControl Switch Not Found Error Detail Exception class
+    """HwControl Switch Not Found Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Switch Not Found Error.
@@ -83,7 +82,8 @@ class SwitchNotFoundHWControlError(DeviceNotFoundHWControlError):
 
 
 class DeviceIDNotFoundHWControlError(DeviceNotFoundHWControlError):
-    """HwControl Device ID Not Found Error Detail Exception class
+    """HwControl Device ID Not Found Error Detail Exception class.
+
     This class is common detail exception class for HwControl defined
     exceptions of Device ID Not Found Error.
     """

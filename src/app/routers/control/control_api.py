@@ -12,31 +12,27 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Device Control API
+"""Device Control API.
 
 This module defines Device Control API and its endpoints.
 
 """
 
-import logging
 import http
+import logging
 from enum import Enum
+from typing import Annotated
 
-from pydantic import BaseModel, Field, UUID4
-from fastapi import APIRouter, Query, Path
+from fastapi import APIRouter, Path, Query
 from fastapi.responses import JSONResponse
-
-from app.routers import api_metadata
-from app.routers.control import response_models
-
-from app.core.control import control_base
-from app.core.control import fm_control
-from app.core.control import oob_control
-from app.core.control import agent_control
+from pydantic import UUID4, BaseModel, Field
 
 import app.common.basic_exceptions as exc
 from app.common import constants
 from app.common.dim import device_id_base
+from app.core.control import agent_control, control_base, fm_control, oob_control
+from app.routers import api_metadata
+from app.routers.control import response_models
 
 # The timeout value of the Is OS Ready endpoint.
 DEFAULT_IS_OS_READY_TIMEOUT = 30
@@ -100,8 +96,7 @@ router = APIRouter(
 
 
 def _get_true_device_ids(upstream_device_id: str, downstream_device_id: str) -> tuple[str, str]:
-    """
-    Get the true upstream and downstream device IDs based on switch port type.
+    """Get the true upstream and downstream device IDs based on switch port type.
 
     Args:
         upstream_device_id (str): The Device ID of the upstream side device.
@@ -113,7 +108,6 @@ def _get_true_device_ids(upstream_device_id: str, downstream_device_id: str) -> 
     Example:
         true_upstream_device_id, true_downstream_device_id = _get_true_device_ids("upstream_id", "downstream_id")
     """
-
     # get true upstream_device_id
     true_upstream_device_id = device_id_base.get_device_id_of_switch_port_type(
         device_id=upstream_device_id, switch_port_type=constants.SwitchPortType.USP
@@ -183,7 +177,7 @@ class DeviceAggregationControlRequestModel(BaseModel):
         409: api_metadata.error_case_spec_factory(
             case_description="Your request is conflict to the specified device state.",
         ),
-        422: api_metadata.error_case_spec_factory(
+        422: api_metadata.validation_error_case_spec_factory(
             case_description="The request parameter validation error.",
         ),
         500: api_metadata.error_cases_spec_factory(
@@ -204,14 +198,16 @@ class DeviceAggregationControlRequestModel(BaseModel):
 )
 def device_aggregation_control_api(
     request_body: DeviceAggregationControlRequestModel,
-    upstream_device_id: UUID4 = Path(
-        alias="sourceDeviceID",
-        description="The Device ID of aggregation control target upstream side device.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    ),
+    upstream_device_id: Annotated[
+        UUID4,
+        Path(
+            alias="sourceDeviceID",
+            description="The Device ID of aggregation control target upstream side device.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
 ) -> response_models.DeviceAggregationControlResponseModel:
-    """
-    Control the connection between the upstream side device and the downstream side device.
+    """Control the connection between the upstream side device and the downstream side device.
 
     This endpoint allows for connecting and disconnecting the upstream side device to/from the downstream side device.
     The action performed is based on the `action` parameter provided in the `request_body`.
@@ -235,7 +231,6 @@ def device_aggregation_control_api(
         defined in `src/app/routers/error_handlers.py`.
 
     """
-
     logger.info(
         "Device Aggregation Control start.",
         extra={
@@ -255,14 +250,10 @@ def device_aggregation_control_api(
         upstream_device=upstream_device, downstream_device=downstream_device
     )
 
-    device_pair.get_lock()
-    try:
-        if request_body.action.value == AggregationControlAction.CONNECT.value:
-            fm_control.FMController.connect(device_pair=device_pair)
-        else:  # The 'action' specified by the client is "disconnect".
-            fm_control.FMController.disconnect(device_pair=device_pair)
-    finally:
-        device_pair.release_lock()
+    if request_body.action.value == AggregationControlAction.CONNECT.value:
+        fm_control.FMController.connect(device_pair=device_pair)
+    else:  # The 'action' specified by the client is "disconnect".
+        fm_control.FMController.disconnect(device_pair=device_pair)
 
     return response_models.DeviceAggregationControlResponseModel(
         upstream_device_id=str(upstream_device_id), downstream_device_id=str(request_body.downstream_device_id)
@@ -337,7 +328,7 @@ def _perform_power_off(target_device: control_base.PowerControlTargetDevice) -> 
         409: api_metadata.error_case_spec_factory(
             case_description="Your request is conflict to the specified device state.",
         ),
-        422: api_metadata.error_case_spec_factory(
+        422: api_metadata.validation_error_case_spec_factory(
             case_description="The request parameter validation error.",
         ),
         500: api_metadata.error_cases_spec_factory(
@@ -358,14 +349,16 @@ def _perform_power_off(target_device: control_base.PowerControlTargetDevice) -> 
 )
 def power_control_api(
     request_body: PowerControlRequestModel,
-    device_id: UUID4 = Path(
-        alias="deviceID",
-        description="The Device ID of power control target device.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    ),
+    device_id: Annotated[
+        UUID4,
+        Path(
+            alias="deviceID",
+            description="The Device ID of power control target device.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
 ) -> response_models.PowerControlResponseModel:
-    """
-    Control the power state of the specified device.
+    """Control the power state of the specified device.
 
     This endpoint allows for controlling the power state (on, off, reset, force off) of a specified device.
     The action performed is based on the `action` parameter provided in the `request_body`.
@@ -388,7 +381,6 @@ def power_control_api(
         defined in `src/app/routers/error_handlers.py`.
 
     """
-
     logger.info(
         "Power Control start.",
         extra={"deviceID": str(device_id), "action": request_body.action.value},
@@ -396,22 +388,17 @@ def power_control_api(
 
     target_device = control_base.PowerControlTargetDevice(device_id=str(device_id))
 
-    target_device.get_lock()
-    try:
-        if request_body.action.value == PowerControlAction.ON.value:
-            oob_control.OOBController.power_on(target_device=target_device)
+    if request_body.action.value == PowerControlAction.ON.value:
+        oob_control.OOBController.power_on(target_device=target_device)
 
-        elif request_body.action.value == PowerControlAction.FORCE_OFF.value:
-            oob_control.OOBController.force_off(target_device=target_device)
+    elif request_body.action.value == PowerControlAction.FORCE_OFF.value:
+        oob_control.OOBController.force_off(target_device=target_device)
 
-        elif request_body.action.value == PowerControlAction.RESET.value:
-            oob_control.OOBController.reset(target_device=target_device)
+    elif request_body.action.value == PowerControlAction.RESET.value:
+        oob_control.OOBController.reset(target_device=target_device)
 
-        else:  # The 'action' specified by the client is "off".
-            _perform_power_off(target_device=target_device)
-
-    finally:
-        target_device.release_lock()
+    else:  # The 'action' specified by the client is "off".
+        _perform_power_off(target_device=target_device)
 
     return response_models.PowerControlResponseModel(device_id=target_device.device_id)
 
@@ -433,7 +420,7 @@ def power_control_api(
             case_description="The specified resource not found.",
             sub_case_descriptions=["The specified path not found.", "The specified device not found."],
         ),
-        422: api_metadata.error_case_spec_factory(
+        422: api_metadata.validation_error_case_spec_factory(
             case_description="The request parameter validation error.",
         ),
         500: api_metadata.error_cases_spec_factory(
@@ -450,26 +437,30 @@ def power_control_api(
     name="Is OS Ready",
 )
 def is_os_ready_api(
-    cpu_device_id: UUID4 = Path(
-        alias="CPUDeviceID",
-        description="The Device ID of the host CPU that checks if the host OS is running.",
-        examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
-    ),
-    time_out: int = Query(
-        default=DEFAULT_IS_OS_READY_TIMEOUT,
-        alias="timeOut",
-        description="The timeout value for checking if the host OS is running. Please specify in seconds.",
-        examples=[
-            MIN_IS_OS_READY_TIMEOUT,
-            DEFAULT_IS_OS_READY_TIMEOUT,
-            MAX_IS_OS_READY_TIMEOUT,
-        ],
-        ge=MIN_IS_OS_READY_TIMEOUT,
-        le=MAX_IS_OS_READY_TIMEOUT,
-    ),
+    cpu_device_id: Annotated[
+        UUID4,
+        Path(
+            alias="CPUDeviceID",
+            description="The Device ID of the host CPU that checks if the host OS is running.",
+            examples=["451b0faf-b70d-4476-832a-4c93f0e6e1ce"],
+        ),
+    ],
+    time_out: Annotated[
+        int,
+        Query(
+            alias="timeOut",
+            description="The timeout value for checking if the host OS is running. Please specify in seconds.",
+            examples=[
+                MIN_IS_OS_READY_TIMEOUT,
+                DEFAULT_IS_OS_READY_TIMEOUT,
+                MAX_IS_OS_READY_TIMEOUT,
+            ],
+            ge=MIN_IS_OS_READY_TIMEOUT,
+            le=MAX_IS_OS_READY_TIMEOUT,
+        ),
+    ] = DEFAULT_IS_OS_READY_TIMEOUT,
 ) -> response_models.IsOSReadyResponseModel:
-    """
-    Check if the OS is ready on the specified CPU device.
+    """Check if the OS is ready on the specified CPU device.
 
     This endpoint checks if the operating system is running on the specified CPU device by querying the status through
     an agent.
@@ -491,7 +482,6 @@ def is_os_ready_api(
         defined in `src/app/routers/error_handlers.py`.
 
     """
-
     logger.info("Is OS Ready start.", extra={"CPUDeviceID": str(cpu_device_id), "timeOut": time_out})
 
     target_device = control_base.PowerControlTargetDevice(device_id=str(cpu_device_id))

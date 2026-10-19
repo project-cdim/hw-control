@@ -12,27 +12,30 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get Agent(OS) Information
+"""HW independent section - Get Agent(OS) Information.
 
 Get metric information for the specified Device ID.
 
 """
-import logging
-import fcntl
-from typing import Any
+
 import copy
+import fcntl
+import logging
 from pathlib import Path
+from typing import Any
+
 import requests
 import requests.exceptions
 import yaml
-from app.common.messages import message
+
+import app.common.constants as const
 from app.common.basic_exceptions import (
     AgentConnectFailureHWControlError,
     AgentGetInformationFailureHWControlError,
 )
-import app.common.constants as const
-from app.common.utils.file_location_settings import FileLocationSettings
+from app.common.messages import message
 from app.common.utils.authorization_utilities import authorization_server_client
+from app.common.utils.file_location_settings import FileLocationSettings
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +51,13 @@ DEVICE_LIST_ITEM_NAME_DEVICE_TYPE = "type"  # Device Type
 
 
 class InfoMetricAgent:
-    """Get metric information
+    """Get metric information.
 
     Get metric information from agent.
     """
 
     def get_metric_agent(self, device_id: str, device_type: str, cpu_device_id: str) -> dict:
-        """Get metric information
+        """Get metric information.
 
         Get metric information for the specified Device ID and Device Type
 
@@ -89,7 +92,7 @@ class InfoMetricAgent:
         return resp
 
     def _get_agent_data(self, url: str, timeout_seconds: int, param: dict, device_id: str) -> dict | Any:
-        """Get agent data
+        """Get agent data.
 
         Request to agent and get metric information.
 
@@ -150,7 +153,7 @@ class InfoMetricAgent:
             logger.info(message.get_log_message(message.I00006, [log_param]))
 
     def create_device_attribute(self, device_list: list) -> None:
-        """Create device attribute file
+        """Create device attribute file.
 
         Create device attribute file based on setting file
 

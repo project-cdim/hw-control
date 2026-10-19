@@ -16,15 +16,10 @@
 
 import uuid
 
-from pydantic import ValidationError
 import pytest
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+from pydantic import ValidationError
 
 from app.routers.control import control_api
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
 
 DUMMY_DEVICE_ID = uuid.UUID("d62e98bf-6c50-4b88-95f9-49c609d2fdc9")
 

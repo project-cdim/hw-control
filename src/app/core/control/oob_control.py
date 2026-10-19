@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-HW independent section - oob control
+"""HW independent section - oob control.
 
 Upon receiving a request from the control API,
 Makes a control request to OOB for the device
@@ -22,21 +21,19 @@ specified by the device id.
 
 import logging
 
-from app.core.control.control_base import (
-    PowerControlTargetDevice,
-    OOBPluginRequestTarget,
-)
-from app.common import constants
-from app.common.utils import plugin_manager
 import app.common.basic_exceptions as exc
+from app.common import constants
+from app.common.plugin import plugin_manager
+from app.core.control.control_base import (
+    OOBPluginRequestTarget,
+    PowerControlTargetDevice,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class OOBController:
-    """
-    A class to control the OOB (Out-of-Band) Manager by calling methods
-    defined in different OOB plugins.
+    """A class to control the OOB (Out-of-Band) Manager by calling methods defined in different OOB plugins.
 
     Attributes: None
 
@@ -56,8 +53,7 @@ class OOBController:
 
     @staticmethod
     def power_on(target_device: PowerControlTargetDevice) -> None:
-        """
-        Turns the power on for the target device using the OOB plugin.
+        """Turns the power on for the target device using the OOB plugin.
 
         Args:
             target_device (PowerControlTargetDevice):
@@ -70,7 +66,6 @@ class OOBController:
             UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
-
         oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
@@ -104,8 +99,7 @@ class OOBController:
 
     @staticmethod
     def reset(target_device: PowerControlTargetDevice) -> None:
-        """
-        Resets the CPU of the target device using the OOB plugin.
+        """Resets the CPU of the target device using the OOB plugin.
 
         Args:
             target_device (PowerControlTargetDevice):
@@ -121,7 +115,6 @@ class OOBController:
             UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
-
         if target_device.device_type != constants.DeviceType.CPU.value:
             raise exc.RequestNotSupportedHWControlError("Reset is supported only by the CPU.")
 
@@ -158,8 +151,7 @@ class OOBController:
 
     @staticmethod
     def force_off(target_device: PowerControlTargetDevice) -> None:
-        """
-        Forces the power off for the target device using the OOB plugin.
+        """Forces the power off for the target device using the OOB plugin.
 
         Args:
             target_device (PowerControlTargetDevice):
@@ -205,8 +197,7 @@ class OOBController:
 
     @staticmethod
     def power_off(target_device: PowerControlTargetDevice) -> None:
-        """
-        Turns the power off for the target device using the OOB plugin.
+        """Turns the power off for the target device using the OOB plugin.
 
         Args:
             target_device (PowerControlTargetDevice): The device to be powered off.
@@ -218,7 +209,6 @@ class OOBController:
             UnexpectedExceptionHWControlError:
                 plugin raise unexpected Exception.
         """
-
         oob_plugin = plugin_manager.get_oob_plugin(manager_id=target_device.oob_manager_id)
 
         oob_plugin_argument = [
@@ -230,7 +220,6 @@ class OOBController:
 
         try:
             if target_device.device_type == constants.DeviceType.CPU.value:
-
                 logger.info(
                     "Request Host CPU shutdown to OOB plugin.",
                     extra={

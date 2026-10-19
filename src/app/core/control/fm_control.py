@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-HW independent section - fm control
+"""HW independent section - fm control.
 
 Upon receiving a request from the control API,
 Makes a control request to FM for the device
@@ -24,12 +23,11 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from app.core.control.control_base import ControlTargetDevice
-from app.common import constants
-
-from app.common.dim import device_id_base as dim
-from app.common.utils import plugin_manager
 import app.common.basic_exceptions as exc
+from app.common import constants
+from app.common.dim import device_id_base as dim
+from app.common.plugin import plugin_manager
+from app.core.control.control_base import ControlTargetDevice
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +85,7 @@ class FMControlTargetDevice(ControlTargetDevice):
             raise exc.RequestNotSupportedHWControlError from e
 
     def set_fm_manager_id(self) -> None:
-        """
-        Set fm_manager_id from information of dim.
+        """Set fm_manager_id from information of dim.
 
         This method gets the 'FM Manager ID' of the specified device from app.common.dim
         and set self.fm_manager_id.
@@ -135,7 +132,7 @@ class FMControlTargetDevice(ControlTargetDevice):
         self.fm_manager_id = fm_manager_id
 
     def set_fm_port_id(self) -> None:
-        """set fm_port_id from information of dim.
+        """Set fm_port_id from information of dim.
 
         This method gets the 'FM Port ID' of the specified device
         from dim and set self.fm_port_id.
@@ -165,7 +162,6 @@ class FMControlTargetDevice(ControlTargetDevice):
                 in "/app/common/device_id_manager/".
 
         """
-
         try:
             raw_fm_port_id = dim.device_id_to_fm_port_id(device_id=self.device_id)
         # APIUsageHWControlError: Raised when the specified device_id
@@ -261,47 +257,6 @@ class FMControlTargetDevicePair(BaseModel):
         if self.upstream_device.device_id == self.downstream_device.device_id:
             raise exc.RequestNotSupportedHWControlError
 
-    def get_lock(self) -> None:
-        """get upstream side device and downstream side device lock.
-
-        get upstream side device and downstream side device lock.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        Raises:
-            exc.DeviceBusyHWControlError:
-                specified target_device is Busy.
-
-        """
-
-        self.downstream_device.get_lock()
-
-        try:
-            self.upstream_device.get_lock()
-        except exc.DeviceBusyHWControlError as e:
-            self.downstream_device.release_lock()
-            raise e
-
-    def release_lock(self) -> None:
-        """release upstream side device and downstream side device lock.
-
-        release upstream side device and downstream side device lock.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        """
-
-        self.upstream_device.release_lock()
-        self.downstream_device.release_lock()
-
 
 class FMController:
     """Perform operations using FM.
@@ -328,7 +283,6 @@ class FMController:
             exc.UnexpectedExceptionHWControlError:
                 FM-plugin raise Unexpected Exception.
         """
-
         # Raise RequestNotSupportedHWControlError when the following cases occur.
         # 1. The switch_port_type of the specified upstream_device is not "USP".
         # 2. switch_port_type of the specified downstream_device is not "DSP".
@@ -400,7 +354,6 @@ class FMController:
             exc.UnexpectedExceptionHWControlError:
                 FM-plugin raise Unexpected Exception.
         """
-
         if (
             device_pair.upstream_device.switch_port_type != constants.SwitchPortType.USP.value
             or device_pair.downstream_device.switch_port_type != constants.SwitchPortType.DSP.value

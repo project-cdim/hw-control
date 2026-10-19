@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,21 +13,17 @@
 #  under the License.
 
 """Unit test module for FMControlTargetDevice class ."""
+
 from typing import cast
 
 import pytest
 from pytest_mock import MockFixture
 
-from tests.app.core.control import test_util
-
-from app.common import constants
 import app.common.basic_exceptions as exc
+from app.common import constants
 from app.common.dim import device_id_base as dim
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.core.control.fm_control import FMControlTargetDevice
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from tests.app.core.control import test_util
 
 
 class TestFMControlTargetDeviceGenerate:
@@ -98,7 +94,7 @@ class TestFMControlTargetDeviceGenerate:
             _ = FMControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -177,7 +173,7 @@ class TestFMControlTargetDeviceGenerate:
         ],
     )
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -259,7 +255,7 @@ class TestFMControlTargetDeviceGenerate:
         [{"fm": None, "oob": "test_oob_manager_id"}, {"fm": None, "oob": None}],
     )
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -268,7 +264,7 @@ class TestFMControlTargetDeviceGenerate:
             (exc.InvalidTypeDeviceIDHWControlError, exc.RequestNotSupportedHWControlError),
         ],
     )
-    def test_to_fm_port_id_raise(  # pylint: disable=R0913, R0917
+    def test_to_fm_port_id_raise(
         self,
         mocker: MockFixture,
         device_id_manager_return_switch_port_type,

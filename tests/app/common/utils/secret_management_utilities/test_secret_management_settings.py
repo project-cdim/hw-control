@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,19 +15,15 @@
 """Unit test module for secret_management_settings.py ."""
 
 import pytest
-from pytest import MonkeyPatch
 from pydantic import ValidationError
 
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.common.utils.secret_management_utilities import secret_management_settings
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
 class TestSecretManagementSettings:
     """Unit test class for SecretManagementSettings"""
 
-    def test_instance_generate_default_value(self, monkeypatch: MonkeyPatch):
+    def test_instance_generate_default_value(self, monkeypatch: pytest.MonkeyPatch):
         """test for SecretManagementSettings instance generate default value"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Clean up the environment variables in the current test environment.
@@ -50,7 +46,7 @@ class TestSecretManagementSettings:
         assert actual_setting.path == expected_path
         assert actual_setting.timeout == expected_timeout
 
-    def test_env_case_sensitive(self, monkeypatch: MonkeyPatch):
+    def test_env_case_sensitive(self, monkeypatch: pytest.MonkeyPatch):
         """Test environment case sensitive."""
 
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -76,7 +72,7 @@ class TestSecretManagementSettings:
         assert actual_setting.path == "/v1.0/secrets/"  # default value
         assert actual_setting.timeout == 3  # default value
 
-    def test_instance_generate_from_env(self, monkeypatch: MonkeyPatch):
+    def test_instance_generate_from_env(self, monkeypatch: pytest.MonkeyPatch):
         """Test environment variables set case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -108,7 +104,7 @@ class TestSecretManagementSettings:
         assert actual_setting.timeout == expected_timeout
 
     @pytest.mark.parametrize(
-        "env_key, env_value",
+        ("env_key", "env_value"),
         [
             ("HW_CONTROL_SECRET_API_PORT", "test_str"),  # port must be int
             ("HW_CONTROL_SECRET_API_PORT", -1),  # port must be greater than 0.
@@ -118,7 +114,7 @@ class TestSecretManagementSettings:
             ("HW_CONTROL_SECRET_API_TIMEOUT", 11),  # timeout must be less than 10.
         ],
     )
-    def test_invalid_env(self, monkeypatch: MonkeyPatch, env_key, env_value):
+    def test_invalid_env(self, monkeypatch: pytest.MonkeyPatch, env_key, env_value):
         """Test invalid environment variables set case."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 

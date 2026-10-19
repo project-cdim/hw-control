@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -19,44 +19,34 @@ UT of app/common/utils/os_ipaddress.py
 
 import logging
 import uuid
-import yaml
 
-from pytest import MonkeyPatch, LogCaptureFixture
+import pytest
+import yaml
 from pytest_mock import MockFixture
 
 import app.common.basic_exceptions as exc
 from app.common.dim import device_id_base
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++#
 from app.common.utils import os_ipaddress
 
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-def mock_safe_load(file: str, encoding: str | None = None) -> dict:
-    """
-    Mock : safe_load
-    """
-    response = {
-        "OS_IPAddress": [
-            {
-                # device_id : 00000001-0001-0001-0001-000000000001
-                "fmPortID": "49951897-c615-43a5-a125-ad63266fd8c6",
-                "IPAddress": "192.168.122.11",
-            },
-            {
-                # device_id : 00000002-0002-0002-0002-000000000002
-                "fmPortID": "6bfcd16b-76c8-4dbc-ac56-3da1d008f15d",
-                "IPAddress": "192.168.122.12",
-            },
-            {
-                # device_id : 00000003-0003-0003-0003-000000000003
-                "fmPortID": "072fcd71-7137-454f-a678-aea4eaf54732",
-                "IPAddress": "192.168.122.13",
-            },
-        ]
-    }
-    return response
+MOCK_SAFE_LOAD_RESPONSE = {
+    "OS_IPAddress": [
+        {
+            # device_id : 00000001-0001-0001-0001-000000000001
+            "fmPortID": "49951897-c615-43a5-a125-ad63266fd8c6",
+            "IPAddress": "192.168.122.11",
+        },
+        {
+            # device_id : 00000002-0002-0002-0002-000000000002
+            "fmPortID": "6bfcd16b-76c8-4dbc-ac56-3da1d008f15d",
+            "IPAddress": "192.168.122.12",
+        },
+        {
+            # device_id : 00000003-0003-0003-0003-000000000003
+            "fmPortID": "072fcd71-7137-454f-a678-aea4eaf54732",
+            "IPAddress": "192.168.122.13",
+        },
+    ]
+}
 
 
 def mock_device_id_to_fm_port_id(device_id: str) -> str | None:
@@ -91,7 +81,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
         expected_response = ("192.168.122.11", True)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -111,7 +101,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000002-0002-0002-0002-000000000002"
         expected_response = ("192.168.122.12", True)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -130,7 +120,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000099-0099-0099-0099-000000000099"
         expected_response = (None, False)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -184,13 +174,14 @@ class TestOSIPAddress:
 
         """
 
-        def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
-            """
-            mock_safe_load_keyerror
-                KeyError in yaml file data(TEST_OS_IPAddress)
-
-            """
-            response = {
+        # preparations
+        cpu_device_id = "00000001-0001-0001-0001-000000000001"
+        expected_response = (None, False)
+        mocker.patch("builtins.open")
+        mocker.patch.object(
+            yaml,
+            "safe_load",
+            return_value={
                 "TEST_OS_IPAddress": [
                     {
                         # device_id : 00000001-0001-0001-0001-000000000001
@@ -198,14 +189,8 @@ class TestOSIPAddress:
                         "IPAddress": "192.168.122.11",
                     }
                 ]
-            }
-            return response
-
-        # preparations
-        cpu_device_id = "00000001-0001-0001-0001-000000000001"
-        expected_response = (None, False)
-        mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load_keyerror)
+            },
+        )
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -221,13 +206,14 @@ class TestOSIPAddress:
 
         """
 
-        def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
-            """
-            mock_safe_load_keyerror
-                KeyError in yaml file data(TEST_fmPortID)
-
-            """
-            response = {
+        # preparations
+        cpu_device_id = "00000001-0001-0001-0001-000000000001"
+        expected_response = (None, False)
+        mocker.patch("builtins.open")
+        mocker.patch.object(
+            yaml,
+            "safe_load",
+            return_value={
                 "OS_IPAddress": [
                     {
                         # device_id : 00000001-0001-0001-0001-000000000001
@@ -235,14 +221,8 @@ class TestOSIPAddress:
                         "IPAddress": "192.168.122.11",
                     }
                 ]
-            }
-            return response
-
-        # preparations
-        cpu_device_id = "00000001-0001-0001-0001-000000000001"
-        expected_response = (None, False)
-        mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load_keyerror)
+            },
+        )
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -258,13 +238,14 @@ class TestOSIPAddress:
 
         """
 
-        def mock_safe_load_keyerror(file: str, encoding: str | None = None) -> dict:
-            """
-            mock_safe_load_keyerror
-                KeyError in yaml file data(TEST_IPAddress)
-
-            """
-            response = {
+        # preparations
+        cpu_device_id = "00000001-0001-0001-0001-000000000001"
+        expected_response = (None, False)
+        mocker.patch("builtins.open")
+        mocker.patch.object(
+            yaml,
+            "safe_load",
+            return_value={
                 "OS_IPAddress": [
                     {
                         # device_id : 00000001-0001-0001-0001-000000000001
@@ -272,14 +253,8 @@ class TestOSIPAddress:
                         "TEST_IPAddress": "192.168.122.11",
                     }
                 ]
-            }
-            return response
-
-        # preparations
-        cpu_device_id = "00000001-0001-0001-0001-000000000001"
-        expected_response = (None, False)
-        mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load_keyerror)
+            },
+        )
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         # test run
@@ -317,7 +292,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
         expected_response = (None, False)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDNotFoundHWControlError)
 
         # test run
@@ -336,7 +311,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
         expected_response = (None, False)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(
             device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDFileIncorrectHWControlError
         )
@@ -357,7 +332,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
         expected_response = (None, False)
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(
             device_id_base, "device_id_to_fm_port_id", side_effect=exc.DeviceIDFileNotFoundHWControlError
         )
@@ -369,7 +344,7 @@ class TestOSIPAddress:
         assert expected_response == actual
 
     def test_get_os_ipaddress_output_debug_log(
-        self, mocker: MockFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch
+        self, mocker: MockFixture, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
     ):
         """
         get_os_ipaddress test
@@ -380,7 +355,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
 
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         monkeypatch.delenv("HW_CONTROL_CONFIG_FILE_DIR", raising=False)
@@ -399,7 +374,7 @@ class TestOSIPAddress:
         assert error_debug_log.getMessage() == "[get_os_ipaddress] config_file_dir=/opt/cdim/hw-control/config/"
 
     def test_get_os_ipaddress_output_debug_log_with_env(
-        self, mocker: MockFixture, caplog: LogCaptureFixture, monkeypatch: MonkeyPatch
+        self, mocker: MockFixture, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
     ):
         """
         get_os_ipaddress test
@@ -410,7 +385,7 @@ class TestOSIPAddress:
         cpu_device_id = "00000001-0001-0001-0001-000000000001"
 
         mocker.patch("builtins.open")
-        mocker.patch.object(yaml, "safe_load", side_effect=mock_safe_load)
+        mocker.patch.object(yaml, "safe_load", return_value=MOCK_SAFE_LOAD_RESPONSE)
         mocker.patch.object(device_id_base, "device_id_to_fm_port_id", side_effect=mock_device_id_to_fm_port_id)
 
         monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", "/dev/null")

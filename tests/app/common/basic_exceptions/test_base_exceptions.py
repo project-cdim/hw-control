@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,6 +13,7 @@
 #  under the License.
 
 """Tests Basic Exceptions module."""
+
 import pytest
 
 import app.common.basic_exceptions as exc
@@ -32,16 +33,16 @@ class TestBaseHWControlError:
         expected_error_message = "The server encountered an internal error and was unable to complete your request."
 
         # execution
-        try:
+        with pytest.raises(exc.BaseHWControlError) as error_object:
             raise exc.BaseHWControlError
-        except exc.BaseHWControlError as error_object:
-            actual_status_code = error_object.http_code
-            actual_error_code = error_object.error_code
-            actual_error_message = error_object.message
-            # inspection
-            assert actual_status_code == expected_status_code
-            assert actual_error_code == expected_error_code
-            assert actual_error_message == expected_error_message
+
+        actual_status_code = error_object.value.http_code
+        actual_error_code = error_object.value.error_code
+        actual_error_message = error_object.value.message
+        # inspection
+        assert actual_status_code == expected_status_code
+        assert actual_error_code == expected_error_code
+        assert actual_error_message == expected_error_message
 
     def test_append_error_message(self):
         """test BaseHWControlError.append_error_message"""
@@ -93,13 +94,13 @@ class TestBaseHWControlError:
         expected_status_code = 500
         expected_response_body = f'{{"code":"CF000BAS000","message":"{expected_error_message}"}}'
         # execution
-        try:
+        with pytest.raises(exc.BaseHWControlError) as error_object:
             raise exc.BaseHWControlError
-        except exc.BaseHWControlError as error_object:
-            actual = error_object.generate_api_response()
-            # inspection
-            assert actual.status_code == expected_status_code
-            assert actual.body.decode("utf-8") == expected_response_body
+
+        actual = error_object.value.generate_api_response()
+        # inspection
+        assert actual.status_code == expected_status_code
+        assert actual.body.decode("utf-8") == expected_response_body
 
     @pytest.mark.parametrize(
         "error_information",
@@ -136,7 +137,7 @@ class TestBaseHWControlError:
 
 
 @pytest.mark.parametrize(
-    "exception_class, expected_status_code, expected_error_code, expected_error_message",
+    ("exception_class", "expected_status_code", "expected_error_code", "expected_error_message"),
     [
         (
             exc.BaseHWControlError,
@@ -248,22 +249,22 @@ def test_initialize_instance_and_set_additional_message(
 
     # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
 
-    try:
+    with pytest.raises(exc.BaseHWControlError) as error_object:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.BaseHWControlError as error_object:
-        error_object.append_error_message(additional_message="test_additional_message_02")
 
-        actual_response_object = error_object.generate_api_response()
-        actual_error_information = error_object.args
-        actual_error_dict = error_object.to_error_dict()
+    error_object.value.append_error_message(additional_message="test_additional_message_02")
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
-        assert error_object.http_code == expected_status_code
-        assert error_object.error_code == expected_error_code
-        assert error_object.message == expected_error_message
-        assert actual_error_information == ("test_error_information",)
+    actual_response_object = error_object.value.generate_api_response()
+    actual_error_information = error_object.value.args
+    actual_error_dict = error_object.value.to_error_dict()
 
-        assert actual_error_dict == expected_error_dict
+    # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+    assert error_object.value.http_code == expected_status_code
+    assert error_object.value.error_code == expected_error_code
+    assert error_object.value.message == expected_error_message
+    assert actual_error_information == ("test_error_information",)
 
-        assert actual_response_object.status_code == expected_status_code
-        assert actual_response_object.body.decode("utf-8") == expected_response_body
+    assert actual_error_dict == expected_error_dict
+
+    assert actual_response_object.status_code == expected_status_code
+    assert actual_response_object.body.decode("utf-8") == expected_response_body

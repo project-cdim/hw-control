@@ -14,19 +14,21 @@
 
 """This is a test program."""
 
+import logging
 import os
 from pathlib import Path
-import logging
+
+import pytest
 import requests
 import requests.exceptions
-import pytest
-from app.core.info.metric_agent import InfoMetricAgent
+
+import app.core.info.metric_agent
 from app.common.basic_exceptions import (
     AgentConnectFailureHWControlError,
     AgentGetInformationFailureHWControlError,
 )
-import app.core.info.metric_agent
 from app.common.utils.authorization_utilities import authorization_server_client
+from app.core.info.metric_agent import InfoMetricAgent
 
 # Device Attribute Information File Name (Generated)
 TEST_DEVICE_DATA_FILE = "test_metric_agent_device_attribute1.yaml"
@@ -85,7 +87,7 @@ def _set_device_data_file(mocker, monkeypatch, trailing_slash: bool = True):
 
 def _get_metric_agent(
     mocker, monkeypatch, status_code, return_value, device_id, device_type, cpu_device_id, trailing_slash: bool = True
-):  # pylint: disable=R0913,R0917
+):
     """request get mock"""
     mock_get = mocker.patch("requests.get")
     mock_get.return_value.status_code = status_code
@@ -171,7 +173,7 @@ def test_get_metric_agent_request_http_exception(mocker, caplog, monkeypatch):
     caplog.set_level(logging.INFO)
     custom_resp = requests.Response()
     custom_resp.status_code = 404
-    custom_resp._content = b'{"code": "ERROR0001", "message": "Error Message"}'  # pylint: disable=W0212
+    custom_resp._content = b'{"code": "ERROR0001", "message": "Error Message"}'
 
     http_error = requests.exceptions.HTTPError()
     http_error.response = custom_resp

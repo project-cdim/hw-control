@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,8 +14,8 @@
 
 """This is a test program."""
 
-from app.common.utils import error_utils
 from app.common.basic_exceptions import ERROR_CODE, ERROR_MESSAGE
+from app.common.utils import error_utils
 
 
 def test_remove_duplicates_none():

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -80,11 +80,11 @@ def generate_dummy_agent_response(
 
     # Setup the content of the response
     if isinstance(content, dict):
-        dummy_response._content = json.dumps(content).encode("utf-8")  # pylint: disable=W0212
+        dummy_response._content = json.dumps(content).encode("utf-8")
     elif isinstance(content, str):
-        dummy_response._content = content.encode("utf-8")  # pylint: disable=W0212
+        dummy_response._content = content.encode("utf-8")
     else:
-        dummy_response._content = b""  # pylint: disable=W0212
+        dummy_response._content = b""
 
     dummy_response.encoding = "utf-8"
 
@@ -120,11 +120,11 @@ def generate_dummy_http_response(
 
     # Setup the content of the response
     if isinstance(content, dict):
-        dummy_response._content = json.dumps(content).encode("utf-8")  # pylint: disable=W0212
+        dummy_response._content = json.dumps(content).encode("utf-8")
     elif isinstance(content, str):
-        dummy_response._content = content.encode("utf-8")  # pylint: disable=W0212
+        dummy_response._content = content.encode("utf-8")
     else:
-        dummy_response._content = b""  # pylint: disable=W0212
+        dummy_response._content = b""
 
     dummy_response.encoding = "utf-8"
 

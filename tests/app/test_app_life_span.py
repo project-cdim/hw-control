@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -17,23 +17,18 @@
 import logging
 
 import pytest
-from pytest import LogCaptureFixture
-from pytest_mock import MockFixture
 from fastapi import FastAPI
 from pydantic import ValidationError
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+from pytest_mock import MockFixture
 
 from app import app_life_span
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
 class TestLifespan:
     """Unit test class for app_life_span.lifespan"""
 
     @pytest.mark.asyncio
-    async def test_lifespan_logs_start_and_shutdown(self, mocker: MockFixture, caplog: LogCaptureFixture):
+    async def test_lifespan_logs_start_and_shutdown(self, mocker: MockFixture, caplog: pytest.LogCaptureFixture):
         """
         Test that the lifespan function logs application start and shutdown messages.
         """
@@ -58,9 +53,9 @@ class TestLifespan:
                 assert app_start_log.levelname == "INFO"
                 assert app_start_log.getMessage() == "hw-control application start."
 
-                assert hasattr(
-                    app_start_log, "application_name"
-                ), "application_name should be present in the log record"
+                assert hasattr(app_start_log, "application_name"), (
+                    "application_name should be present in the log record"
+                )
                 assert getattr(app_start_log, "application_name") == "dummy_app"
 
                 assert hasattr(app_start_log, "version"), "version should be present in the log record"
@@ -107,7 +102,7 @@ class TestSetLoggingSettings:
         ],
     )
     def test_apply_logging_settings(
-        self, mocker: MockFixture, caplog: LogCaptureFixture, dummy_logging_raise_exceptions_value: bool
+        self, mocker: MockFixture, caplog: pytest.LogCaptureFixture, dummy_logging_raise_exceptions_value: bool
     ):
         """Test _set_logging_settings applies."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -126,7 +121,7 @@ class TestSetLoggingSettings:
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
         with caplog.at_level(logging.INFO, logger=app_life_span.__name__):
-            app_life_span._set_logging_settings()  # pylint: disable=W0212
+            app_life_span._set_logging_settings()
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert logging.raiseExceptions is dummy_logging_raise_exceptions_value
@@ -142,7 +137,7 @@ class TestSetLoggingSettings:
         assert hasattr(apply_setting_log, "raise_exceptions"), "raise_exceptions should be present in the log record"
         assert getattr(apply_setting_log, "raise_exceptions") is dummy_logging_raise_exceptions_value
 
-    def test_validation_error(self, mocker: MockFixture, caplog: LogCaptureFixture):
+    def test_validation_error(self, mocker: MockFixture, caplog: pytest.LogCaptureFixture):
         """Test _set_logging_settings raises ValidationError."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -150,10 +145,10 @@ class TestSetLoggingSettings:
         mocker.patch("app.common.log.settings.LoggingSettings", side_effect=ValidationError("dummy", []))
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
+        caplog.clear()
         with pytest.raises(ValidationError) as exc_info:
-            caplog.clear()
             with caplog.at_level(logging.INFO, logger=app_life_span.__name__):
-                app_life_span._set_logging_settings()  # pylint: disable=W0212
+                app_life_span._set_logging_settings()
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
 

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,8 +13,11 @@
 #  under the License.
 
 """This is a test program."""
+
 import logging
+
 import pytest
+
 import app
 import app.common.basic_exceptions as exc
 import app.common.messages.message as msg
@@ -27,7 +30,8 @@ def _log_contains(record, level, message) -> bool:
 def test_info(caplog):
     """log test"""
     app_logger = logging.getLogger(app.__name__)
-    app_logger.info(msg.get_log_message(msg.I00003, ["manager_id"]))
+    with caplog.at_level(logging.INFO, logger=app.__name__):
+        app_logger.info(msg.get_log_message(msg.I00003, ["manager_id"]))
 
     assert _log_contains(caplog.record_tuples, logging.INFO, "I00003: manager_id Plugin Call.")
 

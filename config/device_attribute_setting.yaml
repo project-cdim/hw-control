@@ -1,9 +1,9 @@
 ---
 DEFAULT:
-    agent:
-        url: http://0.0.0.0:8100
-        timeout: 600
-    specific_data:
-        diskID: 00000000000000000000
-        macAddress: 00:00:00:00:00:00
+  agent:
+    url: http://0.0.0.0:8100
+    timeout: 600
+  specific_data:
+    diskID: 00000000000000000000
+    macAddress: 00:00:00:00:00:00
 ...

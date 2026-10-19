@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get Information process (Response generation)
+"""HW independent section - Get Information process (Response generation).
 
 Upon receiving a request from the information acquisition API,
 make an information acquisition request for the specified Device ID to FM and OOB.

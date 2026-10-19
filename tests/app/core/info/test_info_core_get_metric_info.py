@@ -14,19 +14,20 @@
 
 """This is a test program."""
 
-import os
-import logging
 import datetime
+import logging
+import os
+
 import pytest
-from app.common.settings import settings
-from app.core.info.info_core import InformationCore
-from app.common.constants import TIME_STAMP_FORMAT
+
 from app.common.basic_exceptions import (
     BaseHWControlError,
     InternalHWControlError,
 )
+from app.common.constants import TIME_STAMP_FORMAT
+from app.common.settings import settings
+from app.core.info.info_core import InformationCore
 from app.core.info.info_utils import load_mapping_table
-
 
 # Response Item Name Current Date and Time
 RESP_ITEM_NAME_TIME_STAMP = "infoTimestamp"
@@ -439,6 +440,7 @@ OOB_DATA_STORAGE = {
                     "NegotiatedSpeedGbs": 12.24,
                     "PowerState": "On",
                     "PowerCapability": True,
+                    "SecureEraseCapability": True,
                     "Status": {"Health": "OK", "State": "Enabled"},
                 },
             },
@@ -506,6 +508,7 @@ RESP_STORAGE = {
     "status": {"state": "Enabled", "health": "OK"},
     "powerState": "On",
     "powerCapability": True,
+    "secureEraseCapability": True,
     "disk": {
         "amountUsedDisk": 1,
         "usageIO": {
@@ -1246,6 +1249,59 @@ RESP_GPU_FLOAT = {
 # RESP graphicController
 RESP_GC = {"deviceID": "5001", "type": "graphicController"}
 
+# OOB unknown device
+OOB_DATA_UNKNOWN = {
+    "devices": [
+        {
+            "type": "unknown",
+            "deviceID": "7001",
+            "schema": {
+                "PowerState": "On",
+                "Status": {"Health": "OK", "State": "Enabled"},
+            },
+        }
+    ]
+}
+
+# OOB unknown int value
+OOB_DATA_UNKNOWN_INT = {
+    "devices": [
+        {
+            "type": "unknown",
+            "deviceID": "7001",
+        }
+    ]
+}
+
+# FM_DATA unknown
+FM_DATA_UNKNOWN = {
+    "data": [
+        {
+            "deviceID": "7001",
+            "type": "unknown",
+            "devicePortList": [
+                {
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "USP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP unknown
+RESP_UNKNOWN = {
+    "deviceID": "7001",
+    "type": "unknown",
+}
+
+# RESP unknown int value
+RESP_UNKNOWN_INT = {
+    "deviceID": "7001",
+    "type": "unknown",
+}
+
 # Mapping table file
 MAPPING_TABLE_FILE = {
     "fm": {"spec": "test_info_core_fm_spec_mapping.json", "metric": "test_info_core_fm_metric_mapping.json"},
@@ -1282,9 +1338,9 @@ def _get_metric_info(mocker, device_id, device_type, agent_data, oob_data, fm_da
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
-    mocker.patch.object(settings, "HW_CONTROL_AGENT_ENABLED", True)
+    mocker.patch.object(settings, "agent_enabled", True)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE)
@@ -1503,6 +1559,20 @@ def test_get_metric_info_gc(mocker):
     assert (None, []) == (metric_data, errors)
 
 
+def test_get_metric_info_unknown(mocker):
+    """Test Get metric unknown"""
+    metric_data, errors = _get_metric_info(mocker, "7001", "unknown", None, OOB_DATA_UNKNOWN, FM_DATA_UNKNOWN, True)
+    # Return value verification.
+    assert (RESP_UNKNOWN, []) == (metric_data, errors)
+
+
+def test_get_metric_info_unknown_int(mocker):
+    """Test Get metric GPU int value"""
+    metric_data, errors = _get_metric_info(mocker, "7001", "unknown", None, OOB_DATA_UNKNOWN_INT, None, True)
+    # Return value verification.
+    assert (RESP_UNKNOWN_INT, []) == (metric_data, errors)
+
+
 def test_get_metric_info_other_device_type(mocker, caplog):
     """Test Get metric Information other Device Type"""
     metric_data, errors = _get_metric_info(mocker, "9001", None, AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU, False)
@@ -1534,7 +1604,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_o
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE)
@@ -1546,7 +1616,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_o
     get_information = InformationCore()
     with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
-        get_information._create_metric_info("0001", "CPU", None, oob_data, None)  # pylint: disable=protected-access
+        get_information._create_metric_info("0001", "CPU", None, oob_data, None)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
 
 
@@ -1560,7 +1630,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_f
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE)
@@ -1572,7 +1642,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_f
     get_information = InformationCore()
     with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
-        get_information._create_metric_info("0001", "CPU", None, None, fm_data)  # pylint: disable=protected-access
+        get_information._create_metric_info("0001", "CPU", None, None, fm_data)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
 
 
@@ -1586,7 +1656,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_a
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE)
@@ -1598,7 +1668,7 @@ def test_get_metric_info_create_metric_info_create_resp_from_mapping_exception_a
     get_information = InformationCore()
     with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
-        get_information._create_metric_info("0001", "CPU", agent_data, None, None)  # pylint: disable=protected-access
+        get_information._create_metric_info("0001", "CPU", agent_data, None, None)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
 
 
@@ -1612,7 +1682,7 @@ def test_get_metric_info_base_exception(mocker):
     mocker.patch("app.common.dim.device_id_base.device_id_to_device_type", side_effect=mock_device_id_to_device_type)
 
     mocker.patch("app.core.info.spec_oob.GetSpecOOBInfo.get_metric_oob", side_effect=BaseHWControlError)
-    mocker.patch.object(settings, "HW_CONTROL_AGENT_ENABLED", True)
+    mocker.patch.object(settings, "agent_enabled", True)
     get_information = InformationCore()
     _, errors = get_information.get_metric_info("0001")
 
@@ -1631,7 +1701,7 @@ def test_get_metric_info_verify_agent_access_base_exception(mocker):
 
     mocker.patch("app.core.info.info_core.InformationCore._verify_agent_access", side_effect=BaseHWControlError)
 
-    mocker.patch.object(settings, "HW_CONTROL_AGENT_ENABLED", True)
+    mocker.patch.object(settings, "agent_enabled", True)
 
     get_information = InformationCore()
     _, errors = get_information.get_metric_info("0001")
@@ -1653,7 +1723,7 @@ def test_get_metric_info_create_metric_info_base_exception(mocker):
 def test_get_metric_info_create_metric_info_device_type_none():
     """create_metric_info Device Type none"""
     get_information = InformationCore()
-    resp = get_information._create_metric_info("0001", None, {}, {}, {})  # pylint: disable=protected-access
+    resp = get_information._create_metric_info("0001", None, {}, {}, {})
     assert {"deviceID": "0001", "type": None} == resp
 
 
@@ -1679,9 +1749,7 @@ def test_get_metric_info_create_metric_info_remove_empty_item_none(mocker):
     mocker.patch("app.core.info.info_utils.remove_empty_item", side_effect=remove_empty_item)
 
     get_information = InformationCore()
-    resp = get_information._create_metric_info(  # pylint: disable=protected-access
-        "0001", "CPU", AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU
-    )
+    resp = get_information._create_metric_info("0001", "CPU", AGENT_DATA_CPU, OOB_DATA_CPU, FM_DATA_CPU)
     assert {"deviceID": "0001", "type": "CPU"} == resp
 
 
@@ -1698,7 +1766,5 @@ def test_get_metric_info_create_metric_info_get_mapping_table_none(mocker):
     mocker.patch("app.core.info.info_utils.get_mapping_table", side_effect=mock_get_mapping_table)
 
     get_information = InformationCore()
-    resp = get_information._create_metric_info(  # pylint: disable=protected-access
-        "0001", "CPU", agent_data, fm_data, oob_data
-    )
+    resp = get_information._create_metric_info("0001", "CPU", agent_data, fm_data, oob_data)
     assert {"deviceID": "0001", "type": "CPU"} == resp

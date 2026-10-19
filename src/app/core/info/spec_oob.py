@@ -12,15 +12,15 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent part - Get OOB information
+"""HW independent part - Get OOB information.
 
 Get device information for the specified Device ID and Device Type
 
 """
 
-
-import traceback
 import logging
+import traceback
+
 import app.common.constants as const
 import app.common.messages.message as msg
 import app.common.plugin.svc.loader as plugin_loader
@@ -29,17 +29,17 @@ from app.common.dim import device_id_base as dim
 from app.common.utils.oob_plugin_base import OOBPluginBase
 from app.core.info import info_const, info_utils
 
-
 logger = logging.getLogger(__name__)
 
 
 class GetSpecOOBInfo:
-    """OOB information acquisition process
-    A class that acquires OOB information from various devices
+    """OOB information acquisition process.
+
+    A class that acquires OOB information from various devices.
     """
 
     def get_spec_oob(self, device_id: str, device_type: str) -> dict:
-        """Get OOB device information
+        """Get OOB device information.
 
         Get OOB device information corresponding to the
         specified Device ID and Device Type
@@ -52,7 +52,6 @@ class GetSpecOOBInfo:
             dict: OOB device information
 
         Examples:
-
             >>> get_oob_info = GetSpecOOBInfo()
                 spec_oob_info = get_oob_info.get_spec_oob("12345", "cpu")
         """
@@ -66,13 +65,13 @@ class GetSpecOOBInfo:
             oob_info[info_const.OOB_DATA_ITEM].extend(target[info_const.OOB_DATA_ITEM])
 
         # Convert links devices.
-        for device_info in oob_info[info_const.OOB_DATA_ITEM]:
-            device_info = self._convert_links_device(device_info)
+        for idx, device_info in enumerate(oob_info[info_const.OOB_DATA_ITEM]):
+            oob_info[info_const.OOB_DATA_ITEM][idx] = self._convert_links_device(device_info)
 
         return oob_info
 
     def get_metric_oob(self, device_id: str, device_type: str) -> dict:
-        """Get OOB device metric information
+        """Get OOB device metric information.
 
         Get OOB device metric information corresponding to the
         specified Device ID and Device Type
@@ -85,7 +84,6 @@ class GetSpecOOBInfo:
             dict: OOB device metric information
 
         Examples:
-
             >>> get_oob_info = GetSpecOOBInfo()
                 metric_oob_info = get_oob_info.get_metric_oob("12345", "cpu")
         """
@@ -165,7 +163,7 @@ class GetSpecOOBInfo:
         return result_links
 
     def _get_oob_info(self, func_name: str, device_id: str, device_type: str) -> dict:
-        """Get OOB Plugin response
+        """Get OOB Plugin response.
 
         Get the information of the specified Device ID and Device Type
 
@@ -177,13 +175,12 @@ class GetSpecOOBInfo:
         Returns:
             dict: OOB device information
         """
-
         try:
             logger.debug(
                 "[get_oob_info] begin func_name=%s device_id=%s device_type=%s", func_name, device_id, device_type
             )
 
-            # allowed type: CPU,memory,storage,networkInterface,GPU,graphicController
+            # allowed type: CPU,memory,storage,networkInterface,GPU,graphicController,unknown
             if device_type not in [
                 const.DeviceType.CPU.value,
                 const.DeviceType.MEMORY.value,
@@ -193,6 +190,7 @@ class GetSpecOOBInfo:
                 const.DeviceType.DFA.value,
                 const.DeviceType.GPU.value,
                 const.DeviceType.GC.value,
+                const.DeviceType.UNKNOWN.value,
             ]:
                 logger.warning(msg.get_log_message(msg.W00002, [device_type]))
                 raise InternalHWControlError(additional_message=f"The device_type({device_type}) was abnormal.")
@@ -235,7 +233,7 @@ class GetSpecOOBInfo:
             raise
 
     def _oob_info_change_device_id(self, manager_id: str, oob_info: dict[str, list[dict]]) -> list:
-        """change Device ID in oob_info
+        """Change Device ID in oob_info.
 
         Convert the OOB Device ID in the oob information into Device ID
 
@@ -265,7 +263,7 @@ class GetSpecOOBInfo:
         return ret_devices
 
     def _change_to_device_id(self, manager_id: str, info: dict) -> dict:
-        """change deviceID in dict
+        """Change deviceID in dict.
 
         Convert the OOB Device ID in the OOB information into Device ID
 
@@ -285,7 +283,7 @@ class GetSpecOOBInfo:
         return info
 
     def _oob_info_add_cpu_socket_num(self, oob_info: dict[str, list[dict]]) -> None:
-        """CPU socketNum add in oob_info
+        """CPU socketNum add in oob_info.
 
         ADD CPU socketNum property  in the OOB information into processor
 

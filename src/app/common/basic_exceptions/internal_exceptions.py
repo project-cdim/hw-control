@@ -12,9 +12,8 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-This module defines an exception class that inherits from the
-InternalHWControlError class.
+"""This module defines an exception class that inherits from the InternalHWControlError class.
+
 The exception classes defined in this module are as follows.
 
 - UnexpectedExceptionHWControlError
@@ -24,7 +23,7 @@ from app.common.basic_exceptions.base_exceptions import InternalHWControlError
 
 
 class UnexpectedExceptionHWControlError(InternalHWControlError):
-    """Unexpected Exception raise Case Exception class
+    """Unexpected Exception raise Case Exception class.
 
     This class is common HwControl defined detail exception class
     for when an unexpected exception is thrown from a plugin.

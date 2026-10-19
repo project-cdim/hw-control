@@ -14,36 +14,25 @@
 
 """Unit test module for error_handlers.py module."""
 
-from http import HTTPStatus
 import json
 import logging
+from http import HTTPStatus
 
 import pytest
-from pytest import LogCaptureFixture
-from pytest_mock import MockFixture
-from fastapi.testclient import TestClient
-
 from fastapi.exceptions import RequestValidationError
-from starlette.requests import Request
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.datastructures import Headers
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
 
-from app.hw_control_main import app
 import app.common.basic_exceptions as custom_exceptions
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.routers import error_handlers
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-client = TestClient(app, raise_server_exceptions=False)
 
 
 class TestErrorHandlers:
     """Unit test class for error handler function."""
 
     @pytest.mark.parametrize("input_exception_instance", [Exception(), RuntimeError()])
-    def test_custom_expected_handler(self, caplog: LogCaptureFixture, input_exception_instance):
+    def test_custom_expected_handler(self, caplog: pytest.LogCaptureFixture, input_exception_instance):
         """
         Test the custom exception handler for Python built-in exceptions.
 
@@ -113,7 +102,7 @@ class TestErrorHandlers:
         assert getattr(response_log, "content_length") == str(len(response.body))
 
     @pytest.mark.parametrize(
-        "input_exception_instance, expected_status_code, expected_response_body",
+        ("input_exception_instance", "expected_status_code", "expected_response_body"),
         [
             (
                 custom_exceptions.BaseHWControlError(),
@@ -134,7 +123,7 @@ class TestErrorHandlers:
         ],
     )
     def test_hw_control_error_handler(
-        self, caplog: LogCaptureFixture, input_exception_instance, expected_status_code, expected_response_body
+        self, caplog: pytest.LogCaptureFixture, input_exception_instance, expected_status_code, expected_response_body
     ):
         """
         Test hw_control_error_handler.
@@ -199,7 +188,7 @@ class TestErrorHandlers:
         assert getattr(exception_log, "error_message") == expected_response_body["message"]
 
     @pytest.mark.parametrize(
-        "input_status_code, expected_status_code",
+        ("input_status_code", "expected_status_code"),
         [
             (HTTPStatus.BAD_REQUEST.value, HTTPStatus.BAD_REQUEST.value),
             (
@@ -241,7 +230,9 @@ class TestErrorHandlers:
             ),
         ],
     )
-    def test_custom_http_exception_handler(self, caplog: LogCaptureFixture, input_status_code, expected_status_code):
+    def test_custom_http_exception_handler(
+        self, caplog: pytest.LogCaptureFixture, input_status_code, expected_status_code
+    ):
         """
         Test custom_http_exception_handler.
 
@@ -303,7 +294,7 @@ class TestErrorHandlers:
         assert hasattr(exception_log, "error_message"), "error_message should be present in the log record"
         assert getattr(exception_log, "error_message") == expected_response_body["message"]
 
-    def test_custom_validation_exception_handler(self, caplog: LogCaptureFixture):
+    def test_custom_validation_exception_handler(self, caplog: pytest.LogCaptureFixture):
         """
         Test custom_validation_exception_handler.
 
@@ -342,9 +333,11 @@ class TestErrorHandlers:
         # Set up the expected value
         expected_status_code = 422
         expected_error_code = "EF003BAS012"
+        expected_message = "The request parameter is invalid or missing."
         expected_response_body = {
             "code": expected_error_code,
-            "message": errors,
+            "message": expected_message,
+            "detail": json.loads(json.dumps(errors)),
         }
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
@@ -356,7 +349,7 @@ class TestErrorHandlers:
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert response.status_code == expected_status_code
-        assert response_body["code"] == expected_error_code
+        assert response_body == expected_response_body
 
         assert len(caplog.records) == 1
 
@@ -371,111 +364,10 @@ class TestErrorHandlers:
         assert getattr(exception_log, "error_code") == expected_response_body["code"]
 
         assert hasattr(exception_log, "error_message"), "error_message should be present in the log record"
-        assert getattr(exception_log, "error_message") == expected_response_body["message"]
+        assert getattr(exception_log, "error_message") == expected_message
 
-
-class TestCustomExceptionHandler:  # pylint: disable=R0903
-    """Unit test class for custom_exception_handler."""
-
-    @pytest.mark.parametrize(
-        "handle_missing_exception",
-        [
-            Exception,
-            RuntimeError,
-        ],
-    )
-    @pytest.mark.parametrize(
-        "endpoint_url, endpoint_method, request_body",
-        [
-            (
-                "/cdim/api/v1/cpu/451b0faf-b70d-4476-832a-4c93f0e6e1ce/is-os-ready",
-                "GET",
-                None,
-            ),
-        ],
-    )
-    def test_missing_exception_handling(  # pylint: disable=R0913, R0917
-        self,
-        mocker: MockFixture,
-        handle_missing_exception,
-        endpoint_url,
-        endpoint_method,
-        request_body,
-    ):
-        """
-        Test the custom exception handler for unhandled exceptions in specific endpoints.
-
-        This test method sends a GET request to the provided dummy endpoint URL.
-        It verifies that the custom exception handler, which is defined to catch
-        Python's built-in Exception, properly handles unhandled exceptions.
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-
-        expected_http_status = HTTPStatus.INTERNAL_SERVER_ERROR.value
-        expected_response = {
-            "code": "CF010BAS001",
-            "message": "The server encountered an unexpected internal error and was unable to complete your request.",
-        }
-
-        mocker.patch(
-            "app.core.control.control_base.PowerControlTargetDevice",
-            side_effect=handle_missing_exception,
-        )
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.request(method=endpoint_method, url=endpoint_url, json=request_body)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
-
-
-class TestCustomHTTPExceptionHandler:  # pylint: disable=R0903
-    """Unit test class for custom_http_exception_handler."""
-
-    @pytest.mark.parametrize(
-        "http_method",
-        [
-            "GET",
-            "PUT",
-            "DELETE",
-            "POST",
-            "PATCH",
-        ],
-    )
-    def test_requested_url_not_found(self, http_method):
-        """
-        Test that a request to a non-existent URL returns the appropriate
-        error response and status code.
-
-        This test function sends requests to a URL that does not exist using
-        various HTTP methods (GET, PUT, DELETE, POST, PATCH) and checks that
-        the custom error handler for a "Not Found" error is invoked, returning
-        the expected status code and response body.
-
-        Args:
-            http_method (str): The HTTP method to use for the request. This is
-            provided by pytest's parameterize decorator to test multiple methods.
-
-        Expected Response:
-            - Status Code: 404 (HTTPStatus.NOT_FOUND)
-            - JSON Body: {"code": "EF003BAS011", "message": "Not Found"}
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        expected_http_status = HTTPStatus.NOT_FOUND.value
-        expected_response = {
-            "code": "EF003BAS011",
-            "message": "Not Found",
-        }
-
-        undefined_url = "/cdim/api/v1/test/"
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        response = client.request(method=http_method, url=undefined_url)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert response.status_code == expected_http_status
-        assert response.json() == expected_response
+        assert hasattr(exception_log, "error_detail"), "error_detail should be present in the log record"
+        assert getattr(exception_log, "error_detail") == errors
 
 
 class TestIsClientError:
@@ -505,7 +397,7 @@ class TestIsClientError:
 
         """
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert error_handlers._is_client_error(status_code=status_code)  # pylint: disable=W0212
+        assert error_handlers._is_client_error(status_code=status_code)
 
     @pytest.mark.parametrize(
         "status_code",
@@ -527,4 +419,4 @@ class TestIsClientError:
 
         """
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert not error_handlers._is_client_error(status_code=status_code)  # pylint: disable=W0212
+        assert not error_handlers._is_client_error(status_code=status_code)

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 4)
 
 Device manager UT.
@@ -101,7 +101,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -651,7 +651,7 @@ class MockPluginPortAndSwitchAndDeviceInfo9:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -724,7 +724,7 @@ class MockPluginPortAndSwitchAndDeviceInfo10:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo10(),
 )
 @patch(
@@ -788,7 +788,7 @@ pre_data_sn_not_str = [
 ]
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo9())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -898,7 +898,7 @@ class MockPluginPortAndSwitchAndDeviceInvalidInfo:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInvalidInfo(),
 )
 @patch(
@@ -1099,7 +1099,7 @@ pre_data_no_managerIds = [
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoNoManagerIDs(),
 )
 @patch(
@@ -1184,7 +1184,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDiffFMPortID:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDiffFMPortID(),
 )
 @patch(
@@ -1327,7 +1327,7 @@ def test__update_db_info_pci_cpu_sw():
     expected_moved_devices = new_info_d.copy()
     expected_moved_devices.loc[:, "info_from"] = info_type  # Add info_from column
 
-    # pylint: disable=W0212
+
     (
         devices_info_json,
         moved_devices,
@@ -1336,7 +1336,7 @@ def test__update_db_info_pci_cpu_sw():
     ) = dim._update_db_info_pci_cpu_sw(
         devices_info_json, new_info_d, merge_keys, merge_keys_add, "deviceKeys", info_type, same_sn_info_d
     )
-    # pylint: enable=W0212
+
 
     # check expected_devices_info_json == devices_info_json
     diff_devices_info_json = pd.concat([expected_devices_info_json, devices_info_json]).drop_duplicates(keep=False)
@@ -1361,9 +1361,9 @@ def test__update_db_info_new_info_sw_sn_d_no_unmerged():
     moved_devices = pd.DataFrame()
     invalid_sn_info_json = pd.DataFrame()
     ret = 0
-    # pylint: disable=W0212
+
     dim._update_db_info(device_info_list, manager, info_type, devices_info_json, moved_devices, invalid_sn_info_json)
-    # pylint: enable=W0212
+
     ret = 1
     assert ret == 1
 

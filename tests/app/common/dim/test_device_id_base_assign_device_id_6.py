@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 5)
 
 Device manager UT.
@@ -180,7 +180,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -405,7 +405,7 @@ class MockPluginPortAndSwitchAndDeviceInfo4:
         return oob_manager_list
 
 
-class MockDoAssignDeviceID4CheckInvalidSNInfoJSON:  # pylint: disable=R0903
+class MockDoAssignDeviceID4CheckInvalidSNInfoJSON:
     """set result of
 
     set result of all get_xxxx_info
@@ -632,11 +632,11 @@ def test__update_db_info_fmswid_portkeys_samedata_fid():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -653,11 +653,11 @@ def test__update_db_info_fmswid_portkeys_sn_none_fid():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -674,11 +674,11 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_fid():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -694,11 +694,11 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_other_fid():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_sn_dk_none)
     new_info_fm_sw_id_d["PCIeVendorId"] = "77"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
 
@@ -714,11 +714,11 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_portkeys_fid():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_sn_dk_none)
     new_info_fm_sw_id_d["portKeys"] = "{'port': '1234'}"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
 
@@ -735,11 +735,11 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_portkeys_other_fid():
     new_info_fm_sw_id_d["portKeys"] = "{'port': '1234'}"
     new_info_fm_sw_id_d["PCIeVendorId"] = "77"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
 
@@ -757,9 +757,9 @@ def test__update_db_info_fmswid_portkeys_samedata_pk():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -776,9 +776,9 @@ def test__update_db_info_fmswid_portkeys_sn_none_pk():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -795,9 +795,9 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_pk():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -813,9 +813,9 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_other_pk():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_sn_dk_none)
     new_info_fm_sw_id_d["PCIeVendorId"] = "77"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
 
@@ -831,9 +831,9 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_portkeys_pk():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_sn_dk_none)
     new_info_fm_sw_id_d["portKeys"] = "{'port': '1234'}"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -851,9 +851,9 @@ def test__update_db_info_fmswid_portkeys_sn_dk_none_diff_portkeys_other_pk():
     new_info_fm_sw_id_d["portKeys"] = "{'port': '1234'}"
     new_info_fm_sw_id_d["PCIeVendorId"] = "77"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -956,11 +956,11 @@ def test__update_db_info_fmswid_portkeys_samedata_sw_fid():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -977,11 +977,11 @@ def test__update_db_info_fmswid_portkeys_sn_none_sw_fid():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -997,11 +997,11 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_other_sw_fid():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_switch_info_sn_none)
     new_info_fm_sw_id_d["switchManufacturer"] = "777"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1018,11 +1018,11 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_fmswid_sw_fid():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_switch_info_sn_none)
     new_info_fm_sw_id_d["fmSwitchID"] = "D-Alma-93-40"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1040,11 +1040,11 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_portkeys_other_sw_fid():
     new_info_fm_sw_id_d["switchModel"] = "888"
     new_info_fm_sw_id_d["fmSwitchID"] = "D-Alma-93-40"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1063,9 +1063,9 @@ def test__update_db_info_fmswid_portkeys_samedata_sw_pk():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -1082,9 +1082,9 @@ def test__update_db_info_fmswid_portkeys_sn_none_sw_pk():
     expected_devices_info_json = devices_info_json.copy(deep=True)
     expected_devices_info_json["valid"] = True
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     assert ret1.equals(expected_devices_info_json)
     assert ret2.empty
 
@@ -1100,9 +1100,9 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_other_sw_pk():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_switch_info_sn_none)
     new_info_fm_sw_id_d["switchManufacturer"] = "777"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.equals(devices_info_json)
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1119,9 +1119,9 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_fmswid_sw_pk():
     new_info_fm_sw_id_d = pd.DataFrame(check_new_switch_info_sn_none)
     new_info_fm_sw_id_d["fmSwitchID"] = "D-Alma-93-40"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1139,9 +1139,9 @@ def test__update_db_info_fmswid_portkeys_sn_none_diff_portkeys_other_sw_pk():
     new_info_fm_sw_id_d["switchModel"] = "888"
     new_info_fm_sw_id_d["fmSwitchID"] = "D-Alma-93-40"
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1184,11 +1184,11 @@ def test__update_db_info_fmswid_portkeys_diff_fmmanagerid_fid():
     devices_info_json = pd.DataFrame(check_base_switch_info)
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_diff_fmid)
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1255,11 +1255,11 @@ def test__update_db_info_fmswid_portkeys_same_fmswitchid_fmmanagerid_fid():
     devices_info_json = pd.DataFrame(check_base_json_info)
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_same_fmswitchid_fmmanagerid)
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.empty
@@ -1281,11 +1281,11 @@ def test__update_db_info_fmswid_portkeys_none_fmswitchid_fmmanagerid_fid():
     new_info_fm_sw_id_d["fmManagerID"] = None
     new_info_fm_sw_id_d["valid"] = True  # for new_info_d
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(
         devices_info_json, new_info_fm_sw_id_d, ["fmSwitchID", "fmManagerID"]
     )
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)
@@ -1356,9 +1356,9 @@ def test__update_db_info_fmswid_portkeys_same_portkeys_pk():
     devices_info_json = pd.DataFrame(check_base_json_info)
     new_info_fm_sw_id_d = pd.DataFrame(check_new_info_same_portkeys)
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.empty
@@ -1375,9 +1375,9 @@ def test__update_db_info_fmswid_portkeys_none_portkeys_pk():
     new_info_fm_sw_id_d["portKeys"] = None
     new_info_fm_sw_id_d["valid"] = True  # for new_info_d
 
-    # pylint: disable=W0212
+
     ret1, ret2 = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_fm_sw_id_d, ["portKeys"])
-    # pylint: enable=W0212
+
     # assert ret1.equals(devices_info_json)
     assert ret1.values.tolist() == devices_info_json.values.tolist()
     assert ret2.equals(new_info_fm_sw_id_d)

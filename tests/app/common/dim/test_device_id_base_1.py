@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=W0212,R0801
+
 """unit test module in device_ID_base.py (part 1)
 
 system under test
@@ -864,7 +864,7 @@ dummy_device_id_info_invalid_type1_ite12 = [
 ]
 
 
-class TestChangeInfoToNewType:  # pylint: disable=R0903
+class TestChangeInfoToNewType:
     """Unit test class for _change_info_to_new_type.
 
     SUT:/device_id_manager/device_ID_base.py/_change_info_to_new_type
@@ -1131,7 +1131,7 @@ class TestCheckDeviceIDManagerFileDict:
         assert actual is False
 
 
-class TestUpdateIDToInfo:  # pylint: disable=R0903
+class TestUpdateIDToInfo:
     """Unit test class for _update_id_to_info.
     SUT:/device_id_manager/device_ID_base.py/_update_id_to_info
     """
@@ -1189,7 +1189,7 @@ class TestAssignDeviceID:
         """
 
         # preparation
-        def mocked_read_json(file_path, dtype):  # pylint: disable=W0613
+        def mocked_read_json(file_path, dtype):
             """side_effect"""
             if file_path == path_setting().data_file_dir + dim._DEVICE_ID_MANAGER_FILE_NAME:
                 return pd.DataFrame()

@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit AuthenticationHWControlError
+"""Classes that inherit AuthenticationHWControlError.
 
 file path: /app/common/basic_exceptions/authentication_exceptions.py
 
@@ -28,7 +28,7 @@ from app.common.basic_exceptions.base_exceptions import AuthenticationHWControlE
 
 
 class OOBAuthenticationHWControlError(AuthenticationHWControlError):
-    """HwControl OOB Authentication Error Detail Exception class
+    """HwControl OOB Authentication Error Detail Exception class.
 
     This class is common HwControl defined detail exception class
     for when Authentication Error Occur in FM.

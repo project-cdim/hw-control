@@ -25,26 +25,24 @@ To start the application using uvicorn, run the following command:
 
 import uuid
 
+from asgi_correlation_id import CorrelationIdMiddleware
+from asgi_correlation_id.middleware import is_valid_uuid4
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from asgi_correlation_id import CorrelationIdMiddleware
-from asgi_correlation_id.middleware import is_valid_uuid4
 
+import app.common.basic_exceptions as custom_exceptions
 from app import app_life_span
-from app.routers import api_metadata
-from app.routers import error_handlers
-from app.routers import middlewares
+from app.common import constants
+from app.routers import api_metadata, error_handlers, middlewares
 from app.routers.control import control_api
 from app.routers.info import devices
-from app.common import constants
-import app.common.basic_exceptions as custom_exceptions
 
 # Generate ASGI application instance.
 app = FastAPI(
     title="hw-control",
     description=api_metadata.HW_CONTROL_API_DESCRIPTION,
-    version="0.2.0",
+    version="0.2.1",
     openapi_tags=[
         api_metadata.DEVICE_CONTROL_API_TAG,
         api_metadata.DEVICE_INFO_API_TAG,

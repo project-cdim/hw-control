@@ -1,4 +1,4 @@
 ---
 OS_IPAddress:
-    - fmPortID: ""
-      IPAddress: ""
+  - fmPortID: ""
+    IPAddress: ""

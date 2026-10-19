@@ -14,14 +14,10 @@
 
 """Unit test module for control.response_models module ."""
 
-from pydantic import ValidationError
 import pytest
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+from pydantic import ValidationError
 
 from app.routers.control import response_models
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 DUMMY_UPSTREAM_DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
 DUMMY_DOWNSTREAM_DEVICE_ID = "b9f9b678-bce8-49a1-bca3-dbbc32259abf"

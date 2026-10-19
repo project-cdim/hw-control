@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get Information process (Response generation)
+"""HW independent section - Get Information process (Response generation).
 
 Upon receiving a request from the information acquisition API,
 make an information acquisition request for the specified Device ID to FM and OOB.
@@ -21,12 +21,13 @@ type and return it to the information acquisition API.
 
 """
 
-import logging
 import json
+import logging
 from pathlib import Path
 from typing import Any
-from app.common.basic_exceptions import InternalHWControlError
+
 import app.common.constants as const
+from app.common.basic_exceptions import InternalHWControlError
 from app.common.dim import device_id_base as dim
 from app.common.messages import message
 from app.common.settings import settings
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_mapping_table(device_type: str, data_type: str, data_source_type: str) -> dict | None:
-    """Get mapping table
+    """Get mapping table.
 
     Return the mapping table that corresponds to the Device Type and data source and data type.
 
@@ -55,7 +56,7 @@ def get_mapping_table(device_type: str, data_type: str, data_source_type: str) -
 
 
 def remove_empty_item(resp: Any) -> Any:
-    """Remove empty item
+    """Remove empty item.
 
     Remove empty items from response data.
 
@@ -67,8 +68,10 @@ def remove_empty_item(resp: Any) -> Any:
     """
 
     def _is_not_empty(val: Any) -> bool:
-        """Check not empty
+        """Check not empty.
+
         Check if the value is not empty or unwanted.
+
         Args:
             val (Any): value
         Returns:
@@ -98,7 +101,7 @@ def remove_empty_item(resp: Any) -> Any:
 
 
 def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict[str, Any]:
-    """Create response data from mapping table
+    """Create response data from mapping table.
 
     Create response data from source data according to mapping table.
 
@@ -113,7 +116,6 @@ def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict[str
 
     # Loops while extracting the destination key and its mapping information.
     for dest_key, mapping_data in mapping_table.items():
-
         # Source key name. (If no key name is specified, the same key name is used)
         key = mapping_data.get(info_const.MAPPING_ITEM_KEY, dest_key)
 
@@ -154,7 +156,7 @@ def create_resp_from_mapping(mapping_table: dict, source_data: dict) -> dict[str
 
 
 def _check_required_item(mapping_data: dict, key: str, item_value: Any) -> None:
-    """Check required item
+    """Check required item.
 
     Check for the presence of values in required item based on the mapping data.
 
@@ -174,7 +176,7 @@ def _check_required_item(mapping_data: dict, key: str, item_value: Any) -> None:
 
 
 def _check_list_item_types(mapping_data: dict, key: str, item_value: Any) -> None:
-    """Check list item type
+    """Check list item type.
 
     Check the data type of items in the list based on the mapping data.
 
@@ -205,7 +207,7 @@ def _check_list_item_types(mapping_data: dict, key: str, item_value: Any) -> Non
 
 
 def _check_item_type(mapping_data: dict, key: str, item_value: Any) -> None:
-    """Check item type
+    """Check item type.
 
     Check the data type of item based on the mapping data.
 
@@ -242,7 +244,7 @@ def _check_item_type(mapping_data: dict, key: str, item_value: Any) -> None:
 
 
 def _execute_if_callable(mapping_data: dict, key: str, item_value: Any) -> Any:
-    """Execute function if callable
+    """Execute function if callable.
 
     Check if the conversion function is callable and return the execution result.
 
@@ -276,7 +278,7 @@ def _execute_if_callable(mapping_data: dict, key: str, item_value: Any) -> Any:
 
 
 def check_convert_item(mapping_data: dict, key: str, item_value: Any) -> Any:
-    """Check and convert mapping item
+    """Check and convert mapping item.
 
     Check and convert item value based on mapping data.
 
@@ -295,7 +297,7 @@ def check_convert_item(mapping_data: dict, key: str, item_value: Any) -> Any:
 
 
 def load_mapping_table() -> None:
-    """Load mapping table
+    """Load mapping table.
 
     Load the mapping table file into the global variable.
 
@@ -309,7 +311,7 @@ def load_mapping_table() -> None:
         info_const.MAPPING_TABLE[data_type] = {}
         for source_type in source_types:
             # Mapping table file path.
-            file_path = Path(settings.MAPPING_TABLE_PATH) / info_const.MAPPING_TABLE_FILE.get(data_type, {}).get(
+            file_path = Path(settings.mapping_table_path) / info_const.MAPPING_TABLE_FILE.get(data_type, {}).get(
                 source_type, ""
             )
             # File does not exist.
@@ -330,12 +332,12 @@ def load_mapping_table() -> None:
 
 
 def parse_json_value(mapping_data: dict | list) -> dict | list:
-    """Convert json data
+    """Convert json data.
 
     Convert json data to python data.
 
     Args:
-        mapping_data (dict | list: mapping data
+        mapping_data (dict | list): mapping data.
 
     Returns:
         dict | list: Source data after conversion
@@ -370,7 +372,7 @@ def parse_json_value(mapping_data: dict | list) -> dict | list:
 
 
 def get_valid_string(val: Any) -> str | None:
-    """Get valid string value
+    """Get valid string value.
 
     Check if the argument is a valid string value, and if it is, return the string value.
 
@@ -388,7 +390,7 @@ def get_valid_string(val: Any) -> str | None:
 
 
 def get_high_priority_device_type(device_type_1: str, device_type_2: str | None) -> str:
-    """Get higher priority Device Type
+    """Get higher priority Device Type.
 
     Determines and returns the Device Type with higher priority based on predefined priority levels.
 
@@ -437,7 +439,7 @@ def get_high_priority_device_type(device_type_1: str, device_type_2: str | None)
 
 
 def get_combination_match_device(device_id: str) -> tuple[str | None, str | None]:
-    """Get Device ID and Device Type for device that combination data match
+    """Get Device ID and Device Type for device that combination data match.
 
     Retrieve the combination match Device ID and Device Type based on the given Device ID.
 
@@ -469,7 +471,7 @@ def get_combination_match_device(device_id: str) -> tuple[str | None, str | None
 
 
 def get_merge_type(device_type_1: str, device_type_2: str | None) -> int:
-    """Get merge type
+    """Get merge type.
 
     Determines the merge type between two device types.
 
@@ -489,8 +491,7 @@ def get_merge_type(device_type_1: str, device_type_2: str | None) -> int:
 
 
 def merge_dict(source: dict, target: dict, duplicate_key_action: int) -> dict:
-    """
-    Recursively merges two dictionaries with configurable handling of duplicate keys.
+    """Recursively merges two dictionaries with configurable handling of duplicate keys.
 
     Args:
         source (dict): The dictionary to which values will be merged
@@ -507,21 +508,20 @@ def merge_dict(source: dict, target: dict, duplicate_key_action: int) -> dict:
         """Return True if val is None or an empty string."""
         return val is None or (isinstance(val, str) and val.strip() == "")
 
-    for key in target:
+    for key, value in target.items():
         if key not in source or _is_empty(source[key]):
-            source[key] = target[key]
-        elif isinstance(target[key], dict):
-            merge_dict(source[key], target[key], duplicate_key_action)
-        elif isinstance(target[key], list):
-            merge_lists(source[key], target[key])
-        elif duplicate_key_action == 1 and not _is_empty(target[key]):
-            source[key] = target[key]
+            source[key] = value
+        elif isinstance(value, dict):
+            merge_dict(source[key], value, duplicate_key_action)
+        elif isinstance(value, list):
+            merge_lists(source[key], value)
+        elif duplicate_key_action == 1 and not _is_empty(value):
+            source[key] = value
     return source
 
 
 def merge_lists(list1, list2):
-    """
-    Combine two lists and overwrite duplicate elements with the last element.
+    """Combine two lists and overwrite duplicate elements with the last element.
 
     Args:
         list1: The first list

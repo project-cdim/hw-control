@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,35 +12,32 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-A module for handling authorization operations.
-"""
+"""A module for handling authorization operations."""
 
 import logging
 from http import HTTPStatus
 
-from pydantic import BaseModel, ValidationError, Field
 import requests
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
 
 import app.common.basic_exceptions as exc
-from app.common.utils.secret_management_utilities import secret_management_client
 from app.common.utils.authorization_utilities import authorization_server_settings
+from app.common.utils.secret_management_utilities import secret_management_client
 
-CLIENT_SECRET_NAME = "Keycloak"
+CLIENT_SECRET_NAME = "Keycloak"  # noqa: S105  # Secret store entry name, not a credential value.
 
 logger = logging.getLogger(__name__)
 
 
 class ClientCredential(BaseModel):
-    """
-    Validate client credentials for HW Control.
+    """Validate client credentials for HW Control.
 
     This model is responsible for validating the client ID and client secret
     retrieved from a secret API.
 
     Attributes:
         client_id (str): The client identifier for HW Control.
-        client_secret (str): The client secret for HW Control.
+        client_secret (SecretStr): The client secret for HW Control.
 
     Raises:
         ValueError:
@@ -49,7 +46,9 @@ class ClientCredential(BaseModel):
 
     client_id: str = Field(description="client id of HW Control")
 
-    client_secret: str = Field(description="client secret of HW Control")
+    client_secret: SecretStr = Field(description="client secret of HW Control")
+
+    model_config = ConfigDict(hide_input_in_errors=True)
 
 
 def get_agent_access_token() -> str:
@@ -89,7 +88,6 @@ def get_agent_access_token() -> str:
         # Use headers in your HTTP requests to the agent
 
     """
-
     secret = secret_management_client.get_secret(
         secret_store=secret_management_client.SecretStore.AGENT, secret_name=CLIENT_SECRET_NAME
     )
@@ -119,7 +117,7 @@ def get_agent_access_token() -> str:
     token_request_body = {
         "grant_type": "client_credentials",
         "client_id": client_credential.client_id,
-        "client_secret": client_credential.client_secret,
+        "client_secret": client_credential.client_secret.get_secret_value(),
     }
 
     token_request_headers = {"Content-Type": "application/x-www-form-urlencoded"}

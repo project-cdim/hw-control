@@ -242,5 +242,13 @@
         "type": {
             "vtype": "str"
         }
+    },
+    "unknown": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        }
     }
 }

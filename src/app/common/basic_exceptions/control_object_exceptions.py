@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Classes that inherit ControlObjectHWControlError
+"""Classes that inherit ControlObjectHWControlError.
 
 file path: /app/common/basic_exceptions/control_object_exceptions.py
 
@@ -34,7 +34,7 @@ from app.common.basic_exceptions.base_exceptions import ControlObjectHWControlEr
 
 
 class FMConnectFailureHWControlError(ControlObjectHWControlError):
-    """HwControl FM Connect Failure Error Detail Exception class
+    """HwControl FM Connect Failure Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Connect Failure in FM.
@@ -49,7 +49,7 @@ class FMConnectFailureHWControlError(ControlObjectHWControlError):
 
 
 class FMDisconnectFailureHWControlError(ControlObjectHWControlError):
-    """HwControl FM Disconnect Failure Error Detail Exception class
+    """HwControl FM Disconnect Failure Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Disconnect Failure in FM.
@@ -100,7 +100,7 @@ class CPUResetFailureHWControlError(ControlObjectHWControlError):
 
 
 class AgentConnectFailureHWControlError(ControlObjectHWControlError):
-    """HwControl Agent Connect Failure Error Detail Exception class
+    """HwControl Agent Connect Failure Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Connect Failure in Agent.
@@ -112,7 +112,7 @@ class AgentConnectFailureHWControlError(ControlObjectHWControlError):
 
 
 class AgentGetInformationFailureHWControlError(ControlObjectHWControlError):
-    """HwControl Agent Get Information Failure Error Detail Exception class
+    """HwControl Agent Get Information Failure Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Get Information Failure in Agent.

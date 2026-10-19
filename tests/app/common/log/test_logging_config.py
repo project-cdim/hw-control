@@ -24,28 +24,27 @@ The logging system is constructed during uvicorn startup using the provided logg
     2. The logging system constructed from the logging configuration file behaves as expected.
 """
 
-import sys
-import json
-import os
-import logging
-import logging.handlers
-import logging.config
-import tempfile
 import http
+import json
+import logging
+import logging.config
+import logging.handlers
+import os
+import sys
+import tempfile
 
 import pytest
-from pytest import CaptureFixture
 import pythonjsonlogger
-from uvicorn.config import LOGGING_CONFIG as UvicornLoggingConfig
-from uvicorn.logging import DefaultFormatter as UvicornDefaultFormatter
-from uvicorn.logging import AccessFormatter as UvicornAccessFormatter
 from asgi_correlation_id import CorrelationIdFilter
+from uvicorn.config import LOGGING_CONFIG as UVICORN_LOGGING_CONFIG
+from uvicorn.logging import AccessFormatter as UvicornAccessFormatter
+from uvicorn.logging import DefaultFormatter as UvicornDefaultFormatter
 
 import app
 import plugins
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def shutdown_logging_system():
     """Fixture to shutdown the logging system before and after each test.
 
@@ -96,9 +95,9 @@ class TestConstructedLoggingSystemConfig:
             assert app_logger.level == logging.INFO, "`app` Logger should be set to INFO level."
 
             # handler inspection
-            assert isinstance(
-                app_logger.handlers[0], logging.handlers.RotatingFileHandler
-            ), "`app` Logger should have a RotatingFileHandler."
+            assert isinstance(app_logger.handlers[0], logging.handlers.RotatingFileHandler), (
+                "`app` Logger should have a RotatingFileHandler."
+            )
             assert app_logger.handlers[0].baseFilename == log_file_path_for_test
             assert app_logger.handlers[0].level == logging.INFO
             assert app_logger.handlers[0].maxBytes == 15000000
@@ -109,7 +108,7 @@ class TestConstructedLoggingSystemConfig:
             app_logger_json_formatter = app_logger.handlers[0].formatter
             assert isinstance(app_logger_json_formatter, pythonjsonlogger.json.JsonFormatter)
             assert (
-                app_logger_json_formatter._fmt  # pylint: disable=W0212
+                app_logger_json_formatter._fmt
                 == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d [%(correlation_id)s] %(message)s"
             )
             assert app_logger_json_formatter.datefmt is None
@@ -150,7 +149,7 @@ class TestConstructedLoggingSystemConfig:
             # formatter inspection
             assert isinstance(plugins_logger.handlers[0].formatter, pythonjsonlogger.json.JsonFormatter)
             assert (
-                plugins_logger.handlers[0].formatter._fmt  # pylint: disable=W0212
+                plugins_logger.handlers[0].formatter._fmt
                 == "%(asctime)s %(levelname)s %(pathname)s %(lineno)d [%(correlation_id)s] %(message)s"
             )
             assert plugins_logger.handlers[0].formatter.datefmt is None
@@ -179,25 +178,25 @@ class TestConstructedLoggingSystemConfig:
             # logger inspection
             assert (
                 default_logging_config["loggers"]["uvicorn"]["level"]
-                == UvicornLoggingConfig["loggers"]["uvicorn"]["level"]
+                == UVICORN_LOGGING_CONFIG["loggers"]["uvicorn"]["level"]
             )
             assert (
                 default_logging_config["loggers"]["uvicorn"]["propagate"]
-                == UvicornLoggingConfig["loggers"]["uvicorn"]["propagate"]
+                == UVICORN_LOGGING_CONFIG["loggers"]["uvicorn"]["propagate"]
             )
             # handler(uvicorn_default) inspection
             assert (
                 default_logging_config["handlers"]["uvicorn_default"]["class"]
-                == UvicornLoggingConfig["handlers"]["default"]["class"]
+                == UVICORN_LOGGING_CONFIG["handlers"]["default"]["class"]
             )
             assert (
                 default_logging_config["handlers"]["uvicorn_default"]["stream"]
-                == UvicornLoggingConfig["handlers"]["default"]["stream"]
+                == UVICORN_LOGGING_CONFIG["handlers"]["default"]["stream"]
             )
             # formatter(uvicorn_default_formatter) inspection
             assert (
                 default_logging_config["formatters"]["uvicorn_default_formatter"]
-                == UvicornLoggingConfig["formatters"]["default"]
+                == UVICORN_LOGGING_CONFIG["formatters"]["default"]
             )
 
             # ++++ logging system inspection
@@ -239,25 +238,25 @@ class TestConstructedLoggingSystemConfig:
             # logger inspection
             assert (
                 default_logging_config["loggers"]["uvicorn.access"]["level"]
-                == UvicornLoggingConfig["loggers"]["uvicorn.access"]["level"]
+                == UVICORN_LOGGING_CONFIG["loggers"]["uvicorn.access"]["level"]
             )
             assert (
                 default_logging_config["loggers"]["uvicorn.access"]["propagate"]
-                == UvicornLoggingConfig["loggers"]["uvicorn.access"]["propagate"]
+                == UVICORN_LOGGING_CONFIG["loggers"]["uvicorn.access"]["propagate"]
             )
             # handler(uvicorn_access) inspection
             assert (
                 default_logging_config["handlers"]["uvicorn_access"]["class"]
-                == UvicornLoggingConfig["handlers"]["access"]["class"]
+                == UVICORN_LOGGING_CONFIG["handlers"]["access"]["class"]
             )
             assert (
                 default_logging_config["handlers"]["uvicorn_access"]["stream"]
-                == UvicornLoggingConfig["handlers"]["access"]["stream"]
+                == UVICORN_LOGGING_CONFIG["handlers"]["access"]["stream"]
             )
             # formatter(uvicorn_access_formatter) inspection
             assert (
                 default_logging_config["formatters"]["uvicorn_access_formatter"]
-                == UvicornLoggingConfig["formatters"]["access"]
+                == UVICORN_LOGGING_CONFIG["formatters"]["access"]
             )
 
             # ++++ logging system inspection
@@ -265,9 +264,9 @@ class TestConstructedLoggingSystemConfig:
 
             # logger inspection
             assert uvicorn_access_logger.level == logging.INFO
-            assert (
-                uvicorn_access_logger.propagate is False
-            ), "Uvicorn access logger should not propagate messages to the root logger."
+            assert uvicorn_access_logger.propagate is False, (
+                "Uvicorn access logger should not propagate messages to the root logger."
+            )
             assert len(uvicorn_access_logger.handlers) == 1
 
             # handler(uvicorn_access) inspection
@@ -302,7 +301,7 @@ class TestConstructedLoggingSystemConfig:
             # logger inspection
             assert (
                 default_logging_config["loggers"]["uvicorn.error"]["level"]
-                == UvicornLoggingConfig["loggers"]["uvicorn.error"]["level"]
+                == UVICORN_LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"]
             )
 
             # ++++ logging system inspection
@@ -476,11 +475,11 @@ class TestConstructedLoggingSystemBehavior:
 
             # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
             assert len(log_entry_lines) == 1, "There should be exactly one log entry."
-            assert (
-                log_entry_lines[0]["correlation_id"] == expected_correlation_id
-            ), "correlation_id Log entry should set by CorrelationIdFilter, not from extra parameter."
+            assert log_entry_lines[0]["correlation_id"] == expected_correlation_id, (
+                "correlation_id Log entry should set by CorrelationIdFilter, not from extra parameter."
+            )
 
-    def test_uvicorn_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
+    def test_uvicorn_logger_output(self, default_logging_config: dict, capsys: pytest.CaptureFixture):
         """Test that the uvicorn logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Set the input values for the log
@@ -507,7 +506,7 @@ class TestConstructedLoggingSystemBehavior:
             captured = capsys.readouterr()
             assert captured.err == expected_log
 
-    def test_uvicorn_access_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
+    def test_uvicorn_access_logger_output(self, default_logging_config: dict, capsys: pytest.CaptureFixture):
         """Test that the uvicorn access logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Set the input values for the log
@@ -545,7 +544,7 @@ class TestConstructedLoggingSystemBehavior:
             captured = capsys.readouterr()
             assert captured.out == expected_log
 
-    def test_uvicorn_error_logger_output(self, default_logging_config: dict, capsys: CaptureFixture):
+    def test_uvicorn_error_logger_output(self, default_logging_config: dict, capsys: pytest.CaptureFixture):
         """Test that the uvicorn error logger outputs the expected log."""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Set the input values for the log

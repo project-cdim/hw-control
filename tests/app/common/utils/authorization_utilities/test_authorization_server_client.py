@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -18,21 +18,14 @@ import logging
 from http import HTTPStatus
 
 import pytest
-from pytest import MonkeyPatch, LogCaptureFixture
+import requests
+from pydantic import ValidationError
 from pytest_mock import MockFixture
 
-from pydantic import ValidationError
-import requests
-
-from tests import test_util
-
 import app.common.basic_exceptions as exc
-from app.common.utils.secret_management_utilities import secret_management_client
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.common.utils.authorization_utilities import authorization_server_client
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from app.common.utils.secret_management_utilities import secret_management_client
+from tests import test_util
 
 
 class TestClientCredential:
@@ -57,7 +50,7 @@ class TestClientCredential:
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_instance.client_id == expected_client_id
-        assert actual_instance.client_secret == expected_client_secret
+        assert actual_instance.client_secret.get_secret_value() == expected_client_secret
 
     @pytest.mark.parametrize(
         "client_credential",
@@ -91,8 +84,8 @@ class TestGetSecret:
 
     def test_success(
         self,
-        caplog: LogCaptureFixture,
-        monkeypatch: MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
     ):
         """Test success case.
@@ -186,7 +179,7 @@ class TestGetSecret:
         assert getattr(response_log, "status_code") == 200
 
     @pytest.mark.parametrize(
-        "secret_client_raise_exception, expected_exception",
+        ("secret_client_raise_exception", "expected_exception"),
         [
             (exc.DependencyServiceHWControlError, exc.DependencyServiceHWControlError),
             (exc.InternalHWControlError, exc.InternalHWControlError),
@@ -194,7 +187,7 @@ class TestGetSecret:
         ],
     )
     def test_secret_client_raise(
-        self, monkeypatch: MonkeyPatch, mocker: MockFixture, secret_client_raise_exception, expected_exception
+        self, monkeypatch: pytest.MonkeyPatch, mocker: MockFixture, secret_client_raise_exception, expected_exception
     ):
         """test secret management client raise case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -227,7 +220,7 @@ class TestGetSecret:
         with pytest.raises(exc.InternalHWControlError):
             _ = authorization_server_client.get_agent_access_token()
 
-    def test_setting_invalid(self, mocker: MockFixture, monkeypatch: MonkeyPatch):
+    def test_setting_invalid(self, mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
         """test invalid env setting case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -257,7 +250,7 @@ class TestGetSecret:
             _ = authorization_server_client.get_agent_access_token()
 
     @pytest.mark.parametrize(
-        "requests_raise_exception, expected_exception",
+        ("requests_raise_exception", "expected_exception"),
         [
             (requests.exceptions.ReadTimeout, exc.InternalHWControlError),
             (requests.exceptions.ConnectTimeout, exc.InternalHWControlError),
@@ -266,7 +259,7 @@ class TestGetSecret:
         ],
     )
     def test_requests_raised(
-        self, monkeypatch: MonkeyPatch, mocker: MockFixture, requests_raise_exception, expected_exception
+        self, monkeypatch: pytest.MonkeyPatch, mocker: MockFixture, requests_raise_exception, expected_exception
     ):
         """test requests raise case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -297,7 +290,7 @@ class TestGetSecret:
             _ = authorization_server_client.get_agent_access_token()
 
     @pytest.mark.parametrize(
-        "auth_server_response_headers, auth_server_response_body",
+        ("auth_server_response_headers", "auth_server_response_body"),
         [
             (
                 {"Content-Type": "text/plain"},
@@ -307,7 +300,11 @@ class TestGetSecret:
         ],
     )
     def test_auth_server_return_invalid_data(
-        self, monkeypatch: MonkeyPatch, mocker: MockFixture, auth_server_response_headers, auth_server_response_body
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        mocker: MockFixture,
+        auth_server_response_headers,
+        auth_server_response_body,
     ):
         """test Authorization Server return invalid data case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
@@ -344,7 +341,7 @@ class TestGetSecret:
             _ = authorization_server_client.get_agent_access_token()
 
     @pytest.mark.parametrize(
-        "auth_server_response_status_code, auth_server_response_body,expected_exception",
+        ("auth_server_response_status_code", "auth_server_response_body", "expected_exception"),
         [
             (HTTPStatus.BAD_REQUEST.value, {"error": "invalid_client"}, exc.AuthenticationHWControlError),
             (HTTPStatus.UNAUTHORIZED.value, {"error": "invalid_client"}, exc.AuthenticationHWControlError),
@@ -359,9 +356,9 @@ class TestGetSecret:
             ),  # Unexpected HTTP status code was returned case.
         ],
     )
-    def test_secret_manager_return_error(  # pylint: disable=R0913, R0917
+    def test_secret_manager_return_error(
         self,
-        monkeypatch: MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
         auth_server_response_status_code,
         auth_server_response_body,

@@ -14,35 +14,29 @@
 
 """Unit test module for plugin_manager."""
 
-import logging
-import sys
-import os
 import importlib
-import json
-
+import logging
+import os
+import sys
 from unittest.mock import mock_open, patch
-import pytest
-from pytest import LogCaptureFixture, MonkeyPatch
-from pytest_mock import MockFixture
-import yaml
 
-from tests.app.common.utils import test1_plugin
+import pytest
+import yaml
+from pytest_mock import MockFixture
 
 import app.common.basic_exceptions as exc
-import app.common.utils.plugin_manager as mng
-from app.common.utils.plugin_manager import check_plugin
-from app.common.utils.plugin_manager import get_manager_list
-from app.common.utils.plugin_manager import get_plugin
-
+import app.common.plugin.plugin_manager as mng
+from app.common.plugin.plugin_manager import _get_plugin, get_manager_list
 from app.common.utils.secret_management_utilities import secret_management_client as smc
+from tests.app.common.utils import test1_plugin
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # For log check
-PLUGIN_MGR_MODULE_NAME = "app.common.utils.plugin_manager"
+PLUGIN_MGR_MODULE_NAME = "app.common.plugin.plugin_manager"
 
 
-def mock_import(name, *args, **kwargs):  # pylint: disable=W0613
+def mock_import(_name, *_args, **_kwargs):
     """setting
 
     mock import
@@ -51,7 +45,7 @@ def mock_import(name, *args, **kwargs):  # pylint: disable=W0613
     return test1_plugin
 
 
-def test_get_class_instance_invalid_model_name(caplog: LogCaptureFixture):
+def test_get_class_instance_invalid_model_name(caplog: pytest.LogCaptureFixture):
     """failed
 
     Check the format of model_name (directory name.module name) failed
@@ -66,10 +60,10 @@ def test_get_class_instance_invalid_model_name(caplog: LogCaptureFixture):
 
     # Create a class instance with one parameter
     # with pytest.raises(exc.YamlFileError):
-    with pytest.raises(exc.ConfigurationHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ConfigurationHWControlError):
+            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)
 
     # Confirm that the instance cannot be obtained
     assert inst1 is None
@@ -81,73 +75,7 @@ def test_get_class_instance_invalid_model_name(caplog: LogCaptureFixture):
     assert error_log.getMessage() == "module name is invalid."
 
 
-def test_get_class_instance_none_model_name(caplog: LogCaptureFixture):
-    """failed
-
-    model_name is None
-
-    """
-
-    manager_id = "test_id"
-    m_type = "oob"
-    mod1 = None
-    cls = "TestPlugin"
-    param1 = "param1"
-    inst1 = None
-
-    # Create a class instance with one parameter
-    with pytest.raises(exc.ConfigurationHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
-
-    # Confirm that the instance cannot be obtained
-    assert inst1 is None
-
-    assert len(caplog.records) == 1
-    # Inspection: Check the error log
-    error_log = caplog.records[0]
-    assert error_log.levelname == "ERROR"
-    assert (
-        error_log.getMessage()
-        == f"module name is missing or not properly set in the setting file, manager id is {manager_id}."
-    )
-
-
-def test_get_class_instance_none_class_name(caplog: LogCaptureFixture):
-    """failed
-
-    class_name is None
-
-    """
-
-    manager_id = "test_id"
-    m_type = "oob"
-    mod1 = "test1_plugin"
-    cls = None
-    param1 = "param1"
-    inst1 = None
-
-    # Create a class instance with one parameter
-    with pytest.raises(exc.ConfigurationHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
-
-    # Confirm that the instance cannot be obtained
-    assert inst1 is None
-
-    assert len(caplog.records) == 1
-    # Inspection: Check the error log
-    error_log = caplog.records[0]
-    assert error_log.levelname == "ERROR"
-    assert (
-        error_log.getMessage()
-        == f"class name is missing or not properly set in the setting file, manager id is {manager_id}."
-    )
-
-
-def test_get_class_instance_err(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
+def test_get_class_instance_err(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture):
     """failed
 
     Internal Error
@@ -164,10 +92,10 @@ def test_get_class_instance_err(monkeypatch: MonkeyPatch, caplog: LogCaptureFixt
     monkeypatch.setattr(importlib, "import_module", mock_import)
 
     # Create a class instance with one parameter
-    with pytest.raises(exc.PluginGetInstanceHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.PluginGetInstanceHWControlError):
+            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)
 
     # Confirm that the instance cannot be obtained
     assert inst1 is None
@@ -179,7 +107,7 @@ def test_get_class_instance_err(monkeypatch: MonkeyPatch, caplog: LogCaptureFixt
     assert error_log.getMessage() == "Failed to create instance."
 
 
-def test_get_class_instance_ok_none_param(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
+def test_get_class_instance_ok_none_param(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture):
     """success
 
     No parameters
@@ -198,10 +126,11 @@ def test_get_class_instance_ok_none_param(monkeypatch: MonkeyPatch, caplog: LogC
     caplog.clear()
     with caplog.at_level(logging.INFO, logger=mng.__name__):
         # Create a class instance with one parameter
-        inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
+        inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)
 
     # Verify that an instance can be obtained
     assert inst1 is not None
+    assert isinstance(inst1, test1_plugin.TestPlugin)
     assert inst1.test_value is None
 
     assert len(caplog.records) == 1
@@ -215,7 +144,7 @@ def test_get_class_instance_ok_none_param(monkeypatch: MonkeyPatch, caplog: LogC
     assert plugin_create_log.getMessage() == f"create {type(cls2_inst)} instance."
 
 
-def test_get_class_instance_ok_with_param(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
+def test_get_class_instance_ok_with_param(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture):
     """success
 
     With parameters
@@ -234,11 +163,12 @@ def test_get_class_instance_ok_with_param(monkeypatch: MonkeyPatch, caplog: LogC
     caplog.clear()
     with caplog.at_level(logging.INFO, logger=mng.__name__):
         # Create a class instance with one parameter
-        inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
+        inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)
 
     # Verify that an instance can be obtained
     assert inst1 is not None
     # Check the parameters passed to the class constructor are set
+    assert isinstance(inst1, test1_plugin.TestPlugin)
     assert inst1.test_value == param1
 
     # check log
@@ -253,7 +183,9 @@ def test_get_class_instance_ok_with_param(monkeypatch: MonkeyPatch, caplog: LogC
     assert plugin_create_log.getMessage() == f"create {type(cls2_inst)} instance."
 
 
-def test_get_class_plugin_init_raise_unexpected_exception(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
+def test_get_class_plugin_init_raise_unexpected_exception(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
     """plugin_init_raise
     Testing the case where the plugin constructor
     throws an unexpected exception.
@@ -269,10 +201,10 @@ def test_get_class_plugin_init_raise_unexpected_exception(monkeypatch: MonkeyPat
     monkeypatch.setattr(importlib, "import_module", mock_import)
 
     # Create a class instance with one parameter
-    with pytest.raises(exc.BaseHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.BaseHWControlError):
+            inst1 = mng._get_class_instance(manager_id, m_type, mod1, cls, param1)
 
     assert inst1 is None
 
@@ -288,7 +220,7 @@ def test_get_class_plugin_init_raise_unexpected_exception(monkeypatch: MonkeyPat
     )
 
 
-def test_check_manager_id_err_1(caplog: LogCaptureFixture):
+def test_check_manager_id_err_1(caplog: pytest.LogCaptureFixture):
     """failed
 
     Manager ID: 1aB%&h33
@@ -299,10 +231,10 @@ def test_check_manager_id_err_1(caplog: LogCaptureFixture):
     m_id = "1aB%&h33"
 
     # Check ID
-    with pytest.raises(exc.ManagerIDHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            mng._check_manager_id(m_id)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ManagerIDHWControlError):
+            mng._check_manager_id(m_id)
 
     # check log
     assert len(caplog.records) == 1
@@ -313,7 +245,7 @@ def test_check_manager_id_err_1(caplog: LogCaptureFixture):
     assert check_manager_id_error_log.getMessage() == "id contains invalid characters."
 
 
-def test_check_manager_id_err_2(caplog: LogCaptureFixture):
+def test_check_manager_id_err_2(caplog: pytest.LogCaptureFixture):
     """failed
 
     Manager ID: 1aB(33)
@@ -324,10 +256,10 @@ def test_check_manager_id_err_2(caplog: LogCaptureFixture):
     m_id = "1aB(33)"
 
     # Check ID
-    with pytest.raises(exc.ManagerIDHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            mng._check_manager_id(m_id)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ManagerIDHWControlError):
+            mng._check_manager_id(m_id)
 
     # check log
     assert len(caplog.records) == 1
@@ -337,7 +269,7 @@ def test_check_manager_id_err_2(caplog: LogCaptureFixture):
     assert plugin_create_log.getMessage() == "id contains invalid characters."
 
 
-def test_check_manager_id_err_4(caplog: LogCaptureFixture):
+def test_check_manager_id_err_4(caplog: pytest.LogCaptureFixture):
     """failed
 
     Manager ID: 1aB'33'
@@ -348,10 +280,10 @@ def test_check_manager_id_err_4(caplog: LogCaptureFixture):
     m_id = "1aB'33'"
 
     # Check ID
-    with pytest.raises(exc.ManagerIDHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            mng._check_manager_id(m_id)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ManagerIDHWControlError):
+            mng._check_manager_id(m_id)
 
     # check log
     assert len(caplog.records) == 1
@@ -361,7 +293,7 @@ def test_check_manager_id_err_4(caplog: LogCaptureFixture):
     assert plugin_create_log.getMessage() == "id contains invalid characters."
 
 
-def test_check_manager_id_err_5(caplog: LogCaptureFixture):
+def test_check_manager_id_err_5(caplog: pytest.LogCaptureFixture):
     """failed
 
     Manager ID: 1aB 33
@@ -372,10 +304,10 @@ def test_check_manager_id_err_5(caplog: LogCaptureFixture):
     m_id = "1aB 33"
 
     # Check ID
-    with pytest.raises(exc.ManagerIDHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            mng._check_manager_id(m_id)  # pylint: disable=W0212
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ManagerIDHWControlError):
+            mng._check_manager_id(m_id)
 
     # check log
     assert len(caplog.records) == 1
@@ -385,7 +317,31 @@ def test_check_manager_id_err_5(caplog: LogCaptureFixture):
     assert plugin_create_log.getMessage() == "id contains invalid characters."
 
 
-def test_check_manager_id_ok_1(caplog: LogCaptureFixture):
+def test_check_manager_id_err_empty(caplog: pytest.LogCaptureFixture):
+    """failed
+
+    Manager ID: "" (empty string)
+    An empty manager ID is rejected, matching the "_manager.yaml" file
+    exclusion (a file literally named "_manager.yaml" has an empty ID).
+
+    """
+    m_id = ""
+
+    # Check ID
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger=mng.__name__):
+        with pytest.raises(exc.ManagerIDHWControlError):
+            mng._check_manager_id(m_id)
+
+    # check log
+    assert len(caplog.records) == 1
+    # Inspection: Check the plugin create log
+    plugin_create_log = caplog.records[0]
+    assert plugin_create_log.levelname == "ERROR"
+    assert plugin_create_log.getMessage() == "id contains invalid characters."
+
+
+def test_check_manager_id_ok_1(caplog: pytest.LogCaptureFixture):
     """success
 
     Manager ID: 12345679098644976
@@ -398,13 +354,13 @@ def test_check_manager_id_ok_1(caplog: LogCaptureFixture):
     caplog.clear()
     with caplog.at_level(logging.ERROR, logger=mng.__name__):
         # Check ID
-        mng._check_manager_id(m_id)  # pylint: disable=W0212
+        mng._check_manager_id(m_id)
 
         # check log
         assert len(caplog.records) == 0, "log should be empty."
 
 
-def test_check_manager_id_ok_2(caplog: LogCaptureFixture):
+def test_check_manager_id_ok_2(caplog: pytest.LogCaptureFixture):
     """success
 
     Manager ID: 1234a567DDFT9098B644fgjklk976
@@ -417,7 +373,7 @@ def test_check_manager_id_ok_2(caplog: LogCaptureFixture):
     caplog.clear()
     with caplog.at_level(logging.ERROR, logger=mng.__name__):
         # Check ID
-        mng._check_manager_id(m_id)  # pylint: disable=W0212
+        mng._check_manager_id(m_id)
 
         # check log
         assert len(caplog.records) == 0, "log should be empty."
@@ -434,141 +390,7 @@ def test_check_manager_id_ok_3():
     m_id = "1234a5_67DD-FT9098_B64-4fgj_klk976"
 
     # Check ID
-    mng._check_manager_id(m_id)  # pylint: disable=W0212
-
-
-def test_check_plugin_err_by_check_id():
-    """failed
-
-    Manager ID: 1aB 33
-    Only alphanumeric characters, "_" and "-" can be used,
-    no restrictions on number of digits
-
-    """
-    m_type = "oOb"
-    m_id = "1aB 33"
-
-    # Check plugin
-    with pytest.raises(exc.ManagerIDHWControlError):
-        check_plugin(m_type, m_id)
-
-
-def test_check_plugin_err_by_open(caplog: LogCaptureFixture):
-    """File open failure case.
-
-    file open failure(No such file or directory)
-
-    """
-    m_type = "oOb"
-    m_id = "1aB33"
-
-    # Check plugin
-    with pytest.raises(exc.ConfigurationHWControlError):
-        caplog.clear()
-        with caplog.at_level(logging.INFO, logger=mng.__name__):
-            check_plugin(m_type, m_id)
-
-    # check log
-    assert len(caplog.records) == 1
-    # Inspection: Check the plugin create log
-    plugin_create_log = caplog.records[0]
-    assert plugin_create_log.levelname == "ERROR"
-    assert plugin_create_log.getMessage() == "The plugin configuration file of 1aB33 was not found."
-
-
-def test_check_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
-    """failed
-
-    _get_class_instance failed
-
-    """
-    m_type = "oOb"
-    m_id = "1aB33"
-
-    # Mock Data
-    mock_data = {"module": "oob_redfish.test1_plugin", "class": "TestPlugin2"}
-    # Creating mocks
-    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
-        # Use monkeypatch to mock importlib.import_module
-        monkeypatch.setattr(importlib, "import_module", mock_import)
-        with pytest.raises(exc.PluginGetInstanceHWControlError):
-            check_plugin(m_type, m_id)
-
-
-def test_check_plugin_err_by_open_yaml_err(monkeypatch: MonkeyPatch, caplog: LogCaptureFixture):
-    """File open failure case.
-
-    File open failure (yamlErr)
-
-    """
-    m_type = "oOb"
-    m_id = "1aB33"
-
-    # Mock Data
-    mock_data = {"module": "oob_redfish.test1_plugin", "class": "TestPlugin2"}
-    # Creating mocks
-    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data)), create=True) as mock_file:
-        mock_file.return_value.__enter__.return_value = yaml.YAMLError("test error")
-        # Use monkeypatch to mock importlib.import_module
-        monkeypatch.setattr(importlib, "import_module", mock_import)
-        with pytest.raises(exc.ConfigurationHWControlError):
-            caplog.clear()
-            with caplog.at_level(logging.INFO, logger=mng.__name__):
-                check_plugin(m_type, m_id)
-
-    # check log
-    assert len(caplog.records) == 1
-    # Inspection: Check the plugin create log
-    plugin_create_log = caplog.records[0]
-    assert plugin_create_log.levelname == "ERROR"
-    assert plugin_create_log.getMessage() == "The plugin configuration file of 1aB33 is incorrect."
-
-
-def test_check_plugin_ok(monkeypatch: MonkeyPatch):
-    """success
-
-    _get_class_instance succeeded,
-    but the function itself did not return anything.
-
-    """
-    m_type = "oOb"
-    m_id = "1aB33"
-
-    # Mock Data
-    mock_data = {"module": "oob_redfish.test1_plugin", "class": "TestPlugin"}
-    # Creating mocks
-    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
-        # Use monkeypatch to mock importlib.import_module
-        monkeypatch.setattr(importlib, "import_module", mock_import)
-        check_plugin(m_type, m_id)
-
-
-def test_check_plugin_none_type():
-    """failed
-
-    type is None
-
-    """
-    m_type = None
-    m_id = "1aB 33"
-
-    # Check plugin
-    with pytest.raises(exc.APIUsageHWControlError):
-        check_plugin(m_type, m_id)
-
-
-def test_check_plugin_none_id():
-    """failed
-
-    id is None
-
-    """
-    m_type = "oOb"
-    m_id = None
-
-    # Check plugin
-    with pytest.raises(exc.APIUsageHWControlError):
-        check_plugin(m_type, m_id)
+    mng._check_manager_id(m_id)
 
 
 def test_get_manager_list_err():
@@ -582,21 +404,6 @@ def test_get_manager_list_err():
     check_list = []
     # Return the list
     result = get_manager_list(m_type)
-    # Check the list
-    assert result == check_list
-
-
-def test_get_manager_list_err_none_type():
-    """failed
-
-    failed(No such file or directory)
-
-    """
-    m_type = None
-    result = []
-    check_list = []
-    with pytest.raises(exc.APIUsageHWControlError):
-        result = get_manager_list(m_type)
     # Check the list
     assert result == check_list
 
@@ -619,9 +426,9 @@ def test_get_manager_list_err_not_file():
     ]
     check_list = []
     # Return the list
-    with patch("app.common.utils.plugin_manager.os.listdir") as mock_listdir:
+    with patch("app.common.plugin.plugin_manager.os.listdir") as mock_listdir:
         mock_listdir.return_value = file_list
-        with patch("app.common.utils.plugin_manager.os.path.isfile") as mock_isfile:
+        with patch("app.common.plugin.plugin_manager.os.path.isfile") as mock_isfile:
             mock_isfile.return_value = False
             result = get_manager_list(m_type)
     # Check the list
@@ -639,9 +446,9 @@ def test_get_manager_list_err_no_file():
     file_list = []
     check_list = []
     # Return the list
-    with patch("app.common.utils.plugin_manager.os.listdir") as mock_listdir:
+    with patch("app.common.plugin.plugin_manager.os.listdir") as mock_listdir:
         mock_listdir.return_value = file_list
-        with patch("app.common.utils.plugin_manager.os.path.isfile") as mock_isfile:
+        with patch("app.common.plugin.plugin_manager.os.path.isfile") as mock_isfile:
             mock_isfile.return_value = True
             result = get_manager_list(m_type)
     # Check the list
@@ -667,9 +474,9 @@ def test_get_manager_list_ok():
     check_list = ["1111111_abc", "2222-abc222", "abc33333_abc", "4444444", "ab-cd_ef", "6_66-abc666"]
 
     # Return the list
-    with patch("app.common.utils.plugin_manager.os.listdir") as mock_listdir:
+    with patch("app.common.plugin.plugin_manager.os.listdir") as mock_listdir:
         mock_listdir.return_value = file_list
-        with patch("app.common.utils.plugin_manager.os.path.isfile") as mock_isfile:
+        with patch("app.common.plugin.plugin_manager.os.path.isfile") as mock_isfile:
             mock_isfile.return_value = True
             result = get_manager_list(m_type)
 
@@ -677,7 +484,7 @@ def test_get_manager_list_ok():
     assert set(result) == set(check_list)
 
 
-def test_get_manager_list_ok_not_id(caplog: LogCaptureFixture):
+def test_get_manager_list_ok_not_id(caplog: pytest.LogCaptureFixture):
     """success
 
     The list will be returned. However,
@@ -697,9 +504,9 @@ def test_get_manager_list_ok_not_id(caplog: LogCaptureFixture):
     check_list = ["2222-abc222", "abc33333_abc", "4444444"]
     caplog.clear()  # clear log
     # Return the list
-    with patch("app.common.utils.plugin_manager.os.listdir") as mock_listdir:
+    with patch("app.common.plugin.plugin_manager.os.listdir") as mock_listdir:
         mock_listdir.return_value = file_list
-        with patch("app.common.utils.plugin_manager.os.path.isfile") as mock_isfile:
+        with patch("app.common.plugin.plugin_manager.os.path.isfile") as mock_isfile:
             mock_isfile.return_value = True
 
             caplog.clear()
@@ -729,7 +536,7 @@ def test_get_manager_list_ok_not_id(caplog: LogCaptureFixture):
     assert skip_error_log.exc_info[0].__name__ == "ManagerIDHWControlError"
 
 
-def test_get_manager_list_ok_not_yaml(caplog: LogCaptureFixture):
+def test_get_manager_list_ok_not_yaml(caplog: pytest.LogCaptureFixture):
     """success
 
     A list is returned.
@@ -750,9 +557,9 @@ def test_get_manager_list_ok_not_yaml(caplog: LogCaptureFixture):
     check_list = ["1111111_abc", "2222-abc222", "4444444"]
 
     # Return the list
-    with patch("app.common.utils.plugin_manager.os.listdir") as mock_listdir:
+    with patch("app.common.plugin.plugin_manager.os.listdir") as mock_listdir:
         mock_listdir.return_value = file_list
-        with patch("app.common.utils.plugin_manager.os.path.isfile") as mock_isfile:
+        with patch("app.common.plugin.plugin_manager.os.path.isfile") as mock_isfile:
             mock_isfile.return_value = True
 
             caplog.clear()
@@ -790,7 +597,7 @@ def test_get_plugin_err_none_type():
     m_id = "1aB33"
     result = None
     with pytest.raises(exc.APIUsageHWControlError):
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Confirm that the instance cannot be obtained
     assert result is None
 
@@ -809,7 +616,7 @@ def test_get_plugin_err_by_check_id():
 
     # Get plugin
     with pytest.raises(exc.ManagerIDHWControlError):
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Confirm that the instance cannot be obtained
     assert result is None
 
@@ -826,7 +633,7 @@ def test_get_plugin_err_by_open():
 
     # Get plugin
     with pytest.raises(exc.ConfigurationHWControlError):
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Confirm that the instance cannot be obtained
     assert result is None
 
@@ -848,12 +655,56 @@ def test_get_plugin_err_by_open_yaml_err():
         mock_file.return_value.__enter__.return_value = yaml.YAMLError("test error")
         # Use monkeypatch to mock importlib.import_module
         with pytest.raises(exc.ConfigurationHWControlError):
-            result = get_plugin(m_type, m_id)
+            result = _get_plugin(m_type, m_id)
     # Confirm that the instance cannot be obtained
     assert result is None
 
 
-def test_get_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
+def test_get_plugin_err_by_no_module(monkeypatch: pytest.MonkeyPatch):
+    """failed
+
+    _get_class_instance failed
+
+    """
+    m_type = "oOb"
+    m_id = "1aB33"
+    result = None
+
+    # Mock Data
+    mock_data = {"class": "TestPlugin2"}
+    # Creating mocks
+    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
+        # Use monkeypatch to mock importlib.import_module
+        monkeypatch.setattr(importlib, "import_module", mock_import)
+        with pytest.raises(exc.ConfigurationHWControlError):
+            result = _get_plugin(m_type, m_id)
+    # Confirm that the instance cannot be obtained
+    assert result is None
+
+
+def test_get_plugin_err_by_no_class(monkeypatch: pytest.MonkeyPatch):
+    """failed
+
+    _get_class_instance failed
+
+    """
+    m_type = "oOb"
+    m_id = "1aB33"
+    result = None
+
+    # Mock Data
+    mock_data = {"module": "oob_redfish.test1_plugin"}
+    # Creating mocks
+    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
+        # Use monkeypatch to mock importlib.import_module
+        monkeypatch.setattr(importlib, "import_module", mock_import)
+        with pytest.raises(exc.ConfigurationHWControlError):
+            result = _get_plugin(m_type, m_id)
+    # Confirm that the instance cannot be obtained
+    assert result is None
+
+
+def test_get_plugin_err_by_get_class_instance(monkeypatch: pytest.MonkeyPatch):
     """failed
 
     _get_class_instance failed
@@ -870,12 +721,12 @@ def test_get_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
         with pytest.raises(exc.PluginGetInstanceHWControlError):
-            result = get_plugin(m_type, m_id)
+            result = _get_plugin(m_type, m_id)
     # Confirm that the instance cannot be obtained
     assert result is None
 
 
-def test_get_plugin_ok_no_param(monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_no_param(monkeypatch: pytest.MonkeyPatch):
     """success
 
     No specific_data information
@@ -891,13 +742,14 @@ def test_get_plugin_ok_no_param(monkeypatch: MonkeyPatch):
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_no_param_only_key(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available (only key)
@@ -913,13 +765,14 @@ def test_get_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_with_param_1(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available
@@ -941,13 +794,14 @@ def test_get_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_with_param_2(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available(However, some are sub keys only)
@@ -969,13 +823,14 @@ def test_get_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -1000,13 +855,14 @@ def test_get_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPatch):
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_fm(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_fm(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -1031,13 +887,14 @@ def test_get_plugin_ok_secret_on_fm(mocker: MockFixture, monkeypatch: MonkeyPatc
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_no_data(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_no_data(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access(no data)
@@ -1062,13 +919,14 @@ def test_get_plugin_ok_secret_on_no_data(mocker: MockFixture, monkeypatch: Monke
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_no_specific_data(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_no_specific_data(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -1092,13 +950,14 @@ def test_get_plugin_ok_secret_on_no_specific_data(mocker: MockFixture, monkeypat
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_empty_specific_data(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_empty_specific_data(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -1123,13 +982,14 @@ def test_get_plugin_ok_secret_on_empty_specific_data(mocker: MockFixture, monkey
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_not_dict_specific_data(mocker: MockFixture, monkeypatch: MonkeyPatch, caplog):
+def test_get_plugin_ok_secret_on_not_dict_specific_data(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch, caplog):
     """success
 
     With secret access
@@ -1152,11 +1012,10 @@ def test_get_plugin_ok_secret_on_not_dict_specific_data(mocker: MockFixture, mon
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        with pytest.raises(exc.ConfigurationHWControlError):
-
-            caplog.clear()
-            with caplog.at_level(logging.INFO, logger=mng.__name__):
-                get_plugin(m_type, m_id)
+        caplog.clear()
+        with caplog.at_level(logging.INFO, logger=mng.__name__):
+            with pytest.raises(exc.ConfigurationHWControlError):
+                _get_plugin(m_type, m_id)
 
     # check log
     assert len(caplog.records) == 1
@@ -1169,7 +1028,7 @@ def test_get_plugin_ok_secret_on_not_dict_specific_data(mocker: MockFixture, mon
     )
 
 
-def test_get_plugin_ok_secret_off_bool(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_off_bool(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     No secret access(secret_access is bool(False))
@@ -1194,13 +1053,14 @@ def test_get_plugin_ok_secret_off_bool(mocker: MockFixture, monkeypatch: MonkeyP
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_off_int(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_off_int(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     No secret access(secret_access is int)
@@ -1225,13 +1085,14 @@ def test_get_plugin_ok_secret_off_int(mocker: MockFixture, monkeypatch: MonkeyPa
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_off_str(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_off_str(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     No secret access(secret_access is str)
@@ -1256,13 +1117,14 @@ def test_get_plugin_ok_secret_off_str(mocker: MockFixture, monkeypatch: MonkeyPa
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_off_none(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_off_none(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     No secret access(secret_access is None)
@@ -1287,13 +1149,14 @@ def test_get_plugin_ok_secret_off_none(mocker: MockFixture, monkeypatch: MonkeyP
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_off_no_key(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_off_no_key(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     No secret access(no secret_access key)
@@ -1317,13 +1180,16 @@ def test_get_plugin_ok_secret_off_no_key(mocker: MockFixture, monkeypatch: Monke
     with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
         # Use monkeypatch to mock importlib.import_module
         monkeypatch.setattr(importlib, "import_module", mock_import)
-        result = get_plugin(m_type, m_id)
+        result = _get_plugin(m_type, m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_plugin_ok_secret_on_dependency_service_hw_control_error(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_dependency_service_hw_control_error(
+    mocker: MockFixture, monkeypatch: pytest.MonkeyPatch
+):
     """success
 
     secret access error(DependencyServiceHWControlError)
@@ -1332,7 +1198,7 @@ def test_get_plugin_ok_secret_on_dependency_service_hw_control_error(mocker: Moc
     m_type = "oOb"
     m_id = "1aB33"
 
-    mock_get_secret = mocker.patch("app.common.utils.plugin_manager.smc.get_secret")
+    mock_get_secret = mocker.patch("app.common.plugin.plugin_manager.smc.get_secret")
     mock_get_secret.side_effect = exc.DependencyServiceHWControlError
 
     # Mock Data
@@ -1343,14 +1209,14 @@ def test_get_plugin_ok_secret_on_dependency_service_hw_control_error(mocker: Moc
         "specific_data": {"ip": None, "port": 5678},
     }
     # Creating mocks
-    with pytest.raises(exc.DependencyServiceHWControlError):
-        with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
-            # Use monkeypatch to mock importlib.import_module
-            monkeypatch.setattr(importlib, "import_module", mock_import)
-            get_plugin(m_type, m_id)
+    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
+        # Use monkeypatch to mock importlib.import_module
+        monkeypatch.setattr(importlib, "import_module", mock_import)
+        with pytest.raises(exc.DependencyServiceHWControlError):
+            _get_plugin(m_type, m_id)
 
 
-def test_get_plugin_ok_secret_on_other_error(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_plugin_ok_secret_on_other_error(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     secret access error(others)
@@ -1359,7 +1225,7 @@ def test_get_plugin_ok_secret_on_other_error(mocker: MockFixture, monkeypatch: M
     m_type = "oOb"
     m_id = "1aB33"
 
-    mock_get_secret = mocker.patch("app.common.utils.plugin_manager.smc.get_secret")
+    mock_get_secret = mocker.patch("app.common.plugin.plugin_manager.smc.get_secret")
     mock_get_secret.side_effect = exc.ConfigurationHWControlError
 
     # Mock Data
@@ -1370,9 +1236,8 @@ def test_get_plugin_ok_secret_on_other_error(mocker: MockFixture, monkeypatch: M
         "specific_data": {"ip": None, "port": 5678},
     }
     # Creating mocks
-    with pytest.raises(exc.ConfigurationHWControlError):
-        with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
-            # Use monkeypatch to mock importlib.import_module
-            monkeypatch.setattr(importlib, "import_module", mock_import)
-            with pytest.raises(ValueError):
-                get_plugin(m_type, m_id)
+    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
+        # Use monkeypatch to mock importlib.import_module
+        monkeypatch.setattr(importlib, "import_module", mock_import)
+        with pytest.raises(exc.ConfigurationHWControlError):
+            _get_plugin(m_type, m_id)

@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get Information process (Response generation)
+"""HW independent section - Get Information process (Response generation).
 
 Upon receiving a request from the information acquisition API,
 make an information acquisition request for the specified Device ID to FM and OOB.
@@ -21,19 +21,21 @@ type and return it to the information acquisition API.
 
 """
 
-import logging
-import json
 import datetime
-from typing import Any, Annotated
+import json
+import logging
 from collections.abc import Callable
+from typing import Annotated, Any
+
 from pydantic import BaseModel, Field
-from app.common.messages import message
-from app.common.basic_exceptions import BaseHWControlError, InternalHWControlError
+
 import app.common.constants as const
+from app.common.basic_exceptions import BaseHWControlError, InternalHWControlError
 from app.common.dim import device_id_base as dim
+from app.common.messages import message
 from app.common.settings import settings
 from app.common.utils import error_utils
-from app.core.info import info_utils, info_const
+from app.core.info import info_const, info_utils
 from app.core.info.metric_agent import InfoMetricAgent
 from app.core.info.spec_fm import GetSpecFMInfo
 from app.core.info.spec_oob import GetSpecOOBInfo
@@ -42,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 class Device(BaseModel):
-    """Device information
+    """Device information.
 
     Device information data class
 
@@ -53,7 +55,7 @@ class Device(BaseModel):
 
 
 class DeviceList(BaseModel):
-    """Device list information
+    """Device list information.
 
     Device list information data class
 
@@ -64,14 +66,14 @@ class DeviceList(BaseModel):
 
 
 class InformationCore:
-    """Information Core
+    """Information Core.
 
     Get information from various devices
 
     """
 
     def get_spec_info(self, device_id: str) -> tuple[Any, list]:
-        """Get device information
+        """Get device information.
 
         Get device information for the specified Device ID
 
@@ -88,7 +90,6 @@ class InformationCore:
                 device_info = get_info.get_spec_info("0001")
 
         """
-
         response_data = None
         oob_data = None
         fm_data = None
@@ -141,7 +142,7 @@ class InformationCore:
         return response_data, error_utils.remove_duplicates(errors)
 
     def get_metric_info(self, device_id: str) -> tuple[Any, list]:
-        """Get metric information
+        """Get metric information.
 
         Get metric information for the specified Device ID
 
@@ -188,12 +189,13 @@ class InformationCore:
             const.DeviceType.DFA.value,
             const.DeviceType.MEMORY.value,
             const.DeviceType.GPU.value,
+            const.DeviceType.UNKNOWN.value,
         ):
             return response_data, errors
 
         # Function to handle errors for data fetching
         def fetch_data(fetch_func: Callable) -> Any:
-            """Fetch data
+            """Fetch data.
 
             Fetches data using the provided fetch function and handles any BaseHWControlError exceptions.
 
@@ -217,10 +219,11 @@ class InformationCore:
         get_spec_fm_info = GetSpecFMInfo()
         fm_data = fetch_data(lambda: get_spec_fm_info.get_spec_fm(device_id, device_type))
 
-        if settings.HW_CONTROL_AGENT_ENABLED and device_type not in (
+        if settings.agent_enabled and device_type not in (
             const.DeviceType.GPU.value,
             const.DeviceType.SFA.value,
             const.DeviceType.DFA.value,
+            const.DeviceType.UNKNOWN.value,
         ):
             try:
                 # Check agent connectivity.
@@ -249,7 +252,7 @@ class InformationCore:
     def _create_spec_info(
         self, device_id: str, device_type: str | Any, fm_data: dict | None, oob_data: dict | None
     ) -> dict:
-        """Generate device information
+        """Generate device information.
 
         Generate device information to return
 
@@ -271,8 +274,7 @@ class InformationCore:
             return resp
 
         def _merge_resp(source_type: str, data: dict) -> dict:
-            """
-            Merges response data for a given source type and data item using a mapping table.
+            """Merges response data for a given source type and data item using a mapping table.
 
             Args:
                 source_type (str): The type of the data source.
@@ -338,7 +340,7 @@ class InformationCore:
         return resp
 
     def _merge_device_info(self, device_info_list: list) -> dict:
-        """Merge device information
+        """Merge device information.
 
         Merge a list of device information dictionaries into a single dictionary.
 
@@ -380,7 +382,7 @@ class InformationCore:
         return result if result is not None else {}
 
     def _merge_spec_link_data(self, resp_oob: dict | None, resp_fm: dict | None) -> list[Any]:
-        """Merge spec link data
+        """Merge spec link data.
 
         Merge spec link data.
 
@@ -411,7 +413,7 @@ class InformationCore:
         return merged_link
 
     def _set_model_property(self, resp: dict) -> None:
-        """Set model property
+        """Set model property.
 
         Set model property according to the Device Type.
 
@@ -441,7 +443,7 @@ class InformationCore:
         if model is not None:
             resp[info_const.RESP_ITEM_NAME_MODEL] = model
 
-    def _create_metric_info(  # pylint: disable=R0913,R0917
+    def _create_metric_info(
         self,
         device_id: str,
         device_type: str | Any,
@@ -449,7 +451,7 @@ class InformationCore:
         oob_data: dict | None,
         fm_data: dict | None,
     ) -> dict:
-        """Generate metric information
+        """Generate metric information.
 
         Generate metric information to return
 
@@ -472,8 +474,7 @@ class InformationCore:
             return resp
 
         def _merge_resp(source_type: str, data: dict, data_item: str) -> dict:
-            """
-            Merges response data for a given source type and data item using a mapping table.
+            """Merges response data for a given source type and data item using a mapping table.
 
             Args:
                 source_type (str): The type of the data source.
@@ -527,7 +528,7 @@ class InformationCore:
         return resp
 
     def _create_constraints(self, device_id: str, device_type: str, links: list) -> dict:
-        """Create constraints
+        """Create constraints.
 
         Generates constraints based on information obtained from OOB and FM and returns them.
 
@@ -539,7 +540,6 @@ class InformationCore:
         Returns:
             dict: constraints
         """
-
         constraints: dict = {info_const.RESP_ITEM_NAME_CONSTRAINTS: {}}
 
         # Determine whether the base device is an internal device.
@@ -552,7 +552,7 @@ class InformationCore:
             link_device_type = link_device.get(info_const.RESP_ITEM_NAME_TYPE)
             if (
                 # If no information has been obtained from the FM,
-                not dim.device_id_to_fm_valid(link_device_id)  # pylint: disable=R0916
+                not dim.device_id_to_fm_valid(link_device_id)
                 # or if the base device is an internal device and linking Device Type is "CPU",
                 or (is_built_in_device and link_device_type == const.DeviceType.CPU.value)
                 # or if the base Device Type is "CPU" and linking Device Type is "sourceFabricAdapter",
@@ -564,14 +564,14 @@ class InformationCore:
                 non_removable_devices.append({info_const.RESP_ITEM_NAME_DEVICE_ID: link_device_id})
         # Add a list of non-dis-connectable devices to the constraints.
         if len(non_removable_devices) > 0:
-            constraints[info_const.RESP_ITEM_NAME_CONSTRAINTS][
-                info_const.RESP_ITEM_NAME_NON_REMOVABLE_DEVICES
-            ] = non_removable_devices
+            constraints[info_const.RESP_ITEM_NAME_CONSTRAINTS][info_const.RESP_ITEM_NAME_NON_REMOVABLE_DEVICES] = (
+                non_removable_devices
+            )
 
         return constraints
 
     def get_device_list(self, device_type: str | None) -> dict:
-        """Get device list
+        """Get device list.
 
         Get a list of devices that correspond to the specified Device Type.
         If no Device Type is specified, get a list of all devices.
@@ -643,7 +643,7 @@ class InformationCore:
     def _verify_agent_access(
         self, device_id: str, device_type: str, oob_data: dict | Any, fm_data: dict | Any
     ) -> tuple[bool, Any]:
-        """Verify agent access
+        """Verify agent access.
 
         Verify agent can be accessed
 
@@ -657,7 +657,6 @@ class InformationCore:
             tuple[bool, Any]: True(connectable) or False(Unable connect), CPU Device ID
 
         """
-
         rtn_is_access = False
         rtn_cpu_device_id = None
         log_param = f"device_id: {device_id}, device_type: {device_type}, "
@@ -728,7 +727,7 @@ class InformationCore:
         return rtn_is_access, rtn_cpu_device_id
 
     def _get_oob_power_state(self, device_type: str, oob_data: dict | Any) -> Any:
-        """Get power state
+        """Get power state.
 
         Get power state from OOB data.
 
@@ -767,7 +766,7 @@ class InformationCore:
         return power_state
 
     def _get_cpu_power_state(self, device_id: str, device_type: str, fm_data: dict | Any) -> tuple[Any, Any]:
-        """Get CPU power state
+        """Get CPU power state.
 
         Get CPU power state from FM data.
 

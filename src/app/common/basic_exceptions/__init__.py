@@ -12,88 +12,119 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""basic exceptions package
+"""basic exceptions package.
+
 file_path: /app/common/basic_exceptions/
 
-This package provides basic exceptions for HWCONTROL.
+This package provides basic exceptions for hw-control.
 """
 
-from app.common.basic_exceptions.base_exceptions import (
-    BaseHWControlError,
-    ERROR_CODE,
-    ERROR_MESSAGE,
-)
-
-# ++++ Base Exception class +++++++++++++++++++++++++++++++++++++++++++#
-from app.common.basic_exceptions.base_exceptions import (
-    UnknownHWControlError,
-    AuthenticationHWControlError,
-    BadRequestHWControlError,
-    ControlObjectHWControlError,
-    ResourceBusyHWControlError,
-    ConfigurationHWControlError,
-    InternalHWControlError,
-    RequestConflictHWControlError,
-    DependencyServiceHWControlError,
-    DeviceNotFoundHWControlError,
-)
-
-# ++++ Subclasses of AuthenticationHWControlError. ++++++++++++++++++++#
 from app.common.basic_exceptions.authentication_exceptions import (
     OOBAuthenticationHWControlError,
 )
-
-# ++++ Subclasses of BadRequestHWControlError. ++++++++++++++++++++++++#
 from app.common.basic_exceptions.bad_request_exceptions import (
     HostCPUPowerOffBadRequestHWControlError,
     RequestNotSupportedHWControlError,
 )
-
-# ++++ Subclasses of ControlObjectHWControlError. +++++++++++++++++++++#
-from app.common.basic_exceptions.control_object_exceptions import (
-    FMConnectFailureHWControlError,
-    FMDisconnectFailureHWControlError,
-    PowerOnFailureHWControlError,
-    PowerOffFailureHWControlError,
-    CPUResetFailureHWControlError,
-    AgentConnectFailureHWControlError,
-    AgentGetInformationFailureHWControlError,
+from app.common.basic_exceptions.base_exceptions import (
+    ERROR_CODE,
+    ERROR_MESSAGE,
+    AuthenticationHWControlError,
+    BadRequestHWControlError,
+    BaseHWControlError,
+    ConfigurationHWControlError,
+    ControlObjectHWControlError,
+    DependencyServiceHWControlError,
+    DeviceNotFoundHWControlError,
+    InternalHWControlError,
+    RequestConflictHWControlError,
+    ResourceBusyHWControlError,
+    UnknownHWControlError,
 )
-
-# ++++ Subclasses of ResourceBusyHWControlError. ++++++++++++++++++++++#
-from app.common.basic_exceptions.resource_busy_exceptions import (
-    DeviceBusyHWControlError,
-)
-
-# ++++ Subclasses of ConfigurationHWControlError. +++++++++++++++++++++#
 from app.common.basic_exceptions.configuration_exceptions import (
     APIUsageHWControlError,
-    ManagerIDHWControlError,
-    PluginGetInstanceHWControlError,
-    PluginRespondUnExpectedTypeHWControlError,
-    InvalidSerialNumberConfigFileNotFoundHWControlError,
-    InvalidSerialNumberConfigFileIncorrectHWControlError,
-    DeviceIDFileNotFoundHWControlError,
     DeviceIDFileIncorrectHWControlError,
+    DeviceIDFileNotFoundHWControlError,
     DeviceIDFileUpdateHWControlError,
-    InvalidTypeDeviceIDHWControlError,
     InvalidDeviceTypeParameterHWControlError,
     InvalidLogMessageParameterHWControlError,
+    InvalidSerialNumberConfigFileIncorrectHWControlError,
+    InvalidSerialNumberConfigFileNotFoundHWControlError,
+    InvalidTypeDeviceIDHWControlError,
+    ManagerIDHWControlError,
+    PluginGetInstanceHWControlError,
     PluginRespondNoneHWControlError,
+    PluginRespondUnExpectedTypeHWControlError,
 )
-
-# ++++ Subclasses of InternalHWControlError. ++++++++++++++++++++++++++#
+from app.common.basic_exceptions.control_object_exceptions import (
+    AgentConnectFailureHWControlError,
+    AgentGetInformationFailureHWControlError,
+    CPUResetFailureHWControlError,
+    FMConnectFailureHWControlError,
+    FMDisconnectFailureHWControlError,
+    PowerOffFailureHWControlError,
+    PowerOnFailureHWControlError,
+)
 from app.common.basic_exceptions.internal_exceptions import (
     UnexpectedExceptionHWControlError,
 )
-
-# ++++ Subclasses of DeviceNotFoundHWControlError. ++++++++++++++++++++#
-from app.common.basic_exceptions.resource_not_found_exceptions import (
-    HostCPUNotFoundHWControlError,
-    HostCPUAndDeviceNotFoundHWControlError,
-    SwitchNotFoundHWControlError,
-    ResourceNotFoundHWControlError,
-    DeviceIDNotFoundHWControlError,
-    UpstreamDeviceNotFoundHWControlError,
-    DownstreamDeviceNotFoundHWControlError,
+from app.common.basic_exceptions.resource_busy_exceptions import (
+    DeviceBusyHWControlError,
 )
+from app.common.basic_exceptions.resource_not_found_exceptions import (
+    DeviceIDNotFoundHWControlError,
+    DownstreamDeviceNotFoundHWControlError,
+    HostCPUAndDeviceNotFoundHWControlError,
+    HostCPUNotFoundHWControlError,
+    ResourceNotFoundHWControlError,
+    SwitchNotFoundHWControlError,
+    UpstreamDeviceNotFoundHWControlError,
+)
+
+__all__ = [
+    "ERROR_CODE",
+    "ERROR_MESSAGE",
+    "APIUsageHWControlError",
+    "AgentConnectFailureHWControlError",
+    "AgentGetInformationFailureHWControlError",
+    "AuthenticationHWControlError",
+    "BadRequestHWControlError",
+    "BaseHWControlError",
+    "CPUResetFailureHWControlError",
+    "ConfigurationHWControlError",
+    "ControlObjectHWControlError",
+    "DependencyServiceHWControlError",
+    "DeviceBusyHWControlError",
+    "DeviceIDFileIncorrectHWControlError",
+    "DeviceIDFileNotFoundHWControlError",
+    "DeviceIDFileUpdateHWControlError",
+    "DeviceIDNotFoundHWControlError",
+    "DeviceNotFoundHWControlError",
+    "DownstreamDeviceNotFoundHWControlError",
+    "FMConnectFailureHWControlError",
+    "FMDisconnectFailureHWControlError",
+    "HostCPUAndDeviceNotFoundHWControlError",
+    "HostCPUNotFoundHWControlError",
+    "HostCPUPowerOffBadRequestHWControlError",
+    "InternalHWControlError",
+    "InvalidDeviceTypeParameterHWControlError",
+    "InvalidLogMessageParameterHWControlError",
+    "InvalidSerialNumberConfigFileIncorrectHWControlError",
+    "InvalidSerialNumberConfigFileNotFoundHWControlError",
+    "InvalidTypeDeviceIDHWControlError",
+    "ManagerIDHWControlError",
+    "OOBAuthenticationHWControlError",
+    "PluginGetInstanceHWControlError",
+    "PluginRespondNoneHWControlError",
+    "PluginRespondUnExpectedTypeHWControlError",
+    "PowerOffFailureHWControlError",
+    "PowerOnFailureHWControlError",
+    "RequestConflictHWControlError",
+    "RequestNotSupportedHWControlError",
+    "ResourceBusyHWControlError",
+    "ResourceNotFoundHWControlError",
+    "SwitchNotFoundHWControlError",
+    "UnexpectedExceptionHWControlError",
+    "UnknownHWControlError",
+    "UpstreamDeviceNotFoundHWControlError",
+]

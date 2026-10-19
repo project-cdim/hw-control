@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,8 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""os ipaddress
+"""os ipaddress.
+
 file_path: /app/common/utils/os_ipaddress.py
 
 Obtain the IP address of the operating system running on the CPU.
@@ -21,6 +22,7 @@ Obtain the IP address of the operating system running on the CPU.
 
 import logging
 import os
+
 import yaml
 
 import app.common.basic_exceptions as exc
@@ -33,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_os_ipaddress(cpu_device_id: str) -> tuple[str | None, bool]:
-    """get_os_ipaddress
+    """get_os_ipaddress.
 
     Get the IP address of the OS corresponding to the CPU.
 

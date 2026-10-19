@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,11 +16,11 @@
 
 import os
 
-import yaml
 import pytest
+import yaml
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def default_logging_config():
     """Load default logging config from config/logging_config.yaml
 

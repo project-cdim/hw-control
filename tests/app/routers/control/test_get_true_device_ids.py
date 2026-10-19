@@ -15,16 +15,10 @@
 """Unit test module for control_api._get_true_device_ids"""
 
 import pytest
-
 from pytest_mock import MockFixture
 
 import app.common.basic_exceptions as exc
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-
 from app.routers.control import control_api
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 DUMMY_UPSTREAM_DEVICE_ID = "d62e98bf-6c50-4b88-95f9-49c609d2fdc9"
 DUMMY_DOWNSTREAM_DEVICE_ID = "b9f9b678-bce8-49a1-bca3-dbbc32259abf"
@@ -47,9 +41,7 @@ class TestGetTrueDeviceIds:
         )
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        result = control_api._get_true_device_ids(  # pylint: disable=W0212
-            DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID
-        )
+        result = control_api._get_true_device_ids(DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert result == (DUMMY_TRUE_UPSTREAM_DEVICE_ID, DUMMY_TRUE_DOWNSTREAM_DEVICE_ID)
@@ -68,9 +60,7 @@ class TestGetTrueDeviceIds:
         )
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        result = control_api._get_true_device_ids(  # pylint: disable=W0212
-            DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID
-        )
+        result = control_api._get_true_device_ids(DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert result == (DUMMY_UPSTREAM_DEVICE_ID, DUMMY_TRUE_DOWNSTREAM_DEVICE_ID)
@@ -89,9 +79,7 @@ class TestGetTrueDeviceIds:
         )
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        result = control_api._get_true_device_ids(  # pylint: disable=W0212
-            DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID
-        )
+        result = control_api._get_true_device_ids(DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
 
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert result == (DUMMY_TRUE_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
@@ -124,9 +112,7 @@ class TestGetTrueDeviceIds:
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(dim_raise):
-            control_api._get_true_device_ids(  # pylint: disable=W0212
-                DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID
-            )
+            control_api._get_true_device_ids(DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
 
         assert dummy_dim.call_count == 1
 
@@ -152,8 +138,6 @@ class TestGetTrueDeviceIds:
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(dim_raise):
-            control_api._get_true_device_ids(  # pylint: disable=W0212
-                DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID
-            )
+            control_api._get_true_device_ids(DUMMY_UPSTREAM_DEVICE_ID, DUMMY_DOWNSTREAM_DEVICE_ID)
 
         assert dummy_dim.call_count == 2

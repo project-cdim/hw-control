@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get Information process (Response generation)
+"""HW independent section - Get Information process (Response generation).
 
 Upon receiving a request from the information acquisition API,
 make an information acquisition request for the specified Device ID to FM and OOB.
@@ -25,8 +25,7 @@ from typing import Any
 
 
 def _parse_days(date_part: str) -> int | None:
-    """
-    Parses a string representing a number of days and returns it as a float.
+    """Parses a string representing a number of days and returns it as a float.
 
     Args:
         date_part (str): A string expected to be in the format "<number>D",
@@ -36,13 +35,12 @@ def _parse_days(date_part: str) -> int | None:
         int | None: The number of days as a int if parsing is successful.
             Returns 0 if the input is empty or None if the format is invalid.
     """
-
     if not date_part:
         return 0
 
     if "D" in date_part:
         try:
-            days_str = date_part.split("D")[0]
+            days_str = date_part.split("D", 1)[0]
             # If there are extra characters other than "D"
             if len(date_part) != len(days_str) + 1:
                 return None
@@ -57,9 +55,7 @@ def _parse_days(date_part: str) -> int | None:
 
 
 def _parse_time(time_part: str) -> tuple[int, int, float] | None:
-    """
-    Parses a time string in the format "[<hours>H][<minutes>M][<seconds>S]"
-    and returns a tuple of (hours, minutes, seconds).
+    """Parses a time string in the format "[<hours>H][<minutes>M][<seconds>S]" and returns (hours, minutes, seconds).
 
     Args:
         time_part (str): The time string to parse, e.g., "1H30M15S", "45M", or "20.5S".
@@ -68,7 +64,6 @@ def _parse_time(time_part: str) -> tuple[int, int, float] | None:
         tuple[int, int, float] | None: A tuple containing hours, minutes, and seconds as floats
         if parsing is successful; otherwise, None if the input is invalid.
     """
-
     hours = minutes = 0
     seconds = 0.0
 
@@ -94,9 +89,8 @@ def _parse_time(time_part: str) -> tuple[int, int, float] | None:
         return None
 
 
-def duration_to_seconds(mapping_data: dict, key: str, item_value: str) -> Any:  # pylint: disable=W0613
-    """
-    Converts an ISO 8601 duration string (format: PnDTnHnMnS) to the total number of seconds.
+def duration_to_seconds(mapping_data: dict, key: str, item_value: str) -> Any:
+    """Converts an ISO 8601 duration string (format: PnDTnHnMnS) to the total number of seconds.
 
     Args:
         mapping_data (dict): Unused parameter, present for interface compatibility.
@@ -113,7 +107,6 @@ def duration_to_seconds(mapping_data: dict, key: str, item_value: str) -> Any:  
         - Does not support months or years.
         - Does not use regular expressions for parsing.
     """
-
     if not isinstance(item_value, str) or not item_value.startswith("P"):
         return None
 

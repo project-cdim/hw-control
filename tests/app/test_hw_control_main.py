@@ -14,20 +14,13 @@
 
 """Unit test module for hw_control_main.py."""
 
+from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from asgi_correlation_id import CorrelationIdMiddleware
 
-from app import app_life_span
-from app.routers import middlewares
-from app.routers import error_handlers
 import app.common.basic_exceptions as custom_exceptions
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-
-from app import hw_control_main
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from app import app_life_span, hw_control_main
+from app.routers import error_handlers, middlewares
 
 
 class TestApplicationInstance:
@@ -55,12 +48,11 @@ class TestApplicationInstance:
         assert custom_exceptions.BaseHWControlError in handlers
 
         # Check if the handler functions are correct
-        # pylint: disable=W0143
+
         assert handlers[StarletteHTTPException] == error_handlers.custom_http_exception_handler
         assert handlers[RequestValidationError] == error_handlers.custom_validation_exception_handler
         assert handlers[Exception] == error_handlers.custom_exception_handler
         assert handlers[custom_exceptions.BaseHWControlError] == error_handlers.hw_control_error_handler
-        # pylint: disable=W0143
 
     def test_middlewares_ordering(self):
         """Test the ordering of middlewares in the application.

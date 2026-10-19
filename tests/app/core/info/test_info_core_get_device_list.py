@@ -15,8 +15,9 @@
 """This is a test program."""
 
 import datetime
-from app.core.info.info_core import InformationCore
+
 from app.common.constants import TIME_STAMP_FORMAT
+from app.core.info.info_core import InformationCore
 
 # Read device information file
 FUNC_LOAD_DEVICE_DATA = "app.core.info.info_core.GetInformation._load_device_data"
@@ -44,6 +45,7 @@ DEVICE_ID_LIST = [
     "3302",
     "5001",
     "5002",
+    "7001",
     "9999",
 ]
 
@@ -66,6 +68,7 @@ DEVICE_ID_TYPE_LIST = [
     {"deviceID": "3302", "type": "destinationFabricAdapter"},
     {"deviceID": "5001", "type": "GPU"},
     {"deviceID": "5002", "type": "GPU"},
+    {"deviceID": "7001", "type": "unknown"},
     {"deviceID": "9999", "type": None},
 ]
 
@@ -89,6 +92,7 @@ DEVICE_LIST_ALL = {
         {"deviceID": "3302", "type": "destinationFabricAdapter"},
         {"deviceID": "5001", "type": "GPU"},
         {"deviceID": "5002", "type": "GPU"},
+        {"deviceID": "7001", "type": "unknown"},
     ]
 }
 
@@ -110,6 +114,7 @@ DEVICE_LIST_HIDDEN_PCIE_DEVICE = {
         {"deviceID": "3302", "type": "destinationFabricAdapter"},
         {"deviceID": "5001", "type": "GPU"},
         {"deviceID": "5002", "type": "GPU"},
+        {"deviceID": "7001", "type": "unknown"},
     ]
 }
 
@@ -156,6 +161,9 @@ DEVICE_LIST_NETWORK_ADAPTER = {
 
 # Device List GPU
 DEVICE_LIST_GPU = {"deviceList": [{"deviceID": "5001", "type": "GPU"}, {"deviceID": "5002", "type": "GPU"}]}
+
+# Device List unknown
+DEVICE_LIST_UNKNOWN = {"deviceList": [{"deviceID": "7001", "type": "unknown"}]}
 
 
 def _log_contains(record, level, message) -> bool:
@@ -251,6 +259,12 @@ def test_get_device_list_gpu(mocker):
     """Test Get device list GPU"""
     # device_type=GPU Device list information matches.
     assert DEVICE_LIST_GPU == _get_device_list(mocker, "GPU", False)
+
+
+def test_get_device_list_unknown(mocker):
+    """Test Get device list unknown"""
+    # device_type=unknown Device list information matches.
+    assert DEVICE_LIST_UNKNOWN == _get_device_list(mocker, "unknown", False)
 
 
 def test_get_device_list_no_device_list(mocker):

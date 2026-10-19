@@ -17,6 +17,9 @@
                         "hostName": {
                             "vtype": "str"
                         },
+                        "bmcHostName": {
+                            "vtype": "str"
+                        },
                         "id": {
                             "vtype": "str"
                         },
@@ -582,6 +585,11 @@
             "vtype": "bool",
             "path": "schema.Drive.PowerCapability"
         },
+        "secureEraseCapability": {
+            "key": "SecureEraseCapability",
+            "vtype": "bool",
+            "path": "schema.Drive.SecureEraseCapability"
+        },
         "driveSerialNumber": {
             "key": "SerialNumber",
             "vtype": "str",
@@ -1079,6 +1087,14 @@
                         "linkStatus1": {
                             "vtype": "str"
                         },
+                        "notificationStatus0": {
+                            "vtype": "list",
+                            "item_type": "str"
+                        },
+                        "notificationStatus1": {
+                            "vtype": "list",
+                            "item_type": "str"
+                        },
                         "switchName": {
                             "vtype": "str"
                         }
@@ -1474,6 +1490,14 @@
                         },
                         "linkStatus1": {
                             "vtype": "str"
+                        },
+                        "notificationStatus0": {
+                            "vtype": "list",
+                            "item_type": "str"
+                        },
+                        "notificationStatus1": {
+                            "vtype": "list",
+                            "item_type": "str"
                         },
                         "switchName": {
                             "vtype": "str"
@@ -2072,6 +2096,88 @@
                     "vtype": "str"
                 }
             }
+        }
+    },
+    "unknown": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
+        },
+        "attribute": {
+            "path": "schema.attribute",
+            "key": "attribute",
+            "vtype": "dict",
+            "sub_mapping": {
+                "deviceSpecificInformation": {
+                    "vtype": "dict",
+                    "sub_mapping": {
+                        "id": {
+                            "vtype": "str"
+                        },
+                        "name": {
+                            "vtype": "str"
+                        },
+                        "firmware_version": {
+                            "key": "firmwareversion",
+                            "vtype": "str"
+                        }
+                    }
+                }
+            }
+        },
+        "serialNumber": {
+            "key": "SerialNumber",
+            "vtype": "str",
+            "path": "schema.SerialNumber"
+        },
+        "manufacturer": {
+            "key": "Manufacturer",
+            "vtype": "str",
+            "path": "schema.Manufacturer"
+        },
+        "model": {
+            "key": "Model",
+            "vtype": "str",
+            "path": "schema.Model"
+        },
+        "links": {
+            "key": "link",
+            "vtype": "list",
+            "sub_mapping": {
+                "type": {
+                    "vtype": "str"
+                },
+                "deviceID": {
+                    "vtype": "str"
+                }
+            }
+        },
+        "status": {
+            "path": "schema.Status",
+            "key": "Status",
+            "vtype": "dict",
+            "sub_mapping": {
+                "health": {
+                    "key": "Health",
+                    "vtype": "str"
+                },
+                "state": {
+                    "key": "State",
+                    "vtype": "str"
+                }
+            }
+        },
+        "powerState": {
+            "key": "PowerState",
+            "vtype": "str",
+            "path": "schema.PowerState"
+        },
+        "powerCapability": {
+            "key": "PowerCapability",
+            "vtype": "bool",
+            "path": "schema.PowerCapability"
         }
     }
 }

@@ -353,6 +353,11 @@
             "vtype": "bool",
             "path": "schema.Drive.PowerCapability"
         },
+        "secureEraseCapability": {
+            "key": "SecureEraseCapability",
+            "vtype": "bool",
+            "path": "schema.Drive.SecureEraseCapability"
+        },
         "metricEnergyJoules": {
             "key": "environment",
             "vtype": "dict",
@@ -845,6 +850,14 @@
                     "path": "EnergyJoules.Reading"
                 }
             }
+        }
+    },
+    "unknown": {
+        "deviceID": {
+            "vtype": "str"
+        },
+        "type": {
+            "vtype": "str"
         }
     }
 }

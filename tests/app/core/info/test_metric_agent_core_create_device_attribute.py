@@ -14,15 +14,16 @@
 
 """This is a test program."""
 
-import threading
-import time
 import fcntl
 import os
+import threading
+import time
 from pathlib import Path
-import yaml
-import app.core.info.metric_agent
-from app.core.info.metric_agent import InfoMetricAgent, DEVICE_DATA_FILE, DEVICE_DATA_SETTING_FILE
 
+import yaml
+
+import app.core.info.metric_agent
+from app.core.info.metric_agent import DEVICE_DATA_FILE, DEVICE_DATA_SETTING_FILE, InfoMetricAgent
 
 # Device attribute configuration file name
 TEST_DEVICE_DATA_SETTING_FILE1 = "test_metric_agent_device_attribute_setting1.yaml"
@@ -52,7 +53,7 @@ DEVICE_LIST2: list[dict] = []
 
 def _create_device_attribute(
     mocker, monkeypatch, clear, device_list, create_file, setting_file, comp_file, trailing_slash: bool = True
-):  # pylint: disable=R0913,R0914,R0917
+):
     """Create device attribute"""
     # Current path
     current_path = Path(os.path.dirname(os.path.abspath(__file__)))

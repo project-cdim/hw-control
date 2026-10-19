@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,11 +12,12 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""This module defines the base exception class
+"""This module defines the base exception class.
 
 file path: /app/common/basic_exceptions/base_exceptions.py
 
 """
+
 from http import HTTPStatus
 from typing import final
 
@@ -28,7 +29,7 @@ ERROR_MESSAGE = "errorMessage"
 
 
 class BaseHWControlError(Exception):
-    """HwControl Base Exception class
+    """HwControl Base Exception class.
 
     This class serves as the common base exception class for all exceptions
     defined within HW Control. It can be extended to create custom error
@@ -105,8 +106,7 @@ class BaseHWControlError(Exception):
 
     @final
     def to_error_dict(self) -> dict[str, str]:
-        """
-        Converts the error information to a dictionary format.
+        """Converts the error information to a dictionary format.
 
         This method converts the error code and message to a dictionary
         which can be easily used for error reporting.
@@ -133,7 +133,7 @@ class BaseHWControlError(Exception):
 
     @final
     def generate_api_response(self) -> JSONResponse:
-        """generate_api_response method
+        """generate_api_response method.
 
         This method generate api response data
 
@@ -153,7 +153,7 @@ class BaseHWControlError(Exception):
 
 
 class UnknownHWControlError(BaseHWControlError):
-    """HwControl Unknown Error Base Exception class
+    """HwControl Unknown Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Unknown Error.
@@ -166,7 +166,7 @@ class UnknownHWControlError(BaseHWControlError):
 
 
 class AuthenticationHWControlError(BaseHWControlError):
-    """HwControl Authentication Error Base Exception class
+    """HwControl Authentication Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Authentication Error.
@@ -179,7 +179,7 @@ class AuthenticationHWControlError(BaseHWControlError):
 
 
 class BadRequestHWControlError(BaseHWControlError):
-    """HwControl Bad Request Error Base Exception class
+    """HwControl Bad Request Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Bad Request Error.
@@ -192,7 +192,7 @@ class BadRequestHWControlError(BaseHWControlError):
 
 
 class ControlObjectHWControlError(BaseHWControlError):
-    """HwControl Control Object Error Base Exception class
+    """HwControl Control Object Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Control Object Error.
@@ -205,7 +205,7 @@ class ControlObjectHWControlError(BaseHWControlError):
 
 
 class ResourceBusyHWControlError(BaseHWControlError):
-    """HwControl Resource Busy Error Base Exception class
+    """HwControl Resource Busy Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Resource Busy Error.
@@ -218,7 +218,7 @@ class ResourceBusyHWControlError(BaseHWControlError):
 
 
 class ConfigurationHWControlError(BaseHWControlError):
-    """HwControl Configuration Error Base Exception class
+    """HwControl Configuration Error Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of Incomplete configuration Error.
@@ -231,7 +231,7 @@ class ConfigurationHWControlError(BaseHWControlError):
 
 
 class InternalHWControlError(BaseHWControlError):
-    """HwControl 'Internal Server Error' Base Exception class
+    """HwControl 'Internal Server Error' Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of 'Internal Server Error'.
@@ -243,7 +243,7 @@ class InternalHWControlError(BaseHWControlError):
 
 
 class RequestConflictHWControlError(BaseHWControlError):
-    """HwControl Request Conflict Base Exception class
+    """HwControl Request Conflict Base Exception class.
 
     This class is common base exception class for HwControl defined
     exceptions of request conflict to resource state.
@@ -263,7 +263,7 @@ class DependencyServiceHWControlError(BaseHWControlError):
 
 
 class DeviceNotFoundHWControlError(BaseHWControlError):
-    """HwControl Device Not Found Error Detail Exception class
+    """HwControl Device Not Found Error Detail Exception class.
 
     This class is common detail exception class for HwControl defined
     exceptions of Device Not Found Error.

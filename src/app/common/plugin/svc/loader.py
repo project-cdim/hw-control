@@ -43,11 +43,9 @@ import contextvars
 import functools
 import logging
 
-from app.common.utils import plugin_manager
+from app.common.plugin import ext, plugin_manager
 from app.common.utils.fm_plugin_base import FMPluginBase
 from app.common.utils.oob_plugin_base import OOBPluginBase
-from app.common.plugin import ext
-
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +67,7 @@ class PluginLoader:
 
         Args:
             manager_id: Manager ID (prefix of the plugin configuration file)
+
         Returns:
             FM plugin
         """
@@ -90,6 +89,7 @@ class PluginLoader:
 
         Args:
             manager_id: Manager ID (prefix of the plugin configuration file)
+
         Returns:
             OOB plugin
         """
@@ -115,7 +115,7 @@ class PluginLoader:
             if isinstance(plugin, ext.LifecycleAware):
                 try:
                     plugin.finalize()
-                except Exception as exc:  # pylint: disable=broad-exception-caught
+                except Exception as exc:
                     logger.warning("Failed to finalize plugin `%s`: %s", manager_id, str(exc), exc_info=exc)
         plugins.clear()
 
@@ -158,6 +158,7 @@ def get_fm(manager_id: str) -> FMPluginBase:
 
     Args:
         manager_id: Manager ID (prefix of the plugin configuration file)
+
     Returns:
         FM plugin
     """
@@ -174,6 +175,7 @@ def get_oob(manager_id: str) -> OOBPluginBase:
 
     Args:
         manager_id: Manager ID (prefix of the plugin configuration file)
+
     Returns:
         OOB plugin
     """

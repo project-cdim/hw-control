@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-Module for error handling in FastAPI applications.
+"""Module for error handling in FastAPI applications.
 
 This module defines custom exception handlers and integrates them
 with a FastAPI application. These handlers are designed to log errors,
@@ -25,15 +24,15 @@ import logging
 from http import HTTPStatus
 from typing import cast
 
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi import Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import Response, JSONResponse
-from fastapi.encoders import jsonable_encoder
 from asgi_correlation_id import correlation_id
+from fastapi import Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.common import constants
 import app.common.basic_exceptions as custom_exceptions
+from app.common import constants
 from app.routers import response_models
 
 logger = logging.getLogger(__name__)
@@ -53,8 +52,7 @@ _AVAILABLE_STATUS_CODES: list = [
 
 
 def hw_control_error_handler(_: Request, exc: Exception) -> Response:
-    """
-    Handle BaseHWControlError.
+    """Handle BaseHWControlError.
 
     This function handles exceptions of type BaseHWControlError.
     It logs the error and returns an HTTP response containing error details in JSON format.
@@ -99,8 +97,7 @@ def _is_client_error(status_code: int) -> bool:
 
 
 def custom_http_exception_handler(_: Request, exc: Exception) -> Response:
-    """
-    Handle HTTP exceptions.
+    """Handle HTTP exceptions.
 
     This function handles exceptions of type starlette.exceptions.HTTPException.
     It logs the error and returns an HTTP response containing error details in JSON format.
@@ -117,7 +114,6 @@ def custom_http_exception_handler(_: Request, exc: Exception) -> Response:
                     - code: "EF003BAS011" (Fixed error code).
                     - message: Exception detail message.
     """
-
     http_exc = cast(StarletteHTTPException, exc)
 
     status_code = HTTPStatus.INTERNAL_SERVER_ERROR.value
@@ -142,8 +138,7 @@ def custom_http_exception_handler(_: Request, exc: Exception) -> Response:
 
 
 def custom_validation_exception_handler(_: Request, exc: Exception) -> Response:
-    """
-    Handle RequestValidationError.
+    """Handle RequestValidationError.
 
     This function handles exceptions of type 'fastapi.exceptions.RequestValidationError'.
     It logs the error and returns an HTTP response containing validation error details in JSON format.
@@ -158,31 +153,33 @@ def custom_validation_exception_handler(_: Request, exc: Exception) -> Response:
                 - status_code: 422
                 - content:
                     - code: "EF003BAS012" (Fixed error code).
-                    - message: The validation errors that occurred.
+                    - message: A fixed message indicating the request parameter is invalid.
+                    - detail: The validation errors that occurred.
     """
-
     request_validation_exc = cast(RequestValidationError, exc)
 
     status_code = HTTPStatus.UNPROCESSABLE_ENTITY.value
 
     error_code = "EF003BAS012"
-    error_message = request_validation_exc.errors()
+    error_detail = request_validation_exc.errors()
+    error_message = "The request parameter is invalid or missing."
 
     logger.exception(
         msg="Request parameter validation error occurred.",
         exc_info=exc,
-        extra={"error_code": error_code, "error_message": error_message},
+        extra={"error_code": error_code, "error_message": error_message, "error_detail": error_detail},
     )
 
-    response_body = response_models.ErrorResponseModel(code=error_code, message=error_message)
+    response_body = response_models.ValidationErrorResponseModel(
+        code=error_code, message=error_message, detail=error_detail
+    )
     response = JSONResponse(status_code=status_code, content=jsonable_encoder(response_body))
 
     return response
 
 
 def custom_exception_handler(_: Request, exc: Exception) -> Response:
-    """
-    Handle unexpected exceptions.
+    """Handle unexpected exceptions.
 
     This function logs the unexpected exception and generates an HTTP response
     containing a general error message in JSON format with a 500 status code.
@@ -199,7 +196,6 @@ def custom_exception_handler(_: Request, exc: Exception) -> Response:
                     - code: "CF010BAS001" (Fixed error code)
                     - message: The general error message indicating an internal server error.
     """
-
     error_code = "CF010BAS001"
     error_message = "The server encountered an unexpected internal error and was unable to complete your request."
 

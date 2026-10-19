@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -25,6 +25,14 @@ class ErrorResponseModel(BaseModel):
     code: str = Field(
         description="The error code of hw-control.",
     )
-    message: Any = Field(
+    message: str = Field(
         description="The error message.",
+    )
+
+
+class ValidationErrorResponseModel(ErrorResponseModel):
+    """The Response model of validation error case, extending ErrorResponseModel with structured detail."""
+
+    detail: Any = Field(
+        description="The structured validation error details.",
     )

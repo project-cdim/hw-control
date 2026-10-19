@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -18,17 +18,18 @@ Manage device ID,
 it is possible to operate according to the environment.
 
 """
+
 import logging
 from enum import Enum
 import uuid
 import re
 import pandas as pd
 
+from app.common.plugin.plugin_manager import get_fm_plugin
+from app.common.plugin.plugin_manager import get_oob_plugin
+from app.common.plugin.plugin_manager import get_manager_list
 from app.common.utils.fm_plugin_base import FMPluginBase
 from app.common.utils.oob_plugin_base import OOBPluginBase
-from app.common.utils.plugin_manager import get_fm_plugin
-from app.common.utils.plugin_manager import get_oob_plugin
-from app.common.utils.plugin_manager import get_manager_list
 from app.common.constants import ManagerType
 
 import app.common.constants as con
@@ -382,7 +383,7 @@ def _assemble_data(
     return assembled_data, merge_by
 
 
-def _update_db_info(  # pylint: disable=R0913,R0914,R0917
+def _update_db_info(
     device_info_list: list,
     manager: str,
     info_type: str,
@@ -663,7 +664,7 @@ def _find_different_info(info: pd.DataFrame) -> list:
     return indices
 
 
-def _update_db_info_pci_cpu_sw(  # pylint: disable=R0913,R0917
+def _update_db_info_pci_cpu_sw(
     devices_info_json: pd.DataFrame,
     new_info_d: pd.DataFrame,
     merge_keys: list[str],
@@ -1231,7 +1232,7 @@ def _retrieve_fm_plugin_safely(manager: str) -> FMPluginBase | None:
     # Since the plugin may be developed by a vendor outside
     # of NEC, we do not know what kind of exception will be
     # thrown, so we also except exception.
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         logger.warning(
             "Failed to get Plugin class instance due to other error (%s:%s).",
             manager_type,
@@ -1276,7 +1277,7 @@ def _retrieve_oob_plugin_safely(manager: str) -> OOBPluginBase | None:
     # Since the plugin may be developed by a vendor outside
     # of NEC, we do not know what kind of exception will be
     # thrown, so we also except exception.
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         logger.warning(
             "Failed to get Plugin class instance due to other error (%s:%s).",
             manager_type,
@@ -1316,7 +1317,7 @@ def _get_fm_port_info(instance: FMPluginBase, manager: str) -> list | None:
     # Since the plugin may be developed by a vendor outside
     # of NEC, we do not know what kind of exception will be
     # thrown, so we except Exception.
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         device_info_list = None
         logger.warning("Failed to get port info of (%s).", manager, exc_info=True)
 
@@ -1352,7 +1353,7 @@ def _get_oob_device_info(instance: OOBPluginBase, manager: str) -> list | None:
     # Since the plugin may be developed by a vendor outside
     # of NEC, we do not know what kind of exception will be
     # thrown, so we except Exception.
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         device_info_list = None
         logger.warning("Failed to get device info of (%s).", manager, exc_info=True)
 
@@ -1386,7 +1387,7 @@ def _get_fm_switch_info(instance: FMPluginBase, manager: str) -> list | None:
     # Since the plugin may be developed by a vendor outside
     # of NEC, we do not know what kind of exception will be
     # thrown, so we except Exception.
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         device_info_list = None
         logger.warning("Failed to get switch info of (%s).", manager, exc_info=True)
 

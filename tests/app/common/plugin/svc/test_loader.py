@@ -18,17 +18,15 @@ import logging
 from unittest.mock import call
 
 import pytest
-from pytest import LogCaptureFixture
 from pytest_mock import MockerFixture, MockType
 
-from app.common.utils import plugin_manager
-from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData, FMSwitchData
-from app.common.utils.oob_plugin_base import OOBPluginBase, OOBDeviceListItem
-from app.common.plugin import ext
+from app.common.plugin import ext, plugin_manager
 from app.common.plugin.svc.loader import PluginLoader, enable_plugin_lifecycle, get_fm, get_oob
+from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData, FMSwitchData
+from app.common.utils.oob_plugin_base import OOBDeviceListItem, OOBPluginBase
 
 
-def _log_contains(caplog: LogCaptureFixture, level: int, message: str) -> bool:
+def _log_contains(caplog: pytest.LogCaptureFixture, level: int, message: str) -> bool:
     for record in caplog.records:
         if record.levelno == level and message in record.message:
             return True
@@ -88,8 +86,8 @@ def test_plugin_loader_get_fm_cache(mocker: MockerFixture):
     """Check that PluginLoader.get_fm() caches FM plugin."""
 
     get_fm_plugin_mock, _ = _configure_plugin_manager(mocker)
-    fm_plugin_1 = _FMPlugin()
-    fm_plugin_2 = _FMPlugin()
+    fm_plugin_1 = _FMPlugin(None)
+    fm_plugin_2 = _FMPlugin(None)
 
     get_fm_plugin_mock.side_effect = [fm_plugin_1, fm_plugin_2]
 
@@ -119,7 +117,7 @@ def test_plugin_loader_get_fm_initialize(mocker: MockerFixture):
             raise NotImplementedError
 
     get_fm_plugin_mock, _ = _configure_plugin_manager(mocker)
-    fm_plugin = _FMPluginCountingInitialize()
+    fm_plugin = _FMPluginCountingInitialize(None)
 
     get_fm_plugin_mock.return_value = fm_plugin
 
@@ -134,8 +132,8 @@ def test_plugin_loader_get_oob_cache(mocker: MockerFixture):
     """Check that PluginLoader.get_oob() caches OOB plugin."""
 
     _, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    oob_plugin_1 = _OOBPlugin()
-    oob_plugin_2 = _OOBPlugin()
+    oob_plugin_1 = _OOBPlugin(None)
+    oob_plugin_2 = _OOBPlugin(None)
 
     get_oob_plugin_mock.side_effect = [oob_plugin_1, oob_plugin_2]
 
@@ -165,7 +163,7 @@ def test_plugin_loader_get_oob_initialize(mocker: MockerFixture):
             raise NotImplementedError
 
     _, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    oob_plugin = _OOBPluginCountingInitialize()
+    oob_plugin = _OOBPluginCountingInitialize(None)
 
     get_oob_plugin_mock.return_value = oob_plugin
 
@@ -202,10 +200,10 @@ def test_plugin_loader_dispose(mocker: MockerFixture):
             self.finalize_count += 1
 
     get_fm_plugin_mock_, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    fm_plugin_1 = _FMPlugin()
-    fm_plugin_2 = _FMPluginCountingFinalizeCalls()
-    oob_plugin_1 = _OOBPlugin()
-    oob_plugin_2 = _OOBPluginCountingFinalizeCalls()
+    fm_plugin_1 = _FMPlugin(None)
+    fm_plugin_2 = _FMPluginCountingFinalizeCalls(None)
+    oob_plugin_1 = _OOBPlugin(None)
+    oob_plugin_2 = _OOBPluginCountingFinalizeCalls(None)
 
     get_fm_plugin_mock_.side_effect = [fm_plugin_1, fm_plugin_2]
     get_oob_plugin_mock.side_effect = [oob_plugin_1, oob_plugin_2]
@@ -222,7 +220,7 @@ def test_plugin_loader_dispose(mocker: MockerFixture):
     assert oob_plugin_2.finalize_count == 1
 
 
-def test_plugin_loader_dispose_logs_exception(mocker: MockerFixture, caplog: LogCaptureFixture):
+def test_plugin_loader_dispose_logs_exception(mocker: MockerFixture, caplog: pytest.LogCaptureFixture):
     """Check that PluginLoader.dispose() logs an exception raised by finalize() of the plugin."""
 
     class _FMPluginCountingFinalizeOrRaiseOnFinalize(_FMPlugin, ext.LifecycleAware):
@@ -254,10 +252,10 @@ def test_plugin_loader_dispose_logs_exception(mocker: MockerFixture, caplog: Log
             self.finalize_count += 1
 
     get_fm_plugin_mock_, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    fm_plugin_1 = _FMPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=True)
-    fm_plugin_2 = _FMPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=False)
-    oob_plugin_1 = _OOBPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=True)
-    oob_plugin_2 = _OOBPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=False)
+    fm_plugin_1 = _FMPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=True, specific_data=None)
+    fm_plugin_2 = _FMPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=False, specific_data=None)
+    oob_plugin_1 = _OOBPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=True, specific_data=None)
+    oob_plugin_2 = _OOBPluginCountingFinalizeOrRaiseOnFinalize(raise_on_finalize=False, specific_data=None)
 
     get_fm_plugin_mock_.side_effect = [fm_plugin_1, fm_plugin_2]
     get_oob_plugin_mock.side_effect = [oob_plugin_1, oob_plugin_2]
@@ -314,7 +312,7 @@ def test_get_fm_using_plugin_loader(mocker: MockerFixture):
         return get_fm(manager_id)
 
     get_fm_plugin_mock, _ = _configure_plugin_manager(mocker)
-    fm_plugin = _FMPluginCountingInitializeAndFinalize()
+    fm_plugin = _FMPluginCountingInitializeAndFinalize(None)
 
     get_fm_plugin_mock.return_value = fm_plugin
 
@@ -333,7 +331,7 @@ def test_get_fm_not_using_plugin_loader(mocker: MockerFixture):
         return get_fm(manager_id)
 
     get_fm_plugin_mock, _ = _configure_plugin_manager(mocker)
-    fm_plugin = _FMPluginCountingInitializeAndFinalize()
+    fm_plugin = _FMPluginCountingInitializeAndFinalize(None)
 
     get_fm_plugin_mock.return_value = fm_plugin
 
@@ -368,7 +366,7 @@ def test_get_oob_using_plugin_loader(mocker: MockerFixture):
         return get_oob(manager_id)
 
     _, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    oob_plugin = _OOBPluginCountingInitializeAndFinalize()
+    oob_plugin = _OOBPluginCountingInitializeAndFinalize(None)
 
     get_oob_plugin_mock.return_value = oob_plugin
 
@@ -387,7 +385,7 @@ def test_get_oob_not_using_plugin_loader(mocker: MockerFixture):
         return get_oob(manager_id)
 
     _, get_oob_plugin_mock = _configure_plugin_manager(mocker)
-    oob_plugin = _OOBPluginCountingInitializeAndFinalize()
+    oob_plugin = _OOBPluginCountingInitializeAndFinalize(None)
 
     get_oob_plugin_mock.return_value = oob_plugin
 

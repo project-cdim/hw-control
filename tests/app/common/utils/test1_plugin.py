@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,8 +14,19 @@
 
 """This is a test program."""
 
+from app.common.utils.plugin_base import ManagerPluginBase
 
-class TestPlugin:  # pylint: disable=R0903
+
+class NoInitPlugin(ManagerPluginBase):
+    """UT plugin that does not define its own __init__.
+
+    A legacy plugin may omit __init__ and rely on ManagerPluginBase, so
+    the constructor must accept the None passed when the plugin
+    configuration file has no specific_data.
+    """
+
+
+class TestPlugin:
     """UT plugin"""
 
     def __init__(self, value):
@@ -32,9 +43,9 @@ class TestPlugin:  # pylint: disable=R0903
         print(f"get_port_info test1 value = {self.test_value}")
 
 
-class InvalidPlugin:  # pylint: disable=R0903
+class InvalidPlugin:
     """UT Invalid plugin"""
 
-    def __init__(self, value):
+    def __init__(self, _value):
         """raise Unexpected exception"""
         raise ZeroDivisionError

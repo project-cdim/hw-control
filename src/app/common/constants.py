@@ -12,9 +12,9 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW control function - constant definition"""
-from enum import Enum
+"""HW control function - constant definition."""
 
+from enum import Enum
 
 # hw-control API base URL.
 BASE_URL = "/cdim/api"
@@ -31,8 +31,7 @@ CORRELATION_ID_DEFAULT_VALUE = "-"
 
 
 class DeviceType(Enum):
-    """
-    An enumeration of device types.
+    """An enumeration of device types.
 
     This Enum class is used to represent different types of devices.
 
@@ -47,6 +46,7 @@ class DeviceType(Enum):
         VM: Represents a Virtual Media device.
         SFA: Represents a source fabric adapter device.
         DFA: Represents a destination fabric adapter device.
+        UNKNOWN: Represents an unknown device type.
     """
 
     CPU = "CPU"
@@ -59,6 +59,7 @@ class DeviceType(Enum):
     VM = "virtualMedia"
     SFA = "sourceFabricAdapter"
     DFA = "destinationFabricAdapter"
+    UNKNOWN = "unknown"
 
 
 class ManagerType(Enum):

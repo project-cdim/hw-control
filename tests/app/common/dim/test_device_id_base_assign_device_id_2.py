@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 2)
 
 Device manager UT.
@@ -104,7 +104,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -637,7 +637,7 @@ class MockPluginPortAndSwitchAndDeviceInfForBySN:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfForBySN(),
 )
 @patch(
@@ -725,7 +725,7 @@ class MockPluginPortAndSwitchAndDeviceInfo6:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo6(),
 )
 @patch(
@@ -787,7 +787,7 @@ class MockPluginPortAndSwitchAndDeviceInfo7:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo7(),
 )
 @patch(
@@ -854,7 +854,7 @@ class MockPluginPortAndSwitchAndDeviceInfo8:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo8(),
 )
 @patch(
@@ -969,7 +969,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDisableOld:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDisableOld(),
 )
 @patch(
@@ -1031,7 +1031,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDisableOld2:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDisableOld2(),
 )
 @patch(
@@ -1134,7 +1134,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDisableOld3:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDisableOld3(),
 )
 @patch(
@@ -1222,7 +1222,7 @@ class MockPluginPortAndSwitchAndDeviceInfoDisableSameFM:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfoDisableSameFM(),
 )
 @patch(
@@ -1370,7 +1370,7 @@ class MockPluginPortAndSwitchAndDeviceInfSamePortKeys:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfSamePortKeys(),
 )
 @patch(
@@ -1485,7 +1485,7 @@ class MockPluginPortAndSwitchAndDeviceInfSameDeviceKeys:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfSameDeviceKeys(),
 )
 @patch(
@@ -1537,9 +1537,9 @@ def test_update_db_info_devicekeys_empty_new_data():
     devices_info_json = pd.DataFrame()
     new_info_d = pd.DataFrame()
     merge_keys = "deviceKeys"
-    # pylint: disable=W0212
+
     devices_info, unmerged = dim._update_db_info_devicekeys(devices_info_json, new_info_d, merge_keys)
-    # pylint: enable=W0212
+
     assert devices_info.empty
     assert unmerged.empty
 
@@ -1556,9 +1556,9 @@ def test_update_db_info_portkkeys_empty_new_data():
     devices_info_json = pd.DataFrame()
     new_info_d = pd.DataFrame()
     merge_keys = "portKeys"
-    # pylint: disable=W0212
+
     devices_info, unmerged = dim._update_db_info_fmswid_portkeys(devices_info_json, new_info_d, merge_keys)
-    # pylint: enable=W0212
+
     assert devices_info.empty
     assert unmerged.empty
     all_reset()

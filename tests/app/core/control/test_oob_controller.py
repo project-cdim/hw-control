@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,23 +16,17 @@
 
 import logging
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
-from pytest import LogCaptureFixture
 from pytest_mock import MockFixture
 
-from tests.app.core.control import test_util
-
-from app.common import constants
 import app.common.basic_exceptions as exc
-from app.common.utils import plugin_manager
-from app.core.control import control_base
-from app.core.control import oob_control
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
+from app.common import constants
+from app.common.plugin import plugin_manager
+from app.core.control import control_base, oob_control
 from app.core.control.oob_control import OOBController
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from tests.app.core.control import test_util
 
 
 class TestPowerOn:
@@ -60,7 +54,7 @@ class TestPowerOn:
     )
     def test_successful_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: control_base.PowerControlTargetDevice,
     ):
@@ -80,7 +74,8 @@ class TestPowerOn:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        oob_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -102,7 +97,7 @@ class TestPowerOn:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "post_power_on"
@@ -128,7 +123,7 @@ class TestPowerOn:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -156,7 +151,6 @@ class TestPowerOn:
 
         # Set up the mock.
         mocker.patch.object(plugin_manager, "get_oob_plugin", side_effect=plugin_raise)
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_on", side_effect=plugin_raise)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -183,7 +177,7 @@ class TestPowerOn:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PowerOnFailureHWControlError, exc.PowerOnFailureHWControlError),
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -209,8 +203,9 @@ class TestPowerOn:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_on", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_power_on.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -237,7 +232,7 @@ class TestPowerOn:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.DeviceNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
         ],
@@ -268,8 +263,9 @@ class TestPowerOn:
         )
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_on", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_power_on.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:
@@ -305,7 +301,7 @@ class TestForceOff:
     )
     def test_successful_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: control_base.PowerControlTargetDevice,
     ):
@@ -325,7 +321,8 @@ class TestForceOff:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        oob_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -347,7 +344,7 @@ class TestForceOff:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "post_power_off"
@@ -373,7 +370,7 @@ class TestForceOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -420,7 +417,7 @@ class TestForceOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PowerOnFailureHWControlError, exc.PowerOnFailureHWControlError),
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -447,8 +444,9 @@ class TestForceOff:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_off", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_power_off.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -468,7 +466,7 @@ class TestForceOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.DeviceNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
         ],
@@ -499,8 +497,9 @@ class TestForceOff:
         )
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_off", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_power_off.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:
@@ -529,7 +528,7 @@ class TestReset:
     )
     def test_successful_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: control_base.PowerControlTargetDevice,
     ):
@@ -549,7 +548,8 @@ class TestReset:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        oob_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -571,7 +571,7 @@ class TestReset:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "post_cpu_reset"
@@ -605,7 +605,7 @@ class TestReset:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=MagicMock())
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(exc.RequestNotSupportedHWControlError):
@@ -625,7 +625,7 @@ class TestReset:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_manager_raise, expected_raise",
+        ("plugin_manager_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -672,7 +672,7 @@ class TestReset:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PowerOnFailureHWControlError, exc.PowerOnFailureHWControlError),
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -699,8 +699,9 @@ class TestReset:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_cpu_reset", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_cpu_reset.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -720,7 +721,7 @@ class TestReset:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.DeviceNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
         ],
@@ -751,8 +752,9 @@ class TestReset:
         )
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_cpu_reset", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_cpu_reset.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:
@@ -781,7 +783,7 @@ class TestPowerOff:
     )
     def test_successful_shutdown_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: control_base.PowerControlTargetDevice,
     ):
@@ -801,7 +803,8 @@ class TestPowerOff:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        oob_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -823,7 +826,7 @@ class TestPowerOff:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "post_os_shutdown"
@@ -843,7 +846,7 @@ class TestPowerOff:
     )
     def test_successful_power_off_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         power_control_target_device_fixture: control_base.PowerControlTargetDevice,
     ):
@@ -863,7 +866,8 @@ class TestPowerOff:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
+        oob_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -885,7 +889,7 @@ class TestPowerOff:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "post_power_off"
@@ -904,7 +908,7 @@ class TestPowerOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_manager_raise, expected_raise",
+        ("plugin_manager_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -951,7 +955,7 @@ class TestPowerOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.PowerOnFailureHWControlError, exc.PowerOnFailureHWControlError),
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -978,9 +982,10 @@ class TestPowerOff:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_os_shutdown", side_effect=plugin_raise)
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_off", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_os_shutdown.side_effect = plugin_raise
+        oob_plugin_mock.post_power_off.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -1000,7 +1005,7 @@ class TestPowerOff:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             (exc.DeviceNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
         ],
@@ -1027,13 +1032,14 @@ class TestPowerOff:
 
         # Set up the expected value.
         expected_error_message = (
-            "The specified target device is not found." f" The target Device ID is follow: {target_device.device_id}"
+            f"The specified target device is not found. The target Device ID is follow: {target_device.device_id}"
         )
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_os_shutdown", side_effect=plugin_raise)
-        mocker.patch.object(test_util.DummyOOBPlugin, "post_power_off", side_effect=plugin_raise)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.post_os_shutdown.side_effect = plugin_raise
+        oob_plugin_mock.post_power_off.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:

@@ -12,16 +12,18 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801,R0903
+
 """This is a test program."""
 
 import copy
 import logging
+
 import pytest
+
 import app.common.basic_exceptions as exc
 import app.common.constants as const
-from app.core.info.spec_oob import GetSpecOOBInfo
 from app.common.dim import device_id_base as dim
+from app.core.info.spec_oob import GetSpecOOBInfo
 
 MOCK_PLUGIN_CPU_RESPONSE = {
     "devices": [
@@ -669,8 +671,7 @@ def test_get_spec_oob_cpu(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
-        " oob_device_id: 0001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c oob_device_id: 0001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -715,8 +716,7 @@ def test_get_spec_oob_memory(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
-        " oob_device_id: 1001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af oob_device_id: 1001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -760,8 +760,7 @@ def test_get_spec_oob_storage(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: ee9e4718-df31-4bd8-b37b-455e0e0672f6"
-        " oob_device_id: 2001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: ee9e4718-df31-4bd8-b37b-455e0e0672f6 oob_device_id: 2001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -805,8 +804,7 @@ def test_get_spec_oob_nic(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 00029c15-bccb-4f9a-a251-51c9d307a097"
-        " oob_device_id: 3001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 00029c15-bccb-4f9a-a251-51c9d307a097 oob_device_id: 3001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -850,8 +848,7 @@ def test_get_spec_oob_gpu(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 11056940-fd5c-4f37-87e2-9e6c18b65828"
-        " oob_device_id: 4001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 11056940-fd5c-4f37-87e2-9e6c18b65828 oob_device_id: 4001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -895,8 +892,7 @@ def test_get_spec_oob_graphic_controller(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: c1599cc2-d225-429a-8dd9-0862f1e29bcb"
-        " oob_device_id: 5001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: c1599cc2-d225-429a-8dd9-0862f1e29bcb oob_device_id: 5001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -928,7 +924,7 @@ def test_get_spec_oob_empty_device_type(caplog):
     with pytest.raises(exc.InternalHWControlError) as error:
         spec_oob_info.get_spec_oob("28c2318b-6b69-4f41-9865-166906ca2e1c", "")
 
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00002: Unexpected DeviceType: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00002: Unexpected DeviceType: ")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -955,7 +951,7 @@ def test_get_spec_oob_get_plugin_unknown_exception(mocker, caplog):
     with pytest.raises(AttributeError) as error:
         spec_oob_info.get_spec_oob("28c2318b-6b69-4f41-9865-166906ca2e1c", "CPU")
 
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, AttributeError)
 
 
@@ -982,8 +978,7 @@ def test_get_spec_oob_no_device_data(mocker, caplog):
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
-        " oob_device_id: 0001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c oob_device_id: 0001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -991,7 +986,7 @@ def test_get_spec_oob_no_device_data(mocker, caplog):
         "I00004: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
         " oob_device_id: 0001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00005: Plugin Response Unexpected None:")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00005: Plugin Response Unexpected None:")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1018,8 +1013,7 @@ def test_get_spec_oob_no_device_key(mocker, caplog):
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
-        " oob_device_id: 1001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af oob_device_id: 1001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1027,7 +1021,7 @@ def test_get_spec_oob_no_device_key(mocker, caplog):
         "I00004: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00005: Plugin Response Unexpected None:")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00005: Plugin Response Unexpected None:")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1054,8 +1048,7 @@ def test_get_spec_oob_plugin_error(mocker, caplog):
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
-        " oob_device_id: 1001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af oob_device_id: 1001 Plugin Call.",
     )
     assert not _log_contains(
         caplog.record_tuples,
@@ -1090,8 +1083,7 @@ def test_get_spec_oob_plugin_unknown_exception(mocker, caplog):
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
-        " oob_device_id: 1001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af oob_device_id: 1001 Plugin Call.",
     )
     assert not _log_contains(
         caplog.record_tuples,
@@ -1099,7 +1091,7 @@ def test_get_spec_oob_plugin_unknown_exception(mocker, caplog):
         "I00004: BMC-1 get_spec_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, TypeError)
 
 
@@ -1406,7 +1398,7 @@ def test_get_metric_oob_empty_device_type(caplog):
         "I00004: BMC-1 get_metric_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00002: Unexpected DeviceType: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00002: Unexpected DeviceType: ")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1433,7 +1425,7 @@ def test_get_metric_oob_get_plugin_unknown_exception(mocker, caplog):
     with pytest.raises(FileNotFoundError) as error:
         spec_oob_info.get_metric_oob("28c2318b-6b69-4f41-9865-166906ca2e1c", "CPU")
 
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, FileNotFoundError)
 
 
@@ -1469,7 +1461,7 @@ def test_get_metric_oob_no_device_data(mocker, caplog):
         "I00004: BMC-1 get_metric_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00005: Plugin Response Unexpected None:")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00005: Plugin Response Unexpected None:")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1505,7 +1497,7 @@ def test_get_metric_oob_no_device_key(mocker, caplog):
         "I00004: BMC-1 get_metric_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00005: Plugin Response Unexpected None:")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00005: Plugin Response Unexpected None:")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1577,7 +1569,7 @@ def test_get_metric_oob_plugin_unknown_exception(mocker, caplog):
         "I00004: BMC-1 get_metric_info device_id: 1c440d70-ae46-42f6-b03b-6df28d0913af"
         " oob_device_id: 1001 Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, IndexError)
 
 
@@ -1649,7 +1641,7 @@ def test_get_oob_id_convert_unknown_exception(mocker, caplog) -> None:
     mocker.patch.object(dim, "oob_device_id_to_device_id", side_effect=ValueError)
 
     spec_oob_info = GetSpecOOBInfo()
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match=r"^$") as error:
         spec_oob_info.get_metric_oob("c1599cc2-d225-429a-8dd9-0862f1e29bcb", "graphicController")
 
     assert _log_contains(
@@ -1781,8 +1773,7 @@ def test_get_spec_oob_source_fabric_adapter(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2"
-        " oob_device_id: 3201 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2 oob_device_id: 3201 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1822,14 +1813,12 @@ def test_get_spec_oob_source_fabric_adapter_connect_cpu(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2"
-        " oob_device_id: 3201 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2 oob_device_id: 3201 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: A13B98C9-2B42-4FDF-B47D-30696B613353"
-        " oob_device_id: 3101 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: A13B98C9-2B42-4FDF-B47D-30696B613353 oob_device_id: 3101 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1872,8 +1861,7 @@ def test_get_spec_oob_destination_fabric_adapter(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 6AE03D96-C47A-4396-8136-A8590B675339"
-        " oob_device_id: 3301 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 6AE03D96-C47A-4396-8136-A8590B675339 oob_device_id: 3301 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1913,14 +1901,12 @@ def test_get_spec_oob_destination_fabric_adapter_connect_gpu(mocker, caplog) -> 
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 6AE03D96-C47A-4396-8136-A8590B675339"
-        " oob_device_id: 3301 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 6AE03D96-C47A-4396-8136-A8590B675339 oob_device_id: 3301 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: D362C392-564A-4C4A-A675-B50E1CA91A6C"
-        " oob_device_id: 3102 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: D362C392-564A-4C4A-A675-B50E1CA91A6C oob_device_id: 3102 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1966,8 +1952,7 @@ def test_get_spec_oob_cpu_sfa(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
-        " oob_device_id: 0001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c oob_device_id: 0001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -1978,8 +1963,7 @@ def test_get_spec_oob_cpu_sfa(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2"
-        " oob_device_id: 3201 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2 oob_device_id: 3201 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -2019,8 +2003,7 @@ def test_get_spec_oob_cpu_sfa_ignore(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
-        " oob_device_id: 0001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c oob_device_id: 0001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -2031,8 +2014,7 @@ def test_get_spec_oob_cpu_sfa_ignore(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2"
-        " oob_device_id: 3201 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2 oob_device_id: 3201 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -2072,8 +2054,7 @@ def test_get_spec_oob_cpu_sfa_ignore_2(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c"
-        " oob_device_id: 0001 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c oob_device_id: 0001 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,
@@ -2084,8 +2065,7 @@ def test_get_spec_oob_cpu_sfa_ignore_2(mocker, caplog) -> None:
     assert _log_contains(
         caplog.record_tuples,
         logging.INFO,
-        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2"
-        " oob_device_id: 3201 Plugin Call.",
+        "I00003: BMC-1 get_spec_info device_id: 938bbddd-551f-64d5-c434-ac6946dd3aa2 oob_device_id: 3201 Plugin Call.",
     )
     assert _log_contains(
         caplog.record_tuples,

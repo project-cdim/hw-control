@@ -12,23 +12,25 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""This is a test program."""  # pylint: disable=C0302
+"""This is a test program."""
 
 import copy
-import os
+import datetime
 import json
 import logging
-import datetime
+import os
+
 import pytest
-from app.common.settings import settings
-from app.core.info.info_core import InformationCore
-from app.core.info.info_const import RESP_ITEM_NAME_CONSTRAINTS
-from app.common.constants import TIME_STAMP_FORMAT
+
 from app.common.basic_exceptions import (
     BaseHWControlError,
-    InternalHWControlError,
     DeviceNotFoundHWControlError,
+    InternalHWControlError,
 )
+from app.common.constants import TIME_STAMP_FORMAT
+from app.common.settings import settings
+from app.core.info.info_const import RESP_ITEM_NAME_CONSTRAINTS
+from app.core.info.info_core import InformationCore
 from app.core.info.info_utils import load_mapping_table
 
 # Response Item Name Current Date and Time
@@ -67,6 +69,7 @@ OOB_DATA_CPU_LINK = {
                 "attribute": {
                     "deviceSpecificInformation": {
                         "hostName": "sv01",
+                        "bmcHostName": "bmc-sv01",
                         "id": "0P96F00",
                         "name": "Quadro P400",
                         "firmwareversion": "86.07.6B.00.01",
@@ -150,6 +153,7 @@ OOB_DATA_CPU_NO_LINK = {
                 "attribute": {
                     "deviceSpecificInformation": {
                         "hostName": "sv01",
+                        "bmcHostName": "bmc-sv01",
                         "id": "0P96F00",
                         "name": "Quadro P400",
                         "firmwareversion": "86.07.6B.00.01",
@@ -305,6 +309,7 @@ RESP_CPU_LINK = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -366,6 +371,7 @@ RESP_CPU_MULTI_LINK = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -429,6 +435,7 @@ RESP_CPU_LINK_CPU = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -486,6 +493,7 @@ RESP_CPU_LINK_OOB_ONLY = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -543,6 +551,7 @@ RESP_CPU_LINK_FM_ONLY = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -600,6 +609,7 @@ RESP_CPU_NO_LINK = {
     "attribute": {
         "deviceSpecificInformation": {
             "hostName": "sv01",
+            "bmcHostName": "bmc-sv01",
             "id": "0P96F00",
             "name": "Quadro P400",
             "firmware_version": "86.07.6B.00.01",
@@ -945,6 +955,7 @@ OOB_DATA_STORAGE_LINK = {
                     "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "32ADF365C6C1B7BD"}],
                     "PowerState": "On",
                     "PowerCapability": True,
+                    "SecureEraseCapability": True,
                     "HotspareType": "Chassis",
                     "EncryptionAbility": "SelfEncryptingDrive",
                     "EncryptionStatus": "Unlocked",
@@ -1039,6 +1050,7 @@ OOB_DATA_STORAGE_NO_LINK = {
                     "Identifiers": [{"DurableNameFormat": "NAA", "DurableName": "32ADF365C6C1B7BD"}],
                     "PowerState": "On",
                     "PowerCapability": True,
+                    "SecureEraseCapability": True,
                     "HotspareType": "Chassis",
                     "EncryptionAbility": "SelfEncryptingDrive",
                     "EncryptionStatus": "Unlocked",
@@ -1223,6 +1235,7 @@ RESP_STORAGE_LINK = {
     "status": {"health": "OK", "state": "Enabled"},
     "powerState": "On",
     "powerCapability": True,
+    "secureEraseCapability": True,
     "links": [{"type": "CPU", "deviceID": "0001"}],
     "driveSerialNumber": "1234568",
     "driveManufacturer": "Contoso",
@@ -1286,6 +1299,7 @@ RESP_STORAGE_NO_LINK = {
     "status": {"health": "OK", "state": "Enabled"},
     "powerState": "On",
     "powerCapability": True,
+    "secureEraseCapability": True,
     "driveSerialNumber": "1234568",
     "driveManufacturer": "Contoso",
     "driveModel": "C123",
@@ -1833,6 +1847,8 @@ OOB_DATA_FA_LINK = {
                         "groupId": 16,
                         "linkStatus0": "up",
                         "linkStatus1": "down",
+                        "notificationStatus0": ["up", "down"],
+                        "notificationStatus1": ["down", "down"],
                         "switchName": "AD102GL",
                     },
                 },
@@ -1943,6 +1959,8 @@ OOB_DATA_FA_NO_LINK = {
                         "groupId": 16,
                         "linkStatus0": "up",
                         "linkStatus1": "down",
+                        "notificationStatus0": ["up", "down"],
+                        "notificationStatus1": ["down", "down"],
                         "switchName": "AD102GL",
                     },
                 },
@@ -2118,6 +2136,8 @@ RESP_FA_LINK = {
             "groupId": 16,
             "linkStatus0": "up",
             "linkStatus1": "down",
+            "notificationStatus0": ["up", "down"],
+            "notificationStatus1": ["down", "down"],
             "switchName": "AD102GL",
         }
     },
@@ -2221,6 +2241,8 @@ RESP_FA_NO_LINK = {
             "groupId": 16,
             "linkStatus0": "up",
             "linkStatus1": "down",
+            "notificationStatus0": ["up", "down"],
+            "notificationStatus1": ["down", "down"],
             "switchName": "AD102GL",
         }
     },
@@ -2325,6 +2347,8 @@ OOB_DATA_NA_LINK = {
                         "groupId": 16,
                         "linkStatus0": "up",
                         "linkStatus1": "down",
+                        "notificationStatus0": ["up", "down"],
+                        "notificationStatus1": ["down", "down"],
                         "switchName": "AD102GL",
                     },
                 },
@@ -2435,6 +2459,8 @@ OOB_DATA_NA_NO_LINK = {
                         "groupId": 16,
                         "linkStatus0": "up",
                         "linkStatus1": "down",
+                        "notificationStatus0": ["up", "down"],
+                        "notificationStatus1": ["down", "down"],
                         "switchName": "AD102GL",
                     },
                 },
@@ -2610,6 +2636,8 @@ RESP_NA_LINK = {
             "groupId": 16,
             "linkStatus0": "up",
             "linkStatus1": "down",
+            "notificationStatus0": ["up", "down"],
+            "notificationStatus1": ["down", "down"],
             "switchName": "AD102GL",
         }
     },
@@ -2706,6 +2734,8 @@ RESP_NA_NO_LINK = {
             "groupId": 16,
             "linkStatus0": "up",
             "linkStatus1": "down",
+            "notificationStatus0": ["up", "down"],
+            "notificationStatus1": ["down", "down"],
             "switchName": "AD102GL",
         }
     },
@@ -3178,6 +3208,201 @@ RESP_GC = {
     "model": "Multi-Core Intel(R) Xeon(R) processor 7500 Series",
 }
 
+# OOB unknown device Link present
+OOB_DATA_UNKNOWN_LINK = {
+    "devices": [
+        {
+            "type": "unknown",
+            "deviceID": "7001",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "id": "12345",
+                        "firmwareversion": "86.07.6B.00.01",
+                        "name": "Quadro P400",
+                    },
+                },
+                "SerialNumber": "TJ27JXQY",
+                "Manufacturer": "Generic",
+                "Model": "Modelxxx",
+                "Status": {"Health": "OK", "State": "Enabled"},
+                "PowerState": "On",
+                "PowerCapability": False,
+            },
+            "link": [{"type": "CPU", "deviceID": "0001"}],
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# OOB unknown device no Link
+OOB_DATA_UNKNOWN_NO_LINK = {
+    "devices": [
+        {
+            "type": "unknown",
+            "deviceID": "7001",
+            "schema": {
+                "attribute": {
+                    "deviceSpecificInformation": {
+                        "id": "12345",
+                        "firmwareversion": "86.07.6B.00.01",
+                        "name": "Quadro P400",
+                    },
+                },
+                "SerialNumber": "TJ27JXQY",
+                "Manufacturer": "Generic",
+                "Model": "Modelxxx",
+                "Status": {"Health": "OK", "State": "Enabled"},
+                "PowerState": "On",
+                "PowerCapability": True,
+            },
+            "time": "2023-07-06T05:55:55Z",
+        }
+    ]
+}
+
+# FM_DATA unknown Link present
+FM_DATA_UNKNOWN_LINK = {
+    "data": [
+        {
+            "deviceID": "7001",
+            "type": "unknown",
+            "link": [{"type": "GPU", "deviceID": "4001"}],
+            "devicePortList": [
+                {
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "DSP",
+                },
+            ],
+        }
+    ]
+}
+
+# FM_DATA unknown no Link
+FM_DATA_UNKNOWN_NO_LINK = {
+    "data": [
+        {
+            "deviceID": "7001",
+            "type": "unknown",
+            "devicePortList": [
+                {
+                    "switchId": "fmsw-01",
+                    "switchPortNumber": "1",
+                    "switchPortType": "DSP",
+                },
+            ],
+        }
+    ]
+}
+
+# RESP unknown Link present
+RESP_UNKNOWN_LINK = {
+    "deviceID": "7001",
+    "type": "unknown",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "id": "12345",
+            "firmware_version": "86.07.6B.00.01",
+            "name": "Quadro P400",
+        }
+    },
+    "links": [{"type": "CPU", "deviceID": "0001"}, {"type": "GPU", "deviceID": "4001"}],
+    "serialNumber": "TJ27JXQY",
+    "manufacturer": "Generic",
+    "model": "Modelxxx",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "devicePortList": [
+        {
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "DSP",
+        },
+    ],
+}
+
+# RESP unknown Link present
+RESP_UNKNOWN_FMVALID_TRUE_LINK = {
+    "deviceID": "7001",
+    "type": "unknown",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "id": "12345",
+            "firmware_version": "86.07.6B.00.01",
+            "name": "Quadro P400",
+        }
+    },
+    "links": [{"type": "CPU", "deviceID": "0001"}],
+    "serialNumber": "TJ27JXQY",
+    "manufacturer": "Generic",
+    "model": "Modelxxx",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": False,
+    "devicePortList": [
+        {
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "DSP",
+        },
+    ],
+}
+
+# RESP unknown Link present
+RESP_UNKNOWN_FMVALID_FALSE_LINK = {
+    "deviceID": "7001",
+    "type": "unknown",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "id": "12345",
+            "firmware_version": "86.07.6B.00.01",
+            "name": "Quadro P400",
+        }
+    },
+    "links": [{"type": "GPU", "deviceID": "4001"}],
+    "serialNumber": "TJ27JXQY",
+    "manufacturer": "Generic",
+    "model": "Modelxxx",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": True,
+    "devicePortList": [
+        {
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "DSP",
+        },
+    ],
+}
+
+# RESP unknown No Link
+RESP_UNKNOWN_NO_LINK = {
+    "deviceID": "7001",
+    "type": "unknown",
+    "attribute": {
+        "deviceSpecificInformation": {
+            "id": "12345",
+            "firmware_version": "86.07.6B.00.01",
+            "name": "Quadro P400",
+        }
+    },
+    "serialNumber": "TJ27JXQY",
+    "manufacturer": "Generic",
+    "model": "Modelxxx",
+    "status": {"state": "Enabled", "health": "OK"},
+    "powerState": "On",
+    "powerCapability": True,
+    "devicePortList": [
+        {
+            "switchID": "fmsw-01",
+            "switchPortNumber": "1",
+            "switchPortType": "DSP",
+        },
+    ],
+}
+
 # OOB_DATA FA and PCIe device Link present
 OOB_DATA_FA_PCIE_DEVICE_1 = {
     "devices": [
@@ -3193,6 +3418,8 @@ OOB_DATA_FA_PCIE_DEVICE_1 = {
                         "groupId": 16,
                         "linkStatus0": "up",
                         "linkStatus1": "down",
+                        "notificationStatus0": ["up", "down"],
+                        "notificationStatus1": ["down", "down"],
                         "switchName": "AD102GL",
                     },
                 },
@@ -3674,6 +3901,8 @@ RESP_FA_PCIE_DEVICE_1 = {
             "groupId": 16,
             "linkStatus0": "up",
             "linkStatus1": "down",
+            "notificationStatus0": ["up", "down"],
+            "notificationStatus1": ["down", "down"],
             "switchName": "AD102GL",
         }
     },
@@ -3917,7 +4146,7 @@ def _get_spec_info(mocker, device_id, device_type, oob_data, fm_data, cut_timest
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE1)
@@ -4207,7 +4436,7 @@ def test_get_spec_info_get_spec_fm_base_exception(mocker):
 def test_get_spec_info_create_spec_info_device_type_none():
     """create_spec_info Device Type none"""
     get_information = InformationCore()
-    resp = get_information._create_spec_info("0001", None, {}, {})  # pylint: disable=protected-access
+    resp = get_information._create_spec_info("0001", None, {}, {})
     assert {"deviceID": "0001", "type": None} == resp
 
 
@@ -4239,9 +4468,7 @@ def test_get_spec_info_create_spec_info_remove_empty_item_none(mocker):
     mocker.patch("app.core.info.info_core.InformationCore._create_constraints", side_effect=_create_constraints)
 
     get_information = InformationCore()
-    resp = get_information._create_spec_info(  # pylint: disable=protected-access
-        "0001", "CPU", FM_DATA_CPU_LINK, OOB_DATA_CPU_LINK
-    )
+    resp = get_information._create_spec_info("0001", "CPU", FM_DATA_CPU_LINK, OOB_DATA_CPU_LINK)
     assert {"deviceID": "0001", "type": "CPU"} == resp
 
 
@@ -4255,7 +4482,7 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_oob(m
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE1)
@@ -4267,7 +4494,7 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_oob(m
     get_information = InformationCore()
     with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
-        get_information._create_spec_info("0001", "CPU", None, oob_data)  # pylint: disable=protected-access
+        get_information._create_spec_info("0001", "CPU", None, oob_data)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
 
 
@@ -4281,7 +4508,7 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_fm(mo
 
     # Replace the path of the mapping table file (constant) with the path of the test mapping table file.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE1)
@@ -4293,7 +4520,7 @@ def test_get_spec_info_create_spec_info_create_resp_from_mapping_exception_fm(mo
     get_information = InformationCore()
     with pytest.raises(BaseHWControlError):
         # Specify the CPU as a representative.
-        get_information._create_spec_info("0001", "CPU", fm_data, None)  # pylint: disable=protected-access
+        get_information._create_spec_info("0001", "CPU", fm_data, None)
     assert _log_contains(caplog.record_tuples, logging.WARNING, "Device ID:0001")
 
 
@@ -4313,7 +4540,7 @@ def test_get_spec_info_create_spec_info_get_mapping_table_none(mocker):
     mocker.patch("app.core.info.info_core.InformationCore._create_constraints", side_effect=mock_create_constraints)
 
     get_information = InformationCore()
-    resp = get_information._create_spec_info("0001", "CPU", fm_data, oob_data)  # pylint: disable=protected-access
+    resp = get_information._create_spec_info("0001", "CPU", fm_data, oob_data)
     assert {"deviceID": "0001", "type": "CPU"} == resp
 
 
@@ -4697,6 +4924,80 @@ def test_get_spec_info_gc_constraints_nonremovable(mocker):
     assert json.loads(resp_constraints) == ret
 
 
+def test_get_spec_info_unknown_link(mocker):
+    """Test Get Information unknown device type"""
+    spec_data, _ = _get_spec_info(mocker, "7001", "unknown", OOB_DATA_UNKNOWN_LINK, FM_DATA_UNKNOWN_LINK, True)
+    # Link present
+    assert RESP_UNKNOWN_LINK == _link_sort(spec_data)
+
+
+def test_get_spec_info_unknown_no_link(mocker):
+    """Test Get Information unknown device type"""
+    spec_data, errors = _get_spec_info(
+        mocker,
+        "7001",
+        "unknown",
+        OOB_DATA_UNKNOWN_NO_LINK,
+        FM_DATA_UNKNOWN_NO_LINK,
+        True,
+    )
+    # No Link
+    assert (RESP_UNKNOWN_NO_LINK, []) == (spec_data, errors)
+
+
+def test_get_spec_info_unknown_constraints_nonremovable(mocker):
+    """Test Get Information unknown device type"""
+    resp_constraints_dict = dict(RESP_UNKNOWN_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}, {"deviceID": "4001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    resp, errors = _get_spec_info(mocker, "7001", "unknown", OOB_DATA_UNKNOWN_LINK, FM_DATA_UNKNOWN_LINK, True, False)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_built_in_unknown_constraints_nonremovable(mocker):
+    """Test Get Information unknown device type"""
+    resp_constraints_dict = dict(RESP_UNKNOWN_FMVALID_TRUE_LINK)
+    constraints = {"constraints": {"nonRemovableDevices": [{"deviceID": "0001"}]}}
+    resp_constraints_dict.update(constraints)
+    resp_constraints = json.dumps(resp_constraints_dict)
+
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[False, True])
+
+    resp, errors = _get_spec_info(mocker, "7001", "unknown", OOB_DATA_UNKNOWN_LINK, FM_DATA_UNKNOWN_NO_LINK, True, None)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert json.loads(resp_constraints) == ret
+
+
+def test_get_spec_info_cxl_unknown_constraints_nonremovable(mocker):
+    """Test Get Information unknown device type"""
+    mocker.patch("app.common.dim.device_id_base.device_id_to_fm_valid", side_effect=[True, True])
+
+    resp, errors = _get_spec_info(mocker, "7001", "unknown", OOB_DATA_UNKNOWN_NO_LINK, FM_DATA_UNKNOWN_LINK, True, None)
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_UNKNOWN_FMVALID_FALSE_LINK == ret
+
+
+def test_get_spec_info_unknown_no_constraints_nonremovable(mocker):
+    """Test Get Information unknown device type"""
+    # No Link
+    resp, errors = _get_spec_info(
+        mocker, "7001", "unknown", OOB_DATA_UNKNOWN_NO_LINK, FM_DATA_UNKNOWN_NO_LINK, True, False
+    )
+    ret = _constraints_nonremovable_sort(_link_sort(resp))
+
+    assert len(errors) == 0
+    assert RESP_UNKNOWN_NO_LINK == ret
+
+
 def test_get_spec_info_create_constraints_exception_devicenotfound(mocker):
     """Test create_constraints_exception_devicenotfound"""
     # Current path
@@ -4704,7 +5005,7 @@ def test_get_spec_info_create_constraints_exception_devicenotfound(mocker):
 
     # Replace the path of the mapping table file (constant) with the test mapping table file path.
     mapping_path = current_path
-    mocker.patch.object(settings, "MAPPING_TABLE_PATH", mapping_path)
+    mocker.patch.object(settings, "mapping_table_path", mapping_path)
 
     # Replace the mapping table file (constant) with the test mapping table file.
     mocker.patch.dict("app.core.info.info_const.MAPPING_TABLE_FILE", MAPPING_TABLE_FILE1)

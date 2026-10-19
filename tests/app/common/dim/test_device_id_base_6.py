@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=W0212,R0801
+
 """unit test module in device_id_base.py (part 6)
 
 system under test
@@ -21,6 +21,7 @@ system under test
 Test target function:
 get_device_id_of_switch_port_type
 """
+
 import logging
 import typing
 import uuid
@@ -33,7 +34,6 @@ import pandas
 from app.common import constants as con
 from app.common.dim import device_id_base as dim
 from app.common import basic_exceptions as exc
-
 
 _TEST_LOGGER_MODULE = "app.common.dim.device_id_base"
 

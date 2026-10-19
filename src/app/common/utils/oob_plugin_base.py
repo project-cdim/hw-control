@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,14 +12,16 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Module that defined the base class of an OOB plug-in
+"""Module that defined the base class of an OOB plug-in.
 
 File: hw-control/src/app/common/utils/oob_plugin_base.py
 """
 
 import abc
 from abc import ABCMeta
+
 from pydantic import BaseModel, Field
+
 from app.common.utils.plugin_base import ManagerPluginBase
 
 
@@ -39,7 +41,7 @@ class OOBDeviceListItem(BaseModel, validate_assignment=True):
 
 
 class OOBPluginBase(ManagerPluginBase, metaclass=ABCMeta):
-    """The base class of OOB plug-in
+    """The base class of OOB plug-in.
 
     This class defines the methods that the OOB plug-in must implement.
     """

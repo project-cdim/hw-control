@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,9 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-This module defines API metadata and provides factory functions for generating
-API metadata such as error response specifications.
+"""This module defines API metadata and provides factory functions for generating API metadata.
 
 - OpenAPI tag definitions:
     This module contains OpenAPI tag definitions used for FastAPI documentation.
@@ -45,7 +43,7 @@ API metadata such as error response specifications.
             path="/path/to/endpoint",
             # ...omitted for brevity...
             responses = {
-                422: api_metadata.error_case_spec_factory("The request parameter is invalid or missing."),
+                422: api_metadata.validation_error_case_spec_factory("The request parameter is invalid or missing."),
                 500: api_metadata.error_cases_spec_factory(
                     "An internal server error occurred.",
                     [
@@ -101,7 +99,7 @@ please refer to each API's section for more details.
 
 ### Device ID
 
-In hw-control, each device is uniquely identified by a **Device ID** (UUID4). 
+In hw-control, each device is uniquely identified by a **Device ID** (UUID4).
 Most APIs require you to specify this Device ID to select the target device for operations.
 
 ### Error Code
@@ -115,9 +113,28 @@ In error cases, hw-control APIs return a response with the following schema:
 }
 ```
 
-The "code" field represents the error code, which follows the error code system described below. 
-This code allows clients to identify the type and category of the error that occurred. 
+The "code" field represents the error code, which follows the error code system described below.
+This code allows clients to identify the type and category of the error that occurred.
 The "message" field contains a human-readable error message describing the error in detail.
+
+For HTTP status code 422 (request parameter validation error), the response additionally includes
+a "detail" field containing structured information about which request parameters failed validation
+and why:
+
+```json
+{
+    "code": "< An error code will be provided here >",
+    "message": "< A detailed error message will be provided here >",
+    "detail": [
+        {
+            "type": "< The type of the validation error will be provided here >",
+            "loc": ["< The location of the invalid request parameter will be provided here >"],
+            "msg": "< A message describing the validation error will be provided here >",
+            "input": "< The invalid input value will be provided here >"
+        }
+    ]
+}
+```
 
 Each error code consists of 11 characters, with the following structure:
 - **1st character:** Error flag (`E`: error, `C`: critical error)
@@ -130,7 +147,7 @@ Example: `EF013BAS000`
 
 #### Error Category Code
 
-The error category code (characters 3 to 5 in the error code) identifies the type of error that occurred.  
+The error category code (characters 3 to 5 in the error code) identifies the type of error that occurred.
 Below are the main error category codes used in hw-control:
 
 Error category codes:
@@ -138,7 +155,8 @@ Error category codes:
 - `003`: **Bad request**
     - Returned when the request is invalid or malformed.
 - `004`: **Control Object error**
-    - Returned when an error occurs during operate Control Object (e.g., CDI hardware resources management module, fabric-related management module).
+    - Returned when an error occurs during operate Control Object
+      (e.g., CDI hardware resources management module, fabric-related management module).
 - `005`: **Resource busy**
     - Returned when the target resource is busy.
 - `007`: **Configuration error**
@@ -152,8 +170,8 @@ Error category codes:
 - `013`: **Resource not found**
     - Returned when the specified resource cannot be found.
 
-Example:  
-- `EF003BAS000` → Bad request  
+Example:
+- `EF003BAS000` → Bad request
 - `EF013BAS000` → Resource not found
 
 """
@@ -165,10 +183,24 @@ ERROR_EXAMPLE = {
     "message": "< A detailed error message will be provided here >",
 }
 
+# Dictionary type used as an example of the response body schema for the request parameter
+# validation error case (HTTP 422). The values are written abstractly and omitted for brevity.
+VALIDATION_ERROR_EXAMPLE = {
+    "code": "< An error code will be provided here >",
+    "message": "< A detailed error message will be provided here >",
+    "detail": [
+        {
+            "type": "< The type of the validation error will be provided here >",
+            "loc": ["< The location of the invalid request parameter will be provided here >"],
+            "msg": "< A message describing the validation error will be provided here >",
+            "input": "< The invalid input value will be provided here >",
+        },
+    ],
+}
+
 
 class ErrorResponseSpec(BaseModel):
-    """
-    Data model for representing the error response specification used in FastAPI's responses argument.
+    """Data model for representing the error response specification used in FastAPI's responses argument.
 
     This model defines the structure of error response metadata for API documentation.
     It includes a description of the error case, the response model class representing the error response body,
@@ -188,9 +220,7 @@ class ErrorResponseSpec(BaseModel):
 
 
 def error_case_spec_factory(case_description: str) -> dict:
-    """
-    Generate a response specification for a single error case corresponding to one HTTP status code,
-    to be used in API documentation.
+    """Generate a response specification for a single error case for one HTTP status code for API documentation.
 
     This function creates a dictionary representing the error response specification
     for a single error case associated with a specific HTTP status code, suitable for constructing
@@ -217,7 +247,6 @@ def error_case_spec_factory(case_description: str) -> dict:
                 ),
         }
     """
-
     # Set single example
     error_content_example = {"application/json": {"example": ERROR_EXAMPLE}}
 
@@ -225,10 +254,45 @@ def error_case_spec_factory(case_description: str) -> dict:
     return response
 
 
-def error_cases_spec_factory(case_description: str, sub_case_descriptions: list[str]) -> dict:
+def validation_error_case_spec_factory(case_description: str) -> dict:
+    """Generate a response specification for a request parameter validation error case (HTTP 422).
+
+    Unlike `error_case_spec_factory`, this includes the `detail` field showing structured
+    validation error information, since HTTP 422 responses are always generated by
+    `custom_validation_exception_handler`, which returns `ValidationErrorResponseModel`.
+
+    Args:
+        case_description (str): Description text for the specific error case.
+            This will be used as the response's description in the API documentation.
+
+    Returns:
+        dict: A dictionary representing the error response specification for the 422 error case.
+
+    Example usage:
+        from src.app.routers import api_metadata
+
+        @router.put(
+            path="/path/to/endpoint",
+            ...
+            responses = {
+                422: api_metadata.validation_error_case_spec_factory(
+                    case_description="The request parameter validation error."
+                ),
+        }
     """
-    Generate a response specification for multiple error cases corresponding to one HTTP status code,
-    to be used in API documentation.
+    # Set single example
+    error_content_example = {"application/json": {"example": VALIDATION_ERROR_EXAMPLE}}
+
+    response = ErrorResponseSpec(
+        description=case_description,
+        model=response_models.ValidationErrorResponseModel,
+        content=error_content_example,
+    ).model_dump()
+    return response
+
+
+def error_cases_spec_factory(case_description: str, sub_case_descriptions: list[str]) -> dict:
+    """Generate a response specification for multiple error cases for one HTTP status code for API documentation.
 
     This function creates a dictionary representing the error response specification
     for multiple error cases associated with a specific HTTP status code, suitable for constructing

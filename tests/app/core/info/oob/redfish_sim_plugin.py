@@ -13,6 +13,7 @@
 #  under the License.
 
 """test module"""
+
 from typing import Any
 
 CPU_RESPONSE = {

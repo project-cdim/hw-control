@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Equipment information Acquisition API - Device Information Acquisition
+"""Equipment information Acquisition API - Device Information Acquisition.
 
 Provide a REST API that receives a device information acquisition
  request from a higher-level function and returns the corresponding
@@ -21,31 +21,28 @@ Provide a REST API that receives a device information acquisition
 """
 
 import datetime
-import traceback
 import logging
+import traceback
 from typing import Annotated
+
 from fastapi import APIRouter, Path, Query
 from fastapi.responses import JSONResponse
 
 import app.common.messages.message as msg
 import app.common.plugin.svc.loader as plugin_loader
-from app.common.constants import TIME_STAMP_FORMAT
+from app.common import constants
 from app.common.basic_exceptions import (
     BaseHWControlError,
     DeviceNotFoundHWControlError,
     InternalHWControlError,
 )
+from app.common.constants import TIME_STAMP_FORMAT
 from app.common.dim import device_id_base
-
-from app.routers import api_metadata
-from app.routers.info import response_models, info_life_span
-from app.routers.info.response_models import ResourceList
-from app.routers.info.response_models import IncompleteList
-from app.routers.info.response_models import DeviceResourceList
-from app.routers.info.response_models import IncompleteResourceList
-from app.core.info.info_core import InformationCore
 from app.common.utils import error_utils
-from app.common import constants
+from app.core.info.info_core import InformationCore
+from app.routers import api_metadata
+from app.routers.info import info_life_span, response_models
+from app.routers.info.response_models import DeviceResourceList, IncompleteList, IncompleteResourceList, ResourceList
 
 DEVICE_LIST_ITEM_NAME_DEVICE_LIST = "deviceList"  # Device List
 DEVICES_ITEM_NAME_DEVICE_ID = "deviceID"  # Device ID
@@ -119,7 +116,7 @@ def get_device_ids(
         ),
     ] = None,
 ) -> JSONResponse:
-    """Device ID list information acquisition
+    """Device ID list information acquisition.
 
     If the specified Device Type is valid, collect the ID list information for that Device Type.
     If not specified, all Device ID list information will be collected.
@@ -209,7 +206,7 @@ def get_all_devices_information(
         ),
     ] = None,
 ) -> JSONResponse:
-    """Batch acquisition of all resource information
+    """Batch acquisition of all resource information.
 
     If the specified Device Type is valid, collect all resource information for the corresponding Device Type.
     If not specified, all resource information will be collected.
@@ -332,7 +329,7 @@ def get_devices_information(
         ),
     ],
 ) -> JSONResponse:
-    """Get device information
+    """Get device information.
 
     Get device information corresponding to the specified deviceID
 
@@ -411,7 +408,7 @@ def get_devices_resource(
         ),
     ],
 ) -> JSONResponse:
-    """Get resource information
+    """Get resource information.
 
     Get resource information corresponding to the specified deviceID
 
@@ -490,7 +487,7 @@ def get_devices_metrics(
         ),
     ],
 ) -> JSONResponse:
-    """Get metric information
+    """Get metric information.
 
     Get metrics information corresponding to the specified deviceID
 
@@ -531,7 +528,7 @@ def get_devices_metrics(
 
 
 def _assign_device_id(log_param: str) -> JSONResponse | None:
-    """Assign Device ID
+    """Assign Device ID.
 
     Discover devices and assign IDs.
 
@@ -541,7 +538,6 @@ def _assign_device_id(log_param: str) -> JSONResponse | None:
     Returns:
         JSONResponse | None: error response if an error occurred, otherwise None
     """
-
     # Device ID Manager call
     # Add conditions in the future
     # e.g.(if not device_type:Implementation conditions)
@@ -558,7 +554,7 @@ def _assign_device_id(log_param: str) -> JSONResponse | None:
 
 
 def _get_device_list(device_type: str | None, log_param: str, device_list: dict) -> JSONResponse | None:
-    """Find devices by type
+    """Find devices by type.
 
     Return devices of the given type.
     When the type is None, all devices are returned.
@@ -571,7 +567,6 @@ def _get_device_list(device_type: str | None, log_param: str, device_list: dict)
     Returns:
         JSONResponse | None: error response if an error occurred, otherwise None
     """
-
     # Device information getter
     get_info = InformationCore()
 
@@ -605,7 +600,7 @@ def _get_all_device_info(
     device_infos: DeviceResourceList,
     incomplete_device_infos: IncompleteResourceList,
 ) -> JSONResponse | None:
-    """Get device information by Device IDs
+    """Get device information by Device IDs.
 
     Get information of the devices identified by IDs.
 
@@ -618,7 +613,6 @@ def _get_all_device_info(
     Returns:
         JSONResponse | None: error response if an error occurred, otherwise None
     """
-
     for device_item in device_array:
         if isinstance(device_item, dict):
             device_id = str(device_item.get(DEVICES_ITEM_NAME_DEVICE_ID))
@@ -641,7 +635,7 @@ def _get_all_device_info(
                 # If exception, proceed to next device
                 continue
 
-            except Exception:  # pylint: disable=W0718
+            except Exception:
                 # unexpected exception occurred
                 logger.error(msg.get_log_message(msg.E00001, [traceback.format_exc()]))
                 logger.warning(msg.get_log_message(msg.W00001, [log_param]))
@@ -667,12 +661,12 @@ def _get_all_device_info(
 
 
 def _get_individually_specified_device_info(device_id: str, info_type: str) -> tuple[bool, dict]:
-    """Get individual device information
+    """Get individual device information.
 
     Gets the individual device information for the specified Device ID and acquisition type.
 
     Args:
-        device_type (str): specified deviceID
+        device_id (str): specified Device ID
         info_type (str): info acquisition type
 
     Returns:
@@ -714,7 +708,7 @@ def _get_individually_specified_device_info(device_id: str, info_type: str) -> t
 
 
 def _get_resource_info(get_info: InformationCore, device_id: str) -> tuple[dict, list]:
-    """Get resource information by Device ID
+    """Get resource information by Device ID.
 
     Get resource information of the device identified by ID.
 
@@ -725,7 +719,6 @@ def _get_resource_info(get_info: InformationCore, device_id: str) -> tuple[dict,
     Returns:
         tuple[dict, list]: a tuple of resource information and error information
     """
-
     # Initialization of return values
     device_info: dict = {}
     error_info = []
@@ -755,7 +748,7 @@ def _get_resource_info(get_info: InformationCore, device_id: str) -> tuple[dict,
 def _make_get_device_info_result(
     device_id: str, device_info: dict, error_infos: list, log_param: str
 ) -> tuple[bool, dict]:
-    """Make return value of _get_individually_specified_device_info()
+    """Make return value of _get_individually_specified_device_info().
 
     Construct the tuple returned by _get_individually_specified_device_info().
 
@@ -768,7 +761,6 @@ def _make_get_device_info_result(
     Returns:
         tuple[bool, dict]: a tuple of the error flag and the device information
     """
-
     # incomplete device information
     incomplete_info = IncompleteList()
 
@@ -809,7 +801,7 @@ def _make_get_device_info_result(
 def _set_err_info_results_item(
     device_id: str, error_info: list, time_set_flag: bool, incomplete_info: IncompleteList
 ) -> None:
-    """Set of error information data
+    """Set of error information data.
 
     Set error information data for the cause of acquisition failure.
 
@@ -822,7 +814,6 @@ def _set_err_info_results_item(
     Returns:
         Nothing
     """
-
     # the error information for information acquisition failure
     incomplete_info.error_info = error_info
     incomplete_info.device_id = device_id

@@ -12,17 +12,18 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801,R0903
+
 """This is a test program."""
 
 import logging
+
 import pytest
+
 import app.common.basic_exceptions as exc
 import app.common.constants as const
-from app.core.info.spec_fm import GetSpecFMInfo
-from app.common.utils.fm_plugin_base import FMPortData
 from app.common.dim import device_id_base as dim
-
+from app.common.utils.fm_plugin_base import FMPortData
+from app.core.info.spec_fm import GetSpecFMInfo
 
 PLUGIN_RETURN_CPU_1_1 = [
     FMPortData(
@@ -1574,7 +1575,7 @@ def test_spec_fm_no_type(mocker, caplog):
     with pytest.raises(exc.InternalHWControlError) as error:
         spec_fm.get_spec_fm("28c2318b-6b69-4f41-9865-166906ca2e1c", "InvalidType")
 
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00002: Unexpected DeviceType: InvalidType")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00002: Unexpected DeviceType: InvalidType")
     assert isinstance(error.value, exc.InternalHWControlError)
 
 
@@ -1704,7 +1705,7 @@ def test_spec_fm_plugin_unknown_exception(mocker, caplog):
         " device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c,"
         " fm_port_id: 2a79d931-9c8b-4674-94ad-f6d9b00ba50c Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, AttributeError)
 
 
@@ -1771,7 +1772,7 @@ def test_spec_fm_get_plugin_unknown_exception(mocker, caplog):
     with pytest.raises(TypeError) as error:
         spec_fm.get_spec_fm("28c2318b-6b69-4f41-9865-166906ca2e1c", "CPU")
 
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, TypeError)
 
 
@@ -1817,7 +1818,7 @@ def test_spec_fm_unknown_exception_in_transport_fm_plugin_result_to_port_data(mo
         " device_id: 28c2318b-6b69-4f41-9865-166906ca2e1c,"
         " fm_port_id: 2a79d931-9c8b-4674-94ad-f6d9b00ba50c Plugin Respond.",
     )
-    assert _log_contains(caplog.record_tuples, logging.WARN, "W00001: Unexpected Exception: ")
+    assert _log_contains(caplog.record_tuples, logging.WARNING, "W00001: Unexpected Exception: ")
     assert isinstance(error.value, IndexError)
 
 
@@ -1877,7 +1878,7 @@ def test_spec_fm_unknown_exception_in_get_spec(mocker):
     mocker.patch.object(dim, "device_id_to_fm_port_id_multi_hostport", side_effect=ValueError)
 
     spec_fm = GetSpecFMInfo()
-    with pytest.raises(ValueError) as error:
+    with pytest.raises(ValueError, match=r"^$") as error:
         spec_fm.get_spec_fm("28c2318b-6b69-4f41-9865-166906ca2e1c", "CPU")
 
     assert isinstance(error.value, ValueError)

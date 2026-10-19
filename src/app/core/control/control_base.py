@@ -12,28 +12,28 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - control function base
+"""HW independent section - control function base.
 
 app.core.control.control_base
 
 This module defines common constants and processes used
 in control functions.
 """
+
 import logging
 
 from pydantic import BaseModel, Field
 
-from app.common.dim import device_id_base as dim
-from app.common.utils.device_exclusive import DeviceExclusive
 import app.common.basic_exceptions as exc
 from app.common import constants
-from app.common.utils import plugin_manager
+from app.common.dim import device_id_base as dim
+from app.common.plugin import plugin_manager
 
 logger = logging.getLogger(__name__)
 
 
 class OOBPluginRequestTarget(BaseModel):
-    """generate OOB plugin request format
+    """generate OOB plugin request format.
 
     Attributes:
         oob_device_id (str):
@@ -51,8 +51,7 @@ class OOBPluginRequestTarget(BaseModel):
 
 
 class ControlTargetDevice(BaseModel):
-    """
-    Class for holding device information.
+    """Class for holding device information.
 
     This class represents a device in hw-control control part.
 
@@ -63,47 +62,9 @@ class ControlTargetDevice(BaseModel):
 
     device_id: str = Field()
 
-    def get_lock(self) -> None:
-        """
-        Acquire a lock on the target device.
-
-        This method attempts to acquire an exclusive lock on the target device.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        Raises:
-            DeviceBusyHWControlError:
-                If the target device is already locked and thus busy.
-        """
-        device_lock = DeviceExclusive.lock(device_id=self.device_id)
-        if not device_lock:
-            raise exc.DeviceBusyHWControlError(additional_message=f"The target Device ID is follow: {self.device_id}")
-
-    def release_lock(self) -> None:
-        """
-        Release the lock on the target device.
-
-        This method releases the exclusive lock on the target device.
-
-        Args:
-            None
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        DeviceExclusive.unlock(self.device_id)
-
 
 class PowerControlTargetDevice(ControlTargetDevice):
-    """
-    Class for holding device information related to power control.
+    """Class for holding device information related to power control.
 
     This class extends ControlTargetDevice and adds additional attributes
     for managing power state information.
@@ -153,8 +114,7 @@ class PowerControlTargetDevice(ControlTargetDevice):
             raise exc.RequestNotSupportedHWControlError from e
 
     def set_oob_manager_id(self) -> None:
-        """
-        Set oob_manager_id from information of dim.
+        """Set oob_manager_id from information of dim.
 
         This method gets the 'OOB Manager ID' of the specified device from app.common.dim
         and set self.oob_manager_id.
@@ -200,8 +160,7 @@ class PowerControlTargetDevice(ControlTargetDevice):
         self.oob_manager_id = oob_manager_id
 
     def set_device_type(self) -> None:
-        """
-        Set device_type from information of dim.
+        """Set device_type from information of dim.
 
         This method gets the 'Device Type' of the specified device from app.common.dim
         and set self.device_type.
@@ -246,8 +205,7 @@ class PowerControlTargetDevice(ControlTargetDevice):
         self.device_type = raw_device_type
 
     def set_oob_device_id(self) -> None:
-        """
-        Set oob_device_id from information of dim.
+        """Set oob_device_id from information of dim.
 
         This method gets the 'OOB Device ID' of the specified device
         from dim and set self.oob_device_id.

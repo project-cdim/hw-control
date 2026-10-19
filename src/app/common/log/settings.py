@@ -12,17 +12,14 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-Define logging runtime settings.
-"""
+"""Define logging runtime settings."""
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LoggingSettings(BaseSettings):
-    """
-    Logging runtime settings from environment variables.
+    """Logging runtime settings from environment variables.
 
     This class provides settings that cannot be configured via logging system configuration files
     (such as dict_config or file_config).

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,72 +16,18 @@
 
 import logging
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
-from pytest import LogCaptureFixture
 from pytest_mock import MockFixture
 
-from tests.app.core.control import test_util
-
 import app.common.basic_exceptions as exc
-from app.common.dim import device_id_base as dim
-from app.common.utils.device_exclusive import DeviceExclusive
 from app.common import constants
-from app.common.utils import plugin_manager
+from app.common.dim import device_id_base as dim
+from app.common.plugin import plugin_manager
 from app.core.control import control_base
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
-from app.core.control.control_base import ControlTargetDevice, PowerControlTargetDevice
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
-
-class TestControlTargetDevice:
-    """Unit test class for ControlTargetDevice."""
-
-    def test_lock_successful(self):
-        """Test for lock successful case."""
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        target_device_id = test_util.DummyCPUInfo.DEVICE_ID.value
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        test_device = ControlTargetDevice(device_id=target_device_id)
-        test_device.get_lock()
-
-        # ++++ clean up +++++++++++++++++++++++++++++++++++++++++++++++#
-        test_device.release_lock()
-
-    def test_target_device_busy(self, mocker: MockFixture):
-        """Test for target device busy case."""
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        # Set up the input value.
-        target_device_id = test_util.DummyCPUInfo.DEVICE_ID.value
-
-        # Set up the expected value.
-        expected_error_message = f"The specified device is busy. The target Device ID is follow: {target_device_id}"
-
-        # Set up the mock.
-        mocker.patch.object(DeviceExclusive, "lock", return_value=False)
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        test_device = ControlTargetDevice(device_id=target_device_id)
-        with pytest.raises(exc.DeviceBusyHWControlError) as e:
-            test_device.get_lock()
-
-        raised_exception = cast(exc.DeviceBusyHWControlError, e.value)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        assert raised_exception.message == expected_error_message
-
-    def test_unlock_successful(self):
-        """Test for unlock successful case."""
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        target_device_id = test_util.DummyCPUInfo.DEVICE_ID.value
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        test_device = ControlTargetDevice(device_id=target_device_id)
-        test_device.get_lock()
-        test_device.release_lock()
+from app.core.control.control_base import PowerControlTargetDevice
+from tests.app.core.control import test_util
 
 
 class TestPowerControlTargetDeviceGenerate:
@@ -156,7 +102,7 @@ class TestPowerControlTargetDeviceGenerate:
             _ = PowerControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.DeviceIDFileIncorrectHWControlError, exc.DeviceIDFileIncorrectHWControlError),
             (exc.DeviceIDFileNotFoundHWControlError, exc.DeviceIDFileNotFoundHWControlError),
@@ -181,7 +127,7 @@ class TestPowerControlTargetDeviceGenerate:
             _ = PowerControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -239,7 +185,7 @@ class TestPowerControlTargetDeviceGenerate:
             _ = PowerControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.DeviceIDFileIncorrectHWControlError, exc.DeviceIDFileIncorrectHWControlError),
             (exc.DeviceIDFileNotFoundHWControlError, exc.DeviceIDFileNotFoundHWControlError),
@@ -264,7 +210,7 @@ class TestPowerControlTargetDeviceGenerate:
             _ = PowerControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -304,7 +250,7 @@ class TestPowerControlTargetDeviceGenerate:
         assert raised_exception.message == expected_error_message
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.DeviceIDFileIncorrectHWControlError, exc.DeviceIDFileIncorrectHWControlError),
             (exc.DeviceIDFileNotFoundHWControlError, exc.DeviceIDFileNotFoundHWControlError),
@@ -330,7 +276,7 @@ class TestPowerControlTargetDeviceGenerate:
             _ = PowerControlTargetDevice(device_id=target_device_id)
 
     @pytest.mark.parametrize(
-        "device_id_manager_raise, expected_exception",
+        ("device_id_manager_raise", "expected_exception"),
         [
             (exc.APIUsageHWControlError, exc.DeviceNotFoundHWControlError),
             (exc.DeviceIDNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
@@ -392,7 +338,7 @@ class TestSetPowerState:
     """Unit test class for ControlTargetDevice.set_oob_device_id."""
 
     @pytest.mark.parametrize(
-        "power_control_target_device_fixture, plugin_return_spec_info, expected_power_state",
+        ("power_control_target_device_fixture", "plugin_return_spec_info", "expected_power_state"),
         [
             (  # device_type is "CPU" and "powerState" in spec_info is "On"
                 {  # input device object
@@ -577,10 +523,10 @@ class TestSetPowerState:
         ],
         indirect=["power_control_target_device_fixture"],
     )
-    def test_set_power_state(  # pylint: disable=R0913, R0917
+    def test_set_power_state(
         self,
         mocker: MockFixture,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         plugin_return_spec_info,
         expected_power_state,
@@ -591,8 +537,9 @@ class TestSetPowerState:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "get_power_state", return_value=plugin_return_spec_info)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.get_power_state.return_value = plugin_return_spec_info
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -615,13 +562,13 @@ class TestSetPowerState:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "get_power_state"
 
     @pytest.mark.parametrize(
-        "power_control_target_device_fixture, plugin_return_spec_info, expected_power_state",
+        ("power_control_target_device_fixture", "plugin_return_spec_info", "expected_power_state"),
         [
             (  # device_type is "CPU" and PowerState in spec_info is "Unknown"
                 {  # input device object
@@ -644,10 +591,10 @@ class TestSetPowerState:
         ],
         indirect=["power_control_target_device_fixture"],
     )
-    def test_set_unknown_power_state_str(  # pylint: disable=R0913, R0917
+    def test_set_unknown_power_state_str(
         self,
         mocker: MockFixture,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         power_control_target_device_fixture: PowerControlTargetDevice,
         plugin_return_spec_info,
         expected_power_state,
@@ -658,8 +605,9 @@ class TestSetPowerState:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "get_power_state", return_value=plugin_return_spec_info)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.get_power_state.return_value = plugin_return_spec_info
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -682,7 +630,7 @@ class TestSetPowerState:
         assert getattr(plugin_call_log, "manager_id") == target_device.oob_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyOOBPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == oob_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "get_power_state"
@@ -692,13 +640,13 @@ class TestSetPowerState:
         assert unexpected_power_log.levelname == "WARNING"
         assert unexpected_power_log.getMessage() == "The obtained power state is not a valid DevicePowerState."
 
-        assert hasattr(
-            unexpected_power_log, "obtained_power_state"
-        ), "obtained_power_state should be present in the log record"
+        assert hasattr(unexpected_power_log, "obtained_power_state"), (
+            "obtained_power_state should be present in the log record"
+        )
         assert getattr(unexpected_power_log, "obtained_power_state") == "UnknownUnknownUnknownTestPowerState"
 
     @pytest.mark.parametrize(
-        "power_control_target_device_fixture, plugin_return_spec_info, expected_exception",
+        ("power_control_target_device_fixture", "plugin_return_spec_info", "expected_exception"),
         [
             (  # spec_info TypeError, expected_exception is InternalHWControlError
                 {  # input device object
@@ -761,12 +709,9 @@ class TestSetPowerState:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(
-            test_util.DummyOOBPlugin,
-            "get_power_state",
-            return_value=plugin_return_spec_info,
-        )
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.get_power_state.return_value = plugin_return_spec_info
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution and inspection +++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception):
@@ -784,7 +729,7 @@ class TestSetPowerState:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise_exception, expected_exception",
+        ("plugin_raise_exception", "expected_exception"),
         [
             (exc.BaseHWControlError, exc.BaseHWControlError),
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -809,8 +754,9 @@ class TestSetPowerState:
         target_device = power_control_target_device_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "get_power_state", side_effect=plugin_raise_exception)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.get_power_state.side_effect = plugin_raise_exception
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception):
@@ -828,7 +774,7 @@ class TestSetPowerState:
         indirect=True,
     )
     @pytest.mark.parametrize(
-        "plugin_raise_exception, expected_exception",
+        ("plugin_raise_exception", "expected_exception"),
         [
             (exc.DeviceNotFoundHWControlError, exc.DeviceNotFoundHWControlError),
         ],
@@ -857,8 +803,9 @@ class TestSetPowerState:
         )
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=test_util.DummyOOBPlugin())
-        mocker.patch.object(test_util.DummyOOBPlugin, "get_power_state", side_effect=plugin_raise_exception)
+        oob_plugin_mock = MagicMock()
+        oob_plugin_mock.get_power_state.side_effect = plugin_raise_exception
+        mocker.patch.object(plugin_manager, "get_oob_plugin", return_value=oob_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_exception) as e:

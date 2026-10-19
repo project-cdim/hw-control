@@ -12,8 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-This module defines middleware components used in the application.
+"""This module defines middleware components used in the application.
 
 The middleware in this module is responsible for handling various aspects of
 HTTP request and response processing.
@@ -33,17 +32,15 @@ from starlette.responses import Response
 logger = logging.getLogger(__name__)
 
 
-class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
-    """
-    Middleware to log details of incoming HTTP requests and outgoing HTTP responses.
+class LoggingMiddleware(BaseHTTPMiddleware):
+    """Middleware to log details of incoming HTTP requests and outgoing HTTP responses.
 
     This middleware logs the HTTP method, client IP address, port, path parameters,
     query parameters, request body, and response status code for debugging and tracking purposes.
     """
 
     async def _log_request(self, request: Request) -> None:
-        """
-        Logs details of the incoming HTTP request.
+        """Logs details of the incoming HTTP request.
 
         This method extracts and logs the HTTP method, client IP address, port,
         path parameters, query parameters, and body of the request for debugging
@@ -52,7 +49,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
         Args:
             request (Request): The incoming HTTP request object to be logged.
         """
-
         client_ip_address = ""
         client_port = ""
 
@@ -74,8 +70,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
         )
 
     async def _log_response(self, response: Response, app_process_time: float) -> None:
-        """
-        Logs details of the HTTP response.
+        """Logs details of the HTTP response.
 
         This method logs the HTTP response.
 
@@ -84,7 +79,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
 
             app_process_time (float): The time taken to process the request in the application.
         """
-
         logger.info(
             msg="Return http response.",
             extra={
@@ -95,8 +89,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
         )
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        """
-        Middleware method to handle the dispatch of requests and logging trail.
+        """Middleware method to handle the dispatch of requests and logging trail.
 
         This method logs the trail HTTP request and response information.
 
@@ -107,7 +100,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):  # pylint: disable=R0903
         Returns:
             Response: The HTTP response generated after processing the request.
         """
-
         start_time = time.perf_counter()
         await self._log_request(request)
 

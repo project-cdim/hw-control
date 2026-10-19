@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=R0801
+
 """Device manager UT (part 5)
 
 Device manager UT.
@@ -708,9 +708,9 @@ def test__find_different_info_right_col():
     }
     df = pd.DataFrame(data)
     ret = 0
-    # pylint: disable=W0212
+
     index_info = dim._find_different_info(df)
-    # pylint: enable=W0212
+
     ret = 1
     assert ret == 1
     assert index_info == []
@@ -750,7 +750,7 @@ class MockPluginMovedMultiDevices:
         return oob_manager_list
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginMovedMultiDevices())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginMovedMultiDevices())
 def test_update_same_sn_devices_multi_devices(monkeypatch):
     """No err
 
@@ -881,7 +881,7 @@ class MockPluginMovedMultiDevicesInvalidInfo:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginMovedMultiDevicesInvalidInfo(),
 )
 def test_update_same_sn_devices_multi_devices_invalid_info(monkeypatch):
@@ -991,7 +991,7 @@ def test_log_invalid_device_info_switch(mocker: MockFixture, caplog: LogCaptureF
 
     caplog.clear()
     with caplog.at_level(logging.INFO, logger=dim.__name__):
-        dim._log_invalid_device_info(info_type, device_info)  # pylint: disable=W0212
+        dim._log_invalid_device_info(info_type, device_info)
 
     # check log
     assert len(caplog.records) == 1
@@ -1141,7 +1141,7 @@ class MockPluginPortAndSwitchAndDeviceInfo4:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo4(),
 )
 @patch(
@@ -1254,7 +1254,7 @@ class MockPluginPortAndSwitchAndDeviceInfo5:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo5(),
 )
 @patch(
@@ -1282,7 +1282,7 @@ def test_assign_device_id_new_data_bydk(monkeypatch, mocker: MockFixture):
     check_output("ptn17")
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1358,7 +1358,7 @@ def test_assign_device_file_replace_err(mocker: MockFixture, caplog: LogCaptureF
     assert file_error_log.getMessage() == "Failed to update Device ID Management File."
 
 
-@patch("app.common.utils.plugin_manager.get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
+@patch("app.common.plugin.plugin_manager._get_plugin", return_value=MockPluginPortAndSwitchAndDeviceInfo())
 @patch(
     "app.common.dim.device_id_manager.get_manager_list",
     side_effect=MockPluginGetManagerList().get_manager_list,
@@ -1432,7 +1432,7 @@ def all_reset():
     try:
         os.rename(_INVALID_SERIAL_NUMBER_FILE_PATH_bak, _INVALID_SERIAL_NUMBER_FILE_PATH)
         os.rename(_DEVICE_ID_MANAGER_FILE_PATH_bak, _DEVICE_ID_MANAGER_FILE_PATH)
-    except Exception:  # pylint: disable=W0718
+    except Exception:
         pass
     reset_setting_file(_INVALID_SERIAL_NUMBER_FILE_PATH, reset_data)
     reset_setting_file(_DEVICE_ID_MANAGER_FILE_PATH, reset_data)
@@ -1473,7 +1473,7 @@ class MockPluginPortAndSwitchAndDeviceInvalidInfo:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInvalidInfo(),
 )
 @patch(
@@ -1532,7 +1532,7 @@ class MockPluginPortAndSwitchAndDeviceInfo2:
 
 
 @patch(
-    "app.common.utils.plugin_manager.get_plugin",
+    "app.common.plugin.plugin_manager._get_plugin",
     return_value=MockPluginPortAndSwitchAndDeviceInfo2(),
 )
 @patch(

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,32 +14,28 @@
 
 """Unit test module for plugin_manager."""
 
-import sys
-import os
 import importlib
+import os
+import sys
 from unittest.mock import mock_open, patch
 
 import pytest
-from pytest import MonkeyPatch
-from pytest_mock import MockFixture
 import yaml
-
-from tests.app.common.utils import test1_plugin
+from pytest_mock import MockFixture
 
 import app.common.basic_exceptions as exc
-from app.common.utils.plugin_manager import get_oob_plugin
-from app.common.utils.plugin_manager import get_fm_plugin
-
+from app.common.plugin.plugin_manager import get_fm_plugin, get_oob_plugin
 from app.common.utils.secret_management_utilities import secret_management_client as smc
+from tests.app.common.utils import test1_plugin
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # For log check
-PLUGIN_MGR_MODULE_NAME = "app.common.utils.plugin_manager"
+PLUGIN_MGR_MODULE_NAME = "app.common.plugin.plugin_manager"
 CONSTANT_REQUEST_ID = "test_request_id"
 
 
-def mock_import(name, *args, **kwargs):  # pylint: disable=W0613
+def mock_import(_name, *_args, **_kwargs):
     """setting
 
     mock import
@@ -103,7 +99,7 @@ def test_get_oob_plugin_err_by_open_yaml_err():
     assert result is None
 
 
-def test_get_oob_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_err_by_get_class_instance(monkeypatch: pytest.MonkeyPatch):
     """failed
 
     _get_class_instance failed
@@ -124,7 +120,7 @@ def test_get_oob_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
     assert result is None
 
 
-def test_get_oob_plugin_ok_no_param(monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_ok_no_param(monkeypatch: pytest.MonkeyPatch):
     """success
 
     No specific_data information
@@ -142,10 +138,34 @@ def test_get_oob_plugin_ok_no_param(monkeypatch: MonkeyPatch):
         result = get_oob_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_oob_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_ok_no_param_plugin_without_init(monkeypatch: pytest.MonkeyPatch):
+    """success
+
+    No specific_data information, and the plugin class does not define
+    its own __init__ (ManagerPluginBase.__init__ receives None)
+
+    """
+    m_id = "1aB33"
+    result = None
+
+    # Mock Data
+    mock_data = {"module": "oob_redfish.test1_plugin", "class": "NoInitPlugin"}
+    # Creating mocks
+    with patch("builtins.open", mock_open(read_data=yaml.dump(mock_data))):
+        # Use monkeypatch to mock importlib.import_module
+        monkeypatch.setattr(importlib, "import_module", mock_import)
+        result = get_oob_plugin(m_id)
+    # Verify that an instance can be obtained
+    assert result is not None
+    assert isinstance(result, test1_plugin.NoInitPlugin)
+    assert result.specific_data is None
+
+
+def test_get_oob_plugin_ok_no_param_only_key(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available (only key)
@@ -163,10 +183,11 @@ def test_get_oob_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
         result = get_oob_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_oob_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_ok_with_param_1(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available
@@ -190,10 +211,11 @@ def test_get_oob_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
         result = get_oob_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_oob_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_ok_with_param_2(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available(However, some are sub keys only)
@@ -217,10 +239,11 @@ def test_get_oob_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
         result = get_oob_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_oob_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_oob_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -247,6 +270,7 @@ def test_get_oob_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPat
         result = get_oob_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
@@ -305,7 +329,7 @@ def test_get_fm_plugin_err_by_open_yaml_err():
     assert result is None
 
 
-def test_get_fm_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_err_by_get_class_instance(monkeypatch: pytest.MonkeyPatch):
     """failed
 
     _get_class_instance failed
@@ -326,7 +350,7 @@ def test_get_fm_plugin_err_by_get_class_instance(monkeypatch: MonkeyPatch):
     assert result is None
 
 
-def test_get_fm_plugin_ok_no_param(monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_ok_no_param(monkeypatch: pytest.MonkeyPatch):
     """success
 
     No specific_data information
@@ -344,10 +368,11 @@ def test_get_fm_plugin_ok_no_param(monkeypatch: MonkeyPatch):
         result = get_fm_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_fm_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_ok_no_param_only_key(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available (only key)
@@ -365,10 +390,11 @@ def test_get_fm_plugin_ok_no_param_only_key(monkeypatch: MonkeyPatch):
         result = get_fm_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value is None
 
 
-def test_get_fm_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_ok_with_param_1(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available
@@ -392,10 +418,11 @@ def test_get_fm_plugin_ok_with_param_1(monkeypatch: MonkeyPatch):
         result = get_fm_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_fm_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_ok_with_param_2(monkeypatch: pytest.MonkeyPatch):
     """success
 
     specific_data information available(However, some are sub keys only)
@@ -419,10 +446,11 @@ def test_get_fm_plugin_ok_with_param_2(monkeypatch: MonkeyPatch):
         result = get_fm_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param
 
 
-def test_get_fm_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPatch):
+def test_get_fm_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: pytest.MonkeyPatch):
     """success
 
     With secret access
@@ -449,4 +477,5 @@ def test_get_fm_plugin_ok_secret_on(mocker: MockFixture, monkeypatch: MonkeyPatc
         result = get_fm_plugin(m_id)
     # Verify that an instance can be obtained
     assert result is not None
+    assert isinstance(result, test1_plugin.TestPlugin)
     assert result.test_value == param

@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -18,27 +18,20 @@ import logging
 from http import HTTPStatus
 
 import pytest
-from pytest import MonkeyPatch, LogCaptureFixture
+import requests
+from pydantic import ValidationError
 from pytest_mock import MockFixture
 
-from pydantic import ValidationError
-import requests
-
-from tests import test_util
-
 import app.common.basic_exceptions as exc
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.common.utils.secret_management_utilities import secret_management_client
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from tests import test_util
 
 
 class TestGetSecret:
     """Unit test class for get_secret"""
 
     @pytest.mark.parametrize(
-        "input_secret_store, secret_api_response_body",
+        ("input_secret_store", "secret_api_response_body"),
         [
             (
                 secret_management_client.SecretStore.FM,
@@ -63,10 +56,10 @@ class TestGetSecret:
             ),
         ],
     )
-    def test_success(  # pylint: disable=R0913, R0917
+    def test_success(
         self,
-        caplog: LogCaptureFixture,
-        monkeypatch: MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         secret_api_response_body,
@@ -159,7 +152,7 @@ class TestGetSecret:
         assert getattr(response_log, "status_code") == HTTPStatus.OK.value
 
     @pytest.mark.parametrize(
-        "input_secret_store, input_secret",
+        ("input_secret_store", "input_secret"),
         [
             (secret_management_client.SecretStore.FM, 0),  # The type of 'secret_name' is invalid case.
             (secret_management_client.SecretStore.OOB, None),  # The type of 'secret_name' is invalid case.
@@ -167,7 +160,7 @@ class TestGetSecret:
             (0, "dummy_fm_manager_id"),  # The type of 'secret_store' is invalid case.
         ],
     )
-    def test_invalid_request_parameter(self, monkeypatch: MonkeyPatch, input_secret_store, input_secret):
+    def test_invalid_request_parameter(self, monkeypatch: pytest.MonkeyPatch, input_secret_store, input_secret):
         """test invalid request parameter case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -192,7 +185,7 @@ class TestGetSecret:
             secret_management_client.SecretStore.AGENT,
         ],
     )
-    def test_setting_invalid(self, monkeypatch: MonkeyPatch, input_secret_store):
+    def test_setting_invalid(self, monkeypatch: pytest.MonkeyPatch, input_secret_store):
         """test invalid env setting case"""
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
 
@@ -225,7 +218,7 @@ class TestGetSecret:
         ],
     )
     @pytest.mark.parametrize(
-        "requests_raise_exception, expected_exception",
+        ("requests_raise_exception", "expected_exception"),
         [
             (requests.exceptions.ReadTimeout, exc.InternalHWControlError),
             (requests.exceptions.ConnectTimeout, exc.InternalHWControlError),
@@ -233,9 +226,9 @@ class TestGetSecret:
             (requests.exceptions.RequestException, exc.InternalHWControlError),
         ],
     )
-    def test_requests_raised(  # pylint: disable=R0913, R0917
+    def test_requests_raised(
         self,
-        monkeypatch: MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         requests_raise_exception,
@@ -270,7 +263,7 @@ class TestGetSecret:
     )
     def test_secret_manager_return_invalid_data(
         self,
-        monkeypatch: MonkeyPatch,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
     ):
@@ -310,7 +303,7 @@ class TestGetSecret:
         ],
     )
     @pytest.mark.parametrize(
-        "secret_api_response_status_code, expected_exception",
+        ("secret_api_response_status_code", "expected_exception"),
         [
             (HTTPStatus.NO_CONTENT.value, exc.DependencyServiceHWControlError),
             (HTTPStatus.BAD_REQUEST.value, exc.DependencyServiceHWControlError),
@@ -319,10 +312,10 @@ class TestGetSecret:
             (HTTPStatus.NOT_FOUND.value, exc.DependencyServiceHWControlError),
         ],
     )
-    def test_secret_manager_return_error(  # pylint: disable=R0913, R0917
+    def test_secret_manager_return_error(
         self,
-        caplog: LogCaptureFixture,
-        monkeypatch: MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+        monkeypatch: pytest.MonkeyPatch,
         mocker: MockFixture,
         input_secret_store,
         secret_api_response_status_code,

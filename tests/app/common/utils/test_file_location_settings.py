@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,10 +14,7 @@
 
 """Unit test module for file_location_settings.py ."""
 
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.common.utils import file_location_settings
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
 class TestFileLocationSettings:
@@ -28,11 +25,13 @@ class TestFileLocationSettings:
         # Set up the expected value.
         expected_conf = "/opt/cdim/hw-control/config/"
         expected_data = "/opt/cdim/hw-control/data/"
+        expected_plugin = "/opt/cdim/hw-control/data/plugins"
 
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Clean up the environment variables in the current test environment.
         monkeypatch.delenv("HW_CONTROL_CONFIG_FILE_DIR", raising=False)
         monkeypatch.delenv("HW_CONTROL_DATA_FILE_DIR", raising=False)
+        monkeypatch.delenv("HW_CONTROL_PLUGIN_FILE_DIR", raising=False)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         actual_setting = file_location_settings.FileLocationSettings()
@@ -40,6 +39,7 @@ class TestFileLocationSettings:
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_setting.config_file_dir == expected_conf
         assert actual_setting.data_file_dir == expected_data
+        assert actual_setting.plugin_file_dir == expected_plugin
 
     def test_env_case_sensitive(self, monkeypatch):
         """Test environment case sensitive."""
@@ -47,15 +47,18 @@ class TestFileLocationSettings:
         # Set up the expected value.
         expected_conf = "/opt/cdim/hw-control/config/"
         expected_data = "/opt/cdim/hw-control/data/"
+        expected_plugin = "/opt/cdim/hw-control/data/plugins"
 
         # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
         # Clean up the environment variables in the current test environment.
         monkeypatch.delenv("HW_CONTROL_CONFIG_FILE_DIR", raising=False)
         monkeypatch.delenv("HW_CONTROL_DATA_FILE_DIR", raising=False)
+        monkeypatch.delenv("HW_CONTROL_PLUGIN_FILE_DIR", raising=False)
 
         # Set up the mock.
         monkeypatch.setenv("hw_control_config_file_dir", "/dev/null")
         monkeypatch.setenv("hw_control_data_file_dir", "/dev/null")
+        monkeypatch.setenv("hw_control_plugin_file_dir", "/dev/null")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         actual_setting = file_location_settings.FileLocationSettings()
@@ -64,6 +67,7 @@ class TestFileLocationSettings:
         # The initial values of the class are expected to be set.
         assert actual_setting.config_file_dir == expected_conf
         assert actual_setting.data_file_dir == expected_data
+        assert actual_setting.plugin_file_dir == expected_plugin
 
     def test_instance_generate_from_env(self, monkeypatch):
         """Test environment variables set case."""
@@ -72,10 +76,12 @@ class TestFileLocationSettings:
         # Set up the expected value.
         expected_conf = "/dev/null"
         expected_data = "/tmp/"
+        expected_plugin = "/tmp/plugin"
 
         # Set up the mock.
         monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", "/dev/null")
         monkeypatch.setenv("HW_CONTROL_DATA_FILE_DIR", "/tmp/")
+        monkeypatch.setenv("HW_CONTROL_PLUGIN_FILE_DIR", "/tmp/plugin")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         actual_setting = file_location_settings.FileLocationSettings()
@@ -83,6 +89,7 @@ class TestFileLocationSettings:
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_setting.config_file_dir == expected_conf
         assert actual_setting.data_file_dir == expected_data
+        assert actual_setting.plugin_file_dir == expected_plugin
 
     def test_instance_generate_from_env_relative_path(self, monkeypatch):
         """Test environment variables set case."""
@@ -91,10 +98,12 @@ class TestFileLocationSettings:
         # Set up the expected value.
         expected_conf = "./config"
         expected_data = "./data"
+        expected_plugin = "./plugin"
 
         # Set up the mock.
         monkeypatch.setenv("HW_CONTROL_CONFIG_FILE_DIR", "./config")
         monkeypatch.setenv("HW_CONTROL_DATA_FILE_DIR", "./data")
+        monkeypatch.setenv("HW_CONTROL_PLUGIN_FILE_DIR", "./plugin")
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         actual_setting = file_location_settings.FileLocationSettings()
@@ -102,3 +111,4 @@ class TestFileLocationSettings:
         # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
         assert actual_setting.config_file_dir == expected_conf
         assert actual_setting.data_file_dir == expected_data
+        assert actual_setting.plugin_file_dir == expected_plugin

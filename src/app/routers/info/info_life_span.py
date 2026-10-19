@@ -21,14 +21,15 @@ This ensures that essential data is prepared and available for request processin
 """
 
 from contextlib import asynccontextmanager
+
 from fastapi import APIRouter
+
 from app.core.info import info_utils
 
 
 @asynccontextmanager
 async def info_router_lifespan(_router: APIRouter):
-    """
-    Lifespan function for the info router.
+    """Lifespan function for the info router.
 
     This function is intended to be used as a lifespan event handler for the FastAPI router.
     It loads the mapping table required for information acquisition and response generation

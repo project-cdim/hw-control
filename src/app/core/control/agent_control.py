@@ -12,30 +12,29 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-HW independent section - Agent control
+"""HW independent section - Agent control.
 
 Upon receiving a request from the control API,
 Makes a control request to Agent for the device
 specified by the 'Device ID'.
 """
+
 import logging
 from enum import Enum
-from http import HTTPStatus
-from http import HTTPMethod
+from http import HTTPMethod, HTTPStatus
 
 import requests
+from asgi_correlation_id import correlation_id
+from pydantic import BaseModel, Field
 from urllib3.util import Url
 from urllib3.util.retry import Retry
-from pydantic import BaseModel, Field
-from asgi_correlation_id import correlation_id
 
-from app.core.control.control_base import PowerControlTargetDevice
-from app.core.control import oob_control
-from app.common.utils import os_ipaddress
-from app.common import constants
 import app.common.basic_exceptions as exc
+from app.common import constants
+from app.common.utils import os_ipaddress
 from app.common.utils.authorization_utilities import authorization_server_client
+from app.core.control import oob_control
+from app.core.control.control_base import PowerControlTargetDevice
 
 # build for REST API URL
 AGENT_REST_API_SCHEME = "http"
@@ -69,8 +68,7 @@ class AgentAPIPath(Enum):
 
 
 class ControlTargetAgent(BaseModel):
-    """
-    Represents the information of an agent running on the host OS of the control target node.
+    """Represents the information of an agent running on the host OS of the control target node.
 
     Attributes:
         host_cpu_device_id (str):
@@ -118,7 +116,6 @@ class ControlTargetAgent(BaseModel):
             - The 'IP Address' could not be obtained from os_ipaddress.
 
         """
-
         target_ip_address, is_agent_exist = os_ipaddress.get_os_ipaddress(self.host_cpu_device_id)
 
         if not is_agent_exist:
@@ -131,9 +128,7 @@ class ControlTargetAgent(BaseModel):
 
 
 class AgentController:
-    """
-    A class to control the target agent by sending requests to the agent
-    running on the host OS.
+    """A class to control the target agent by sending requests to the agent running on the host OS.
 
     Attributes: None
 
@@ -147,13 +142,11 @@ class AgentController:
 
     @staticmethod
     def _execute_os_shutdown(target_agent: ControlTargetAgent) -> None:
-        """
-        Execute host OS shutdown.
+        """Execute host OS shutdown.
 
         Args:
-            target_device (PowerControlTargetDevice):
-                Represents the CPU device object,
-                which is responsible for executing the target host OS.
+            target_agent (ControlTargetAgent):
+                The agent object running on the host OS to be shut down.
 
         Raises:
             AuthenticationHWControlError:
@@ -168,7 +161,6 @@ class AgentController:
         Returns:
             None
         """
-
         access_token = authorization_server_client.get_agent_access_token()
         requests_header = {
             "Authorization": f"Bearer {access_token}",
@@ -223,9 +215,7 @@ class AgentController:
 
     @staticmethod
     def os_shutdown(target_device: PowerControlTargetDevice, target_agent: ControlTargetAgent) -> None:
-        """
-        Perform an host OS shutdown via the Agent, and if it fails,
-        perform an ACPI shutdown via OOB.
+        """Perform an host OS shutdown via the Agent, and if it fails, perform an ACPI shutdown via OOB.
 
         Args:
             target_device (PowerControlTargetDevice):
@@ -245,7 +235,6 @@ class AgentController:
             InternalHWControlError:
                 If the specified device power state is unexpected.
         """
-
         if target_device.device_type != constants.DeviceType.CPU.value:
             raise exc.RequestNotSupportedHWControlError()
 
@@ -281,8 +270,7 @@ class AgentController:
 
     @staticmethod
     def is_os_ready(target_device: PowerControlTargetDevice, target_agent: ControlTargetAgent, timeout: int) -> bool:
-        """
-        Check whether the target host OS is ready.
+        """Check whether the target host OS is ready.
 
         This method sends a request to the agent to check if the target
         host OS is ready within the specified timeout period.

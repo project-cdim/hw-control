@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-# pylint: disable=W0212,R0801
+
 """unit test module in device_ID_base.py (part 5)
 
 system under test
@@ -1224,7 +1224,7 @@ class TestConnectedFMSwitchIDToDeviceIDList:
             _ = dim.connected_fm_switch_id_to_device_id_list(connect_fm_switch_id)
 
 
-class TestGetDeviceInfo:  # pylint: disable=R0903
+class TestGetDeviceInfo:
     """Unit test class for _get_devices_info.
 
     SUT:/device_id_manager/device_ID_base.py/_get_devices_info.

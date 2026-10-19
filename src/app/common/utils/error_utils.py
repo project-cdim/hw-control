@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW control - Error Utilities
+"""HW control - Error Utilities.
 
 Some utilities widely used in HW control.
 
@@ -20,14 +20,14 @@ Some utilities widely used in HW control.
 
 
 def remove_duplicates(errors: list) -> list:
-    """Remove duplicates error information
+    """Remove duplicates error information.
 
     Remove error information for duplicate error
 
     Args:
         errors (list): error information list
 
-        Returns:
+    Returns:
             list: error information list
     """
     # If the error information is not valid (None, [], etc.), it is returned as is.

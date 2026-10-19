@@ -208,7 +208,7 @@ def _update_id_to_info(devices_info_json: pd.DataFrame):
         None.
 
     """
-    global id_to_info  # pylint: disable=W0603
+    global id_to_info
     # Update global value
     if not devices_info_json.empty:
         new_id_to_info = devices_info_json.set_index("DeviceID").to_dict(orient="index")
@@ -277,7 +277,7 @@ def _read_device_id_manager_file(device_id_manager_file_path: str) -> pd.DataFra
     try:
         devices_info_json = pd.read_json(device_id_manager_file_path, dtype=device_id_json_compat_dtypes)
         devices_info_json = devices_info_json.replace(["NaN", "nan", "None", ""], None)
-        if not devices_info_json.empty:  # pylint: disable=E1101
+        if not devices_info_json.empty:
             devices_info_json = _change_info_to_new_type(devices_info_json)
     # PermissionError: Raised when the json file is not accessible.
     except PermissionError as exc:
@@ -383,7 +383,7 @@ def _get_devices_info() -> dict[str, dict[str, str | list | dict]]:
             If there is a permission error with the
             device_id_info.json file.
     """
-    global id_to_info  # pylint: disable=W0603
+    global id_to_info
 
     with id_to_info_lock:
         if id_to_info:

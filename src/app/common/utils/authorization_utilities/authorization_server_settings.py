@@ -12,21 +12,20 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-Module for configure settings for request to the Authorization Server.
+"""Module for configure settings for request to the Authorization Server.
 
 This module provides a class, `AuthorizationServerSettings`, which fetches
 configuration settings from environment variables and validates them.
 These settings can be used to facilitate requests to the Authorization Server.
 
 """
+
 from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AuthorizationServerSettings(BaseSettings):
-    """
-    Configuration settings for interacting with the Authorization Server
+    """Configuration settings for interacting with the Authorization Server.
 
     This class retrieves configuration settings from environment variables
     for making requests to the Authorization Server,

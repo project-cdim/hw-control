@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -13,19 +13,15 @@
 #  under the License.
 
 """Unit test module for agent_control.py module."""
+
 import pytest
 from pytest_mock import MockFixture
 
-from tests.app.core.control import test_util
-
-from app.common.utils import os_ipaddress
 import app.common.basic_exceptions as exc
+from app.common.utils import os_ipaddress
 from app.core.control import agent_control
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 from app.core.control.agent_control import ControlTargetAgent
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from tests.app.core.control import test_util
 
 
 class TestControlTargetAgentGenerate:

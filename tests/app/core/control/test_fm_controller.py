@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -16,24 +16,17 @@
 
 import logging
 from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
-from pytest import LogCaptureFixture
 from pytest_mock import MockFixture
-
-from tests.app.core.control import test_util
-
 
 import app.common.basic_exceptions as exc
 from app.common import constants
-from app.common.utils import plugin_manager
-from app.core.control.fm_control import FMControlTargetDevicePair
+from app.common.plugin import plugin_manager
 from app.core.control import fm_control
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++#
-from app.core.control.fm_control import FMController
-
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+from app.core.control.fm_control import FMController, FMControlTargetDevicePair
+from tests.app.core.control import test_util
 
 
 class TestConnect:
@@ -59,7 +52,7 @@ class TestConnect:
     )
     def test_successful_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         fm_control_target_device_pair_fixture: FMControlTargetDevicePair,
     ):
@@ -69,7 +62,8 @@ class TestConnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
+        fm_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -91,7 +85,7 @@ class TestConnect:
         assert getattr(plugin_call_log, "manager_id") == test_device_pair.upstream_device.fm_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyFMPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == fm_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "connect"
@@ -170,7 +164,7 @@ class TestConnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_manager_raise, expected_raise",
+        ("plugin_manager_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -215,7 +209,7 @@ class TestConnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             # plugin raise Unexpected Exception case
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -238,8 +232,9 @@ class TestConnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
-        mocker.patch.object(test_util.DummyFMPlugin, "connect", side_effect=plugin_raise)
+        fm_plugin_mock = MagicMock()
+        fm_plugin_mock.connect.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -264,7 +259,7 @@ class TestConnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise, expected_error_message",
+        ("plugin_raise", "expected_raise", "expected_error_message"),
         [
             # plugin raise expected Exception case
             (
@@ -309,7 +304,7 @@ class TestConnect:
             ),
         ],
     )
-    def test_plugin_raise_not_found_error(  # pylint: disable=R0913, R0917
+    def test_plugin_raise_not_found_error(
         self,
         mocker: MockFixture,
         fm_control_target_device_pair_fixture: FMControlTargetDevicePair,
@@ -323,8 +318,9 @@ class TestConnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
-        mocker.patch.object(test_util.DummyFMPlugin, "connect", side_effect=plugin_raise)
+        fm_plugin_mock = MagicMock()
+        fm_plugin_mock.connect.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:
@@ -358,7 +354,7 @@ class TestDisconnect:
     )
     def test_successful_case(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         mocker: MockFixture,
         fm_control_target_device_pair_fixture: FMControlTargetDevicePair,
     ):
@@ -368,7 +364,8 @@ class TestDisconnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
+        fm_plugin_mock = MagicMock()
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         caplog.clear()
@@ -390,7 +387,7 @@ class TestDisconnect:
         assert getattr(plugin_call_log, "manager_id") == test_device_pair.upstream_device.fm_manager_id
 
         assert hasattr(plugin_call_log, "class_name"), "class_name should be present in the log record"
-        assert getattr(plugin_call_log, "class_name") == test_util.DummyFMPlugin.__name__
+        assert getattr(plugin_call_log, "class_name") == fm_plugin_mock.__class__.__name__
 
         assert hasattr(plugin_call_log, "method_name"), "method_name should be present in the log record"
         assert getattr(plugin_call_log, "method_name") == "disconnect"
@@ -469,7 +466,7 @@ class TestDisconnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_manager_raise, expected_raise",
+        ("plugin_manager_raise", "expected_raise"),
         [
             (exc.PluginGetInstanceHWControlError, exc.PluginGetInstanceHWControlError),
             (exc.ConfigurationHWControlError, exc.ConfigurationHWControlError),
@@ -514,7 +511,7 @@ class TestDisconnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise",
+        ("plugin_raise", "expected_raise"),
         [
             # plugin raise Unexpected Exception case
             (RuntimeError, exc.UnexpectedExceptionHWControlError),
@@ -537,8 +534,9 @@ class TestDisconnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
-        mocker.patch.object(test_util.DummyFMPlugin, "disconnect", side_effect=plugin_raise)
+        fm_plugin_mock = MagicMock()
+        fm_plugin_mock.disconnect.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise):
@@ -563,7 +561,7 @@ class TestDisconnect:
         indirect=["fm_control_target_device_pair_fixture"],
     )
     @pytest.mark.parametrize(
-        "plugin_raise, expected_raise, expected_error_message",
+        ("plugin_raise", "expected_raise", "expected_error_message"),
         [
             # plugin raise expected Exception case
             (
@@ -608,7 +606,7 @@ class TestDisconnect:
             ),
         ],
     )
-    def test_plugin_raise_not_found_error(  # pylint: disable=R0913, R0917
+    def test_plugin_raise_not_found_error(
         self,
         mocker: MockFixture,
         fm_control_target_device_pair_fixture: FMControlTargetDevicePair,
@@ -622,8 +620,9 @@ class TestDisconnect:
         test_device_pair = fm_control_target_device_pair_fixture
 
         # Set up the mock.
-        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=test_util.DummyFMPlugin())
-        mocker.patch.object(test_util.DummyFMPlugin, "disconnect", side_effect=plugin_raise)
+        fm_plugin_mock = MagicMock()
+        fm_plugin_mock.disconnect.side_effect = plugin_raise
+        mocker.patch.object(plugin_manager, "get_fm_plugin", return_value=fm_plugin_mock)
 
         # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
         with pytest.raises(expected_raise) as e:

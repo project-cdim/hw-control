@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,28 +12,24 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""
-A module for handling secret management operations.
-"""
+"""A module for handling secret management operations."""
 
 import logging
 from enum import Enum
-from http import HTTPStatus
-from http import HTTPMethod
+from http import HTTPMethod, HTTPStatus
 
-from pydantic import validate_call, ValidationError
 import requests
+from pydantic import ValidationError, validate_call
 from urllib3.util import Url
 
-from app.common.utils.secret_management_utilities import secret_management_settings
 import app.common.basic_exceptions as exc
+from app.common.utils.secret_management_utilities import secret_management_settings
 
 logger = logging.getLogger(__name__)
 
 
 class SecretStore(Enum):
-    """
-    An enumeration representing different secret stores.
+    """An enumeration representing different secret stores.
 
     This Enum class defines the possible secret store names that can be used
     when interacting with the secret management service. It is utilized for
@@ -52,8 +48,7 @@ class SecretStore(Enum):
 
 @validate_call
 def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
-    """
-    Retrieve a secret from a specified secret store.
+    """Retrieve a secret from a specified secret store.
 
     This function interacts with a secret management service to fetch the
     secret corresponding to the given `secret_name` from the given `secret_store`.
@@ -144,7 +139,6 @@ def get_secret(secret_store: SecretStore, secret_name: str) -> dict:
             extra={"status_code": secret_manager_return.status_code},
         )
         secret = secret_manager_response_body
-        logger.debug("obtained secret: %s", {str(secret)})
 
     else:  # Secret retrieval failure case.
         logger.error(

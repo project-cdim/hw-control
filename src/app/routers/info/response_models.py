@@ -12,11 +12,12 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Response models for Fast API
+"""Response models for Fast API.
 
 Define response models used in API definition of Fast API
 
 """
+
 from pydantic import BaseModel, Field
 
 SAMPLES_DEVICE_ID_LIST_DESCRIPTION = "The Device ID of Device IDs list."
@@ -112,7 +113,8 @@ class DeviceSpecificConstraints(BaseModel):
 class PortListInformation(BaseModel):
     """A class to represent Device Port List Information."""
 
-    fabricID: str = Field(
+    fabric_id: str = Field(
+        alias="fabricID",
         description="Fabric ID",
         examples=["12446A3B"],
     )
@@ -120,7 +122,8 @@ class PortListInformation(BaseModel):
         description="Link state of CXL device",
         examples=["L0"],
     )
-    switchID: str = Field(
+    switch_id: str = Field(
+        alias="switchID",
         description="CXL switch identifier",
         examples=["fmsw-01"],
     )
@@ -187,7 +190,7 @@ class GetsDeviceInformationResponseBody(BaseModel):
         description=SAMPLES_POWER_CAPABILITY_DESCRIPTION,
         examples=["True"],
     )
-    device_serialNumber: str = Field(
+    device_serial_number: str = Field(
         alias="serialNumber",
         description=SAMPLES_SERIAL_NUMBER_DESCRIPTION,
         examples=["1234568"],

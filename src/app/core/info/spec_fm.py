@@ -12,20 +12,21 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""HW independent section - Get FM Information
+"""HW independent section - Get FM Information.
 
 Get device information for the specified Device ID Device Type
 
 """
-import traceback
+
 import logging
-import app.common.messages.message as msg
+import traceback
+
 import app.common.constants as const
+import app.common.messages.message as msg
+import app.common.plugin.svc.loader as plugin_loader
 from app.common.basic_exceptions import InternalHWControlError
 from app.common.dim import device_id_base as dim
-import app.common.plugin.svc.loader as plugin_loader
-from app.common.utils.fm_plugin_base import FMPortData
-from app.common.utils.fm_plugin_base import FMPluginBase
+from app.common.utils.fm_plugin_base import FMPluginBase, FMPortData
 from app.core.info import info_const, info_utils
 
 # INDEX where device information is stored in FMPlugin.get_port_info
@@ -35,15 +36,15 @@ PLUGIN_DEVICE_DATA_KEY = "data"
 logger = logging.getLogger(__name__)
 
 
-class GetSpecFMInfo:  # pylint: disable=R0903
-    """Get FM Information
+class GetSpecFMInfo:
+    """Get FM Information.
 
     class for get Device information from Fabric Manager.
 
     """
 
     def _transport_fm_plugin_result_to_port_data(self, manager_id: str, fm_port_data: FMPortData) -> dict:
-        """Transport Plugin result to port data
+        """Transport Plugin result to port data.
 
         Convert 'FMPortData' to port information
 
@@ -99,7 +100,7 @@ class GetSpecFMInfo:  # pylint: disable=R0903
         return result
 
     def _get_spec(self, device_id: str, manager_id: str, plugin: FMPluginBase) -> list:
-        """Get device information
+        """Get device information.
 
         Get device information by specifying ID
 
@@ -129,7 +130,7 @@ class GetSpecFMInfo:  # pylint: disable=R0903
         return specs
 
     def get_spec_fm(self, device_id: str, device_type: str) -> dict:
-        """Get FM device information
+        """Get FM device information.
 
         Get device information for the specified Device ID and Device Type
 
@@ -141,7 +142,6 @@ class GetSpecFMInfo:  # pylint: disable=R0903
             dict: {"data": ListOfDeviceInfo}
 
         Examples:
-
             >>> get_fm_info = GetSpecFMInfo()
                 spec_fm_info = get_fm_info.get_spec_fm("12345", "CPU")
         """
@@ -178,8 +178,8 @@ class GetSpecFMInfo:  # pylint: disable=R0903
                         specs.extend(self._get_spec(target_id, manager_id, plugin_loader.get_fm(manager_id)))
 
             # Convert links devices.
-            for device_info in specs:
-                device_info = self._convert_links_device(device_info)
+            for idx, device_info in enumerate(specs):
+                specs[idx] = self._convert_links_device(device_info)
 
             if not specs:
                 logger.debug("[get_spec_fm] end. no data.")

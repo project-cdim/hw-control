@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,7 +20,7 @@ import app.common.basic_exceptions as exc
 
 
 @pytest.mark.parametrize(
-    "exception_class, expected_status_code, expected_error_code, expected_error_message",
+    ("exception_class", "expected_status_code", "expected_error_code", "expected_error_message"),
     [
         (
             exc.HostCPUNotFoundHWControlError,
@@ -96,22 +96,22 @@ def test_initialize_instance_and_set_additional_message(
 
     # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
 
-    try:
+    with pytest.raises(exc.DeviceNotFoundHWControlError) as error_object:
         raise exception_class("test_error_information", additional_message="test_additional_message_01")
-    except exc.DeviceNotFoundHWControlError as error_object:
-        error_object.append_error_message(additional_message="test_additional_message_02")
 
-        actual_response_object = error_object.generate_api_response()
-        actual_error_information = error_object.args
-        actual_error_dict = error_object.to_error_dict()
+    error_object.value.append_error_message(additional_message="test_additional_message_02")
 
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++#
-        assert error_object.http_code == expected_status_code
-        assert error_object.error_code == expected_error_code
-        assert error_object.message == expected_error_message
-        assert actual_error_information == ("test_error_information",)
+    actual_response_object = error_object.value.generate_api_response()
+    actual_error_information = error_object.value.args
+    actual_error_dict = error_object.value.to_error_dict()
 
-        assert actual_error_dict == expected_error_dict
+    # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
+    assert error_object.value.http_code == expected_status_code
+    assert error_object.value.error_code == expected_error_code
+    assert error_object.value.message == expected_error_message
+    assert actual_error_information == ("test_error_information",)
 
-        assert actual_response_object.status_code == expected_status_code
-        assert actual_response_object.body.decode("utf-8") == expected_response_body
+    assert actual_error_dict == expected_error_dict
+
+    assert actual_response_object.status_code == expected_status_code
+    assert actual_response_object.body.decode("utf-8") == expected_response_body

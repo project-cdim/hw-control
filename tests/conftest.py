@@ -15,19 +15,17 @@
 """This module define common fixture."""
 
 import uuid
-import pytest
-from pytest_mock import MockFixture
-from asgi_correlation_id.context import correlation_id
 
-from tests import test_util
+import pytest
+from asgi_correlation_id.context import correlation_id
+from pytest_mock import MockFixture
 
 from app.common import constants
-from app.core.control import control_base
-from app.core.control import agent_control
-from app.core.control import fm_control
+from app.core.control import agent_control, control_base, fm_control
+from tests import test_util
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def dummy_correlation_id():
     """Provides a dummy Correlation ID set in the context variable for testing.
 
@@ -49,7 +47,7 @@ def dummy_correlation_id():
     correlation_id.reset(token)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def control_target_agent_fixture(mocker: MockFixture, request):
     """Fixture to create a test instance of ControlTargetAgent.
 
@@ -84,7 +82,7 @@ def control_target_agent_fixture(mocker: MockFixture, request):
         )
         def test_function(control_target_agent_fixture)
     """
-    mocker.patch.object(agent_control.ControlTargetAgent, "model_post_init", lambda self, __context: None)
+    mocker.patch.object(agent_control.ControlTargetAgent, "model_post_init")
 
     params = request.param
     agent = agent_control.ControlTargetAgent(
@@ -94,7 +92,7 @@ def control_target_agent_fixture(mocker: MockFixture, request):
     return agent
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
     """Fixture to create a test instance of FMControlTargetDevicePair.
 
@@ -139,7 +137,7 @@ def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
         )
         def test_function(fm_control_target_device_pair_fixture)
     """
-    mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init", lambda self, __context: None)
+    mocker.patch.object(fm_control.FMControlTargetDevice, "model_post_init")
 
     params = request.param
     upstream_device = fm_control.FMControlTargetDevice(
@@ -162,7 +160,7 @@ def fm_control_target_device_pair_fixture(mocker: MockFixture, request):
     return device_pair
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def power_control_target_device_fixture(mocker: MockFixture, request):
     """
     Fixture to create a PowerControlTargetDevice instance with patched `model_post_init`.
@@ -205,7 +203,7 @@ def power_control_target_device_fixture(mocker: MockFixture, request):
         )
         def test_function(power_control_target_device_fixture)
     """
-    mocker.patch.object(control_base.PowerControlTargetDevice, "model_post_init", lambda self, __context: None)
+    mocker.patch.object(control_base.PowerControlTargetDevice, "model_post_init")
 
     params = request.param
     device = control_base.PowerControlTargetDevice(

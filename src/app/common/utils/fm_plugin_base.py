@@ -1,4 +1,4 @@
-# Copyright 2025 NEC Corporation
+# Copyright 2025-2026 NEC Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 #  under the License.
 
-"""Module that defined the base class of an Fabric Manager plug-in
+"""Module that defined the base class of an Fabric Manager plug-in.
 
 File: hw-control/src/app/common/utils/fm_plugin_base.py
 """
@@ -20,15 +20,17 @@ File: hw-control/src/app/common/utils/fm_plugin_base.py
 import abc
 from abc import ABCMeta
 from typing import Literal, Self
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
-from app.common.utils.plugin_base import ManagerPluginBase
 
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
+
+from app.common.utils.plugin_base import ManagerPluginBase
 
 _HEXADECIMAL = r"^[0-9a-fA-F]*$"
 
 
 class FMPortData(BaseModel):
-    """FM Port Data Class
+    """FM Port Data Class.
+
     Defines types of port data's field
 
     Class Name:
@@ -45,8 +47,9 @@ class FMPortData(BaseModel):
     switch_port_type: Literal["USP", "DSP"] | None = Field(None, alias="switchPortType")
     fabric_id: StrictStr | None = Field(None, alias="fabricId")
     link: list[str] | None = Field(None)
-    device_type: None | (
-        Literal["CXL-Type1", "CXL-Type2", "CXL-Type3", "CXL-Type3-MLD", "PCIe", "Undetected", "Other", "Unknown"]
+    device_type: (
+        None
+        | (Literal["CXL-Type1", "CXL-Type2", "CXL-Type3", "CXL-Type3-MLD", "PCIe", "Undetected", "Other", "Unknown"])
     ) = Field(None, alias="deviceType")
     pci_class_code: dict[str, int] | None = Field(None, min_length=3, max_length=3, alias="PCIClassCode")
     pcie_vendor_id: StrictStr | None = Field(
@@ -61,8 +64,13 @@ class FMPortData(BaseModel):
     cpu_manufacturer: StrictStr | None = Field(None, alias="CPUManufacturer")
     cpu_model: StrictStr | None = Field(None, alias="CPUModel")
     cpu_serial_number: StrictStr | None = Field(None, alias="CPUSerialNumber")
-    ltssm_state: None | (
-        Literal["L0", "L0s", "L2", "Detect", "Polling", "Configuration", "Recovery", "HotReset", "Disable", "Loopback"]
+    ltssm_state: (
+        None
+        | (
+            Literal[
+                "L0", "L0s", "L2", "Detect", "Polling", "Configuration", "Recovery", "HotReset", "Disable", "Loopback"
+            ]
+        )
     ) = Field(None, alias="LTSSMState")
     device_keys: dict = Field({}, alias="deviceKeys")
     port_keys: dict = Field({}, alias="portKeys")
@@ -155,9 +163,7 @@ class FMPortData(BaseModel):
 
     @model_validator(mode="after")
     def validate_port_type_cpu_pcie(self) -> Self:
-        """
-        PCIe data must be None if switchPortType is USP,
-        CPU data must be None if switchPortType is DSP
+        """PCIe data must be None if switchPortType is USP, CPU data must be None if switchPortType is DSP.
 
         Method Name:
             validate_port_type_cpu_pcie
@@ -182,7 +188,8 @@ class FMPortData(BaseModel):
 
 
 class FMSwitchData(BaseModel):
-    """FM Switch Data Class
+    """FM Switch Data Class.
+
     Defines types of switch data's field
 
     Class Name:
@@ -201,7 +208,7 @@ class FMSwitchData(BaseModel):
 
 
 class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
-    """It defines the base class of an FM(Fabric Manager) plug-in
+    """It defines the base class of an FM(Fabric Manager) plug-in.
 
     This class defines the methods that the FM plug-in must implement.
     FM plug-ins must inherit from this class.
@@ -234,7 +241,7 @@ class FMPluginBase(ManagerPluginBase, metaclass=ABCMeta):
     # FM API definition
     @abc.abstractmethod
     def connect(self, cpu_id: str, device_id: str) -> None:
-        """Definition of an API for the connection
+        """Definition of an API for the connection.
 
         FM plug-ins should provide the ability to connect upstream and
         downstream ports with this method.

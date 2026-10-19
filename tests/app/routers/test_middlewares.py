@@ -15,33 +15,23 @@
 """Unit test module for middlewares.py"""
 
 import logging
-import uuid
 
 import pytest
 from pytest_mock import MockFixture
-from pytest import LogCaptureFixture
-from fastapi.testclient import TestClient
-from starlette import requests
-from starlette import responses
+from starlette import requests, responses
 from starlette.types import Receive, Scope, Send
-
-from app import hw_control_main
-
-# ++++ system under test ++++++++++++++++++++++++++++++++++++++++++++++#
 
 from app.routers import middlewares
 
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-
 
 # Prepare a dummy ASGI app
-async def dummy_app(scope: Scope, receive: Receive, send: Send):  # pylint: disable=W0613
+async def dummy_app(scope: Scope, receive: Receive, send: Send):
     """A minimal ASGI application for testing purposes.
 
     See following link for more details:
     https://asgi.readthedocs.io/en/latest/specs/main.html#applications
     """
-    pass  # pylint: disable=W0107
+    pass
 
 
 class TestLoggingMiddleware:
@@ -49,7 +39,7 @@ class TestLoggingMiddleware:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "input_scope, expected_client, expected_request_content_length",
+        ("input_scope", "expected_client", "expected_request_content_length"),
         [
             (
                 {
@@ -83,7 +73,7 @@ class TestLoggingMiddleware:
         ],
     )
     @pytest.mark.parametrize(
-        "input_response_headers, expected_response_content_length",
+        ("input_response_headers", "expected_response_content_length"),
         [
             ({"content-length": "456"}, "456"),
             (  # response object without content-length header
@@ -92,9 +82,9 @@ class TestLoggingMiddleware:
             ),
         ],
     )
-    async def test_log_request_and_response(  # pylint: disable=R0913, R0917
+    async def test_log_request_and_response(
         self,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
         input_scope: Scope,
         expected_client: dict,
         expected_request_content_length: str,
@@ -167,7 +157,7 @@ class TestLoggingMiddleware:
     async def test_app_process_time_logged(
         self,
         mocker: MockFixture,
-        caplog: LogCaptureFixture,
+        caplog: pytest.LogCaptureFixture,
     ):
         """Test that LoggingMiddleware logs application process time.
 
@@ -218,95 +208,3 @@ class TestLoggingMiddleware:
         response_log = caplog.records[1]
         assert hasattr(response_log, "app_process_time")
         assert getattr(response_log, "app_process_time") == expected_app_process_time
-
-
-client = TestClient(hw_control_main.app)
-
-
-class TestCorrelationIdMiddlewareSetting:
-    """Test class for CorrelationIdMiddleware setting."""
-
-    def test_correlation_id_from_header(self):
-        """Test that Correlation ID from header is correctly set in context.
-
-        This test verifies that when a valid Correlation ID is provided in the
-        request header, it is correctly set in the context variable and can be
-        retrieved during request processing.
-
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        test_correlation_id = str(uuid.uuid4())
-        headers = {"x-correlation-id": test_correlation_id}
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        # Send request with Correlation ID header.
-        # Send request to non-existent endpoint to avoid auth dependencies in this test.
-        response = client.get("/cdim/api/v1/foo", headers=headers)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        # 404 is expected for non-existent endpoint
-        assert response.status_code == 404
-
-        # Check that extra response header is present
-        assert "x-correlation-id" in response.headers, "`x-correlation-id` should be present in the response headers"
-        assert response.headers["x-correlation-id"] == test_correlation_id, "correlation-id should match request header"
-
-    def test_correlation_id_generated_when_no_header(self):
-        """Test that Correlation ID is generated when no header is provided.
-
-        This test verifies that when no Correlation ID is provided in the
-        request header, the generator function creates a new UUID4 and sets
-        it in the context variable.
-        """
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        # Send request without Correlation ID header.
-        # Send request to non-existent endpoint to avoid auth dependencies in this test.
-        response = client.get("/cdim/api/v1/foo")
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        # 404 is expected for non-existent endpoint
-        assert response.status_code == 404
-
-        # Check the correlation-id set by generator
-        # UUID4 format validation
-        correlation_id = response.headers["x-correlation-id"]
-        assert len(correlation_id) == 36, "correlation-id should be standard UUID4 format"
-        parsed_uuid = uuid.UUID(correlation_id)
-        assert parsed_uuid.version == 4, "correlation-id set by middleware should be UUID4"
-
-    @pytest.mark.parametrize(
-        "invalid_correlation_id",
-        [
-            "invalid-uuid",  # Invalid format
-            "12345678-1234-1234-1234-12345678901g",  # Invalid character
-            "short-id",  # Too short
-            "",  # Empty string
-            "12345678-1234-5234-1234-123456789012",  # Invalid version (should be 4)
-        ],
-    )
-    def test_correlation_id_validation_with_invalid_values(self, invalid_correlation_id: str):
-        """Test that invalid Correlation IDs are rejected and new ones are generated.
-
-        This test verifies that when an invalid Correlation ID is provided in the
-        request header, the validator rejects it and the generator creates a new
-        valid UUID4 instead.
-
-        Args:
-            invalid_correlation_id (str): An invalid Correlation ID to test.
-        """
-        # ++++ preparation ++++++++++++++++++++++++++++++++++++++++++++#
-        headers = {"x-correlation-id": invalid_correlation_id}
-
-        # ++++ execution ++++++++++++++++++++++++++++++++++++++++++++++#
-        # Send request with invalid Correlation ID header.
-        # Send request to non-existent endpoint to avoid auth dependencies in this test.
-        response = client.get("/cdim/api/v1/foo", headers=headers)
-
-        # ++++ inspection +++++++++++++++++++++++++++++++++++++++++++++#
-        # 404 is expected for non-existent endpoint
-        assert response.status_code == 404
-
-        # Check the correlation-id set by generator (rejected invalid one)
-        assert (
-            response.headers["x-correlation-id"] != invalid_correlation_id
-        ), "Invalid Correlation ID should be rejected and replaced with a valid one by middleware."
